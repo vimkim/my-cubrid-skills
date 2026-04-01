@@ -117,6 +117,7 @@ Show the draft to the user and ask for confirmation before creating.
    gh pr create --repo CUBRID/CUBRID \
      --base <base-branch> \
      --head <user>:<branch> \
+     --assignee vimkim \
      --title "[CBRD-XXXXX] Title" \
      --body "$(cat <<'EOF'
    https://jira.cubrid.org/browse/CBRD-XXXXX

@@ -2,7 +2,7 @@
 
 # Install all skills globally
 install:
-    npx skills add . -y -g
+    npx skills add . -y -g --agent claude-code
 
 # List installed skills
 list:

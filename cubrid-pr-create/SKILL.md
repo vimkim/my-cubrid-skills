@@ -115,6 +115,7 @@ Show the draft to the user and ask for confirmation before creating.
 2. Create the PR using `gh`:
    ```bash
    gh pr create --repo CUBRID/CUBRID \
+     --draft \
      --base <base-branch> \
      --head <user>:<branch> \
      --assignee vimkim \

@@ -24,6 +24,13 @@ The issue file MUST follow these conventions:
 - **Code snippets, function names, file paths**: Keep as-is (English/code)
 - **Tables**: Korean content, English column headers are OK
 
+### Character Restrictions
+
+- **NO emoji** (e.g., no ✅, ❌, 🚀, 📝, ⚠️, etc.)
+- **NO non-BMP Unicode characters** or special symbols (e.g., no →, ←, ✓, ✗, ★, ☆, ※, ▶, ◆, ●, ■, □)
+- Use ASCII alternatives instead: `->` instead of `→`, `[x]`/`[ ]` instead of `✅`/`❌`, `*` or `-` instead of `●`/`■`
+- **Reason**: The CUBRID JIRA API rejects requests containing emoji and many non-ASCII symbol characters. Stick to plain ASCII punctuation, Korean Hangul, and standard CJK characters only.
+
 ### File Naming
 
 `CBRD-XXXXX-short-slug.md` where XXXXX is the JIRA ticket number and short-slug is a brief English descriptor.

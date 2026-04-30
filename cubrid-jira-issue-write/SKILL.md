@@ -44,6 +44,17 @@ Every issue MUST have these sections in this order:
 ```markdown
 # [TAG] 한국어 제목
 
+> **TL;DR**: 1-3 문장으로 이슈 요약. 무엇이 문제이고, 무엇을 하려는지, 왜 중요한지 핵심만.
+
+## Summary
+
+- **문제**: 한 줄 요약
+- **원인 / 배경**: 한 줄 요약
+- **제안 / 변경**: 한 줄 요약
+- **영향 범위**: 영향받는 모듈, 사용자, 호환성
+
+---
+
 ## Description
 
 ### 배경
@@ -73,6 +84,14 @@ Every issue MUST have these sections in this order:
 (참고 사항, 후속 작업, PR 링크 등)
 ```
 
+### Top-of-Issue Summary Rules
+
+The `> **TL;DR**` blockquote and `## Summary` block are **required** and must appear before any detailed section. They exist so a reader can grasp the issue in under 30 seconds without reading the full body.
+
+- **TL;DR**: 1-3 문장, 평문 한국어. 결론부터 적기 (무엇/왜/영향).
+- **Summary bullets**: 각 항목 한 줄. 길어지면 자세한 내용은 아래 `## Description` / `## Implementation`으로 보낸다.
+- TL;DR과 Summary는 **요약**이지 상세 설명이 아니다. 동일한 문장을 복붙하지 말고, 아래 본문에서 더 자세히 풀어 쓴다.
+
 ### Optional Sections
 
 Add these when relevant:
@@ -84,14 +103,15 @@ Add these when relevant:
 ### Style Guide
 
 1. **Title format**: `# [TAG] 한국어 설명` — TAG is a short category like `[OOS]`, `[BTREE]`, `[BROKER]`
-2. **Use `---` horizontal rules** between major sections
-3. **Tables** for structured data (function lists, format changes, comparison)
-4. **Code blocks** with language annotation for source code
-5. **Flow diagrams** using ASCII art in code blocks for call chains
-6. **Bold** for emphasis on key terms
-7. **Backticks** for all function names, variable names, file paths, and code references
-8. Keep paragraphs concise — prefer bullet points and tables over long prose
-9. Acceptance criteria as markdown checkboxes (`- [ ]`)
+2. **Lead with TL;DR + Summary** — a human-readable executive summary before any detailed section
+3. **Use `---` horizontal rules** between major sections
+4. **Tables** for structured data (function lists, format changes, comparison)
+5. **Code blocks** with language annotation for source code
+6. **Flow diagrams** using ASCII art in code blocks for call chains
+7. **Bold** for emphasis on key terms
+8. **Backticks** for all function names, variable names, file paths, and code references
+9. Keep paragraphs concise — prefer bullet points and tables over long prose
+10. Acceptance criteria as markdown checkboxes (`- [ ]`)
 
 ## Reference Examples
 
@@ -106,9 +126,10 @@ Refer to existing issues in `/home/vimkim/gh/my-cubrid-jira/issues/` for style c
 1. **Check output directory**: Verify that `/home/vimkim/gh/my-cubrid-jira/issues/` exists. If it does NOT exist, **stop immediately** and tell the user: "Error: Issue directory `/home/vimkim/gh/my-cubrid-jira/issues/` does not exist. Please clone or create the repository first." Do NOT create the directory automatically.
 2. **Gather context**: Read relevant source code, prior analysis, or conversation context
 3. **Determine sections**: Based on issue type (bug/feature/task/analysis), pick the right section mix
-4. **Write the issue**: Follow the format above, in Korean with English `##` headers
-5. **Save the file**: Write to `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XXXXX-slug.md`
-6. **Show the user**: Print the file path and a brief summary
+4. **Draft the TL;DR + Summary first**: Before writing detailed sections, write the top-of-issue executive summary (TL;DR blockquote + `## Summary` bullets). This forces a clear thesis and prevents the issue from devolving into an unfocused brain-dump.
+5. **Write the issue body**: Follow the format above, in Korean with English `##` headers. Detailed sections expand on the summary, never contradict it.
+6. **Save the file**: Write to `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XXXXX-slug.md`
+7. **Show the user**: Print the file path and the TL;DR so the user can sanity-check the framing at a glance
 
 ## Arguments
 

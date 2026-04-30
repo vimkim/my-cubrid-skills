@@ -40,10 +40,21 @@ Pass optional arguments to customize:
 
 ### Required Sections
 
-The JIRA issue link **must** appear at the very top of the PR body, before any section headers.
+The JIRA issue link **must** appear at the very top of the PR body, before any section headers. Immediately below the link, include a human-readable `## Summary` block so a reviewer can understand the PR in under 30 seconds without scrolling.
 
 ```markdown
 https://jira.cubrid.org/browse/CBRD-XXXXX
+
+> **TL;DR**: 1-3 문장으로 이 PR이 무엇을 바꾸는지, 왜 바꾸는지 요약.
+
+## Summary
+
+- **변경**: 한 줄로 무엇을 했는지
+- **이유**: 한 줄로 왜 했는지 (관련 이슈/배경)
+- **영향**: 한 줄로 영향 범위 (모듈, 호환성, 성능)
+- **리뷰 포인트**: 리뷰어가 특히 봐야 할 부분 1-2가지
+
+---
 
 ## Description
 (변경 사항에 대한 배경 및 설명)
@@ -54,6 +65,15 @@ https://jira.cubrid.org/browse/CBRD-XXXXX
 ## Remarks
 (참고 사항, 주의점, 후속 작업 등)
 ```
+
+### Top-of-PR Summary Rules
+
+The `> **TL;DR**` blockquote and `## Summary` block are **required** for every PR. Reviewers have limited time — a focused summary at the top dramatically increases review quality and turnaround.
+
+- **TL;DR**: 1-3 문장, 평문 한국어. 무엇을 바꾸고 왜 바꾸는지 결론부터.
+- **Summary bullets**: 각 항목 한 줄. 자세한 내용은 `## Description` / `## Implementation`에서 풀어 쓴다.
+- TL;DR과 Summary는 본문의 **요약**이지 본문 자체가 아니다. 같은 문장을 그대로 복붙하지 않는다.
+- 단순 typo/주석 수정 같은 사소한 PR에서는 Summary bullets는 생략 가능하나 TL;DR 한 줄은 항상 포함한다.
 
 ### Optional Sections
 
@@ -98,11 +118,15 @@ If there are uncommitted changes, warn the user and ask whether to proceed or co
 Based on the diff analysis:
 
 1. **Title**: `[CBRD-XXXXX] Imperative English summary`
-2. **Body**: Start with the JIRA link on the first line, then Korean text with English `##` headers:
+2. **Body**: Start with the JIRA link, then a TL;DR + Summary block, then detailed sections:
    - `https://jira.cubrid.org/browse/CBRD-XXXXX` — 맨 위에 JIRA 이슈 링크
+   - `> **TL;DR**: ...` — 1-3 문장 요약 (필수)
+   - `## Summary` — 변경/이유/영향/리뷰 포인트 bullet (필수, trivial PR 제외)
    - `## Description` — 왜 이 변경이 필요한지 배경 설명
    - `## Implementation` — 주요 변경 내용을 bullet points로 정리. 파일명, 함수명 포함.
    - `## Remarks` — 리뷰어가 알아야 할 참고 사항, 제한 사항, 후속 작업
+
+**Draft the TL;DR + Summary first**, before writing the detailed sections. This forces a clear thesis and reveals when the PR is doing too many unrelated things.
 
 Show the draft to the user and ask for confirmation before creating.
 
@@ -122,6 +146,17 @@ Show the draft to the user and ask for confirmation before creating.
      --title "[CBRD-XXXXX] Title" \
      --body "$(cat <<'EOF'
    https://jira.cubrid.org/browse/CBRD-XXXXX
+
+   > **TL;DR**: 한 줄 요약...
+
+   ## Summary
+
+   - **변경**: ...
+   - **이유**: ...
+   - **영향**: ...
+   - **리뷰 포인트**: ...
+
+   ---
 
    ## Description
    한국어 설명...

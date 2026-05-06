@@ -37,9 +37,32 @@ The issue file MUST follow these conventions:
 
 If no JIRA ticket number is provided, ask the user for it or use a descriptive name.
 
-### Required Sections
+## Issue Types
 
-Every issue MUST have these sections in this order:
+Reference: https://dev.cubrid.org/dev-process/jira/open
+
+Always determine the issue type first — section structure depends on it. The four most commonly used types:
+
+| Type | When to use | Korean |
+|------|-------------|--------|
+| **Correct Error** | Bug or error fix | 버그/에러 수정 |
+| **Improve Function/Performance** | Enhance existing feature, perf tuning | 기능/성능 개선 |
+| **Development Subject** | Add a new feature | 신규 기능 개발 |
+| **Internal Management** | Internal-only work (version bumps, infra) | 내부 관리 |
+
+Other types (use only if above don't fit):
+
+- **Refactoring** — code cleanup / restructuring (uses the Improve template)
+- **Task** — fallback when nothing else fits (discouraged)
+- **Sub-task** — child of a parent issue
+
+If the type is unclear, ask the user before drafting.
+
+### Required Sections by Issue Type
+
+Every issue starts with the **TL;DR + Summary** block (project-local convention, on top of the official template), then follows the official section list for that type.
+
+#### Common Header (all types)
 
 ```markdown
 # [TAG] 한국어 제목
@@ -48,41 +71,73 @@ Every issue MUST have these sections in this order:
 
 ## Summary
 
-- **문제**: 한 줄 요약
+- **문제 / 목적**: 한 줄 요약
 - **원인 / 배경**: 한 줄 요약
 - **제안 / 변경**: 한 줄 요약
 - **영향 범위**: 영향받는 모듈, 사용자, 호환성
 
 ---
+```
 
+#### Correct Error template
+
+```markdown
 ## Description
+(버그의 개요)
 
-### 배경
-(문제의 배경 설명)
+## Test Build
+(예: `CUBRID-11.0.0.0248-b53ae4a`, OS 정보 포함)
 
-### 목적
-(이 이슈의 목적)
+## Repro
+(복붙으로 재현 가능한 단계. 서술이 아닌 실행 가능한 명령/SQL)
 
----
+## Expected Result
+(정상 동작 시 기대 결과)
+
+## Actual Result
+(실제 관찰된 잘못된 동작)
+
+## Additional Information
+(스택 트레이스, 로그, 관련 이슈 링크 등)
+```
+
+#### Improve Function/Performance, Development Subject, Refactoring template
+
+```markdown
+## Description
+(배경, 목적, 문제 정의)
+
+## Specification Changes
+(변경되는 스펙. QA/매뉴얼 갱신을 위해 명시. 변경 없으면 N/A)
 
 ## Implementation
-(or ## Spec Change, ## Analysis — pick the most appropriate)
-
-(구현 방법, 변경 사항, 또는 분석 결과)
-
----
+(설계 및 구현 방법. 코드 흐름, 자료구조, 알고리즘)
 
 ## Acceptance Criteria
-(or ## A/C)
+- [ ] 수락 조건 1
+- [ ] 수락 조건 2
 
-- [ ] 체크리스트 형태의 수락 조건
-
----
-
-## Remarks
-
-(참고 사항, 후속 작업, PR 링크 등)
+## Definition of done
+- [ ] 위 A/C 충족
+- [ ] QA 통과
+- [ ] 문서/매뉴얼 반영
 ```
+
+#### Internal Management / Task template
+
+```markdown
+## Description
+(작업의 목적과 설명)
+```
+
+### Section Rules
+
+- **Patch/Revision versions** must be written explicitly in the description (JIRA UI only shows Major.Minor).
+- Do **not** delete unused sections — replace contents with `N/A` instead.
+- Use `TBD` for fields that are not yet known.
+- Optional add-ons (project convention, append at the end if useful):
+  - `## 참고 코드` — key source file references
+  - `## Remarks` — follow-up work, PR links, related tickets
 
 ### Top-of-Issue Summary Rules
 
@@ -91,14 +146,6 @@ The `> **TL;DR**` blockquote and `## Summary` block are **required** and must ap
 - **TL;DR**: 1-3 문장, 평문 한국어. 결론부터 적기 (무엇/왜/영향).
 - **Summary bullets**: 각 항목 한 줄. 길어지면 자세한 내용은 아래 `## Description` / `## Implementation`으로 보낸다.
 - TL;DR과 Summary는 **요약**이지 상세 설명이 아니다. 동일한 문장을 복붙하지 말고, 아래 본문에서 더 자세히 풀어 쓴다.
-
-### Optional Sections
-
-Add these when relevant:
-
-- `## Spec Change` — API/format changes with tables showing before/after
-- `## Analysis` — For investigation/research issues
-- `## 참고 코드` — Key source file references
 
 ### Style Guide
 
@@ -124,12 +171,12 @@ Refer to existing issues in `/home/vimkim/gh/my-cubrid-jira/issues/` for style c
 ## Execution Steps
 
 1. **Check output directory**: Verify that `/home/vimkim/gh/my-cubrid-jira/issues/` exists. If it does NOT exist, **stop immediately** and tell the user: "Error: Issue directory `/home/vimkim/gh/my-cubrid-jira/issues/` does not exist. Please clone or create the repository first." Do NOT create the directory automatically.
-2. **Gather context**: Read relevant source code, prior analysis, or conversation context
-3. **Determine sections**: Based on issue type (bug/feature/task/analysis), pick the right section mix
+2. **Determine the issue type**: Pick from `Correct Error`, `Improve Function/Performance`, `Development Subject`, `Internal Management` (or `Refactoring` / `Task`). Section structure depends on it. If unclear, ask the user.
+3. **Gather context**: Read relevant source code, prior analysis, or conversation context
 4. **Draft the TL;DR + Summary first**: Before writing detailed sections, write the top-of-issue executive summary (TL;DR blockquote + `## Summary` bullets). This forces a clear thesis and prevents the issue from devolving into an unfocused brain-dump.
-5. **Write the issue body**: Follow the format above, in Korean with English `##` headers. Detailed sections expand on the summary, never contradict it.
+5. **Write the issue body**: Use the type-specific template above, in Korean with English `##` headers. Keep all official sections — fill `N/A` or `TBD` rather than deleting.
 6. **Save the file**: Write to `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XXXXX-slug.md`
-7. **Show the user**: Print the file path and the TL;DR so the user can sanity-check the framing at a glance
+7. **Show the user**: Print the file path, the chosen issue type, and the TL;DR so the user can sanity-check the framing at a glance
 
 ## Arguments
 

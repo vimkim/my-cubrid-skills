@@ -200,3 +200,28 @@ CBRD-26583 의 목표는 OOS OID 치환 재활성화. 본 PR은 그 범위 안.
 ```
 
 (JIRA Context only; Existing Comments was omitted because no unresolved top-level comments existed. `Non-blocking` and `Questions for the author` subsections are also omitted because they had no items.)
+
+## Optional: Iterate with Grill-and-Revise
+
+For high-stakes reviews (large PRs, architecturally significant changes, contentious findings, reviews of load-bearing modules like storage/MVCC/broker/parser) where review quality matters more than speed, hand the saved report off to the `/grill-and-revise` skill. It loops a writer subagent against a relentless reviewer subagent until the reviewer approves or a round cap is hit, producing a sharper review with stronger evidence and tighter findings — a separate reviewer with no investment in defending the draft catches what the original writer missed.
+
+**When to suggest it:**
+
+- The PR is large, touches load-bearing modules (storage, MVCC, broker, parser, recovery), or has architecturally significant changes
+- The user asks for a "thorough", "bulletproof", "stress-tested", or "peer-reviewed" review
+- The user wants the review to hold up if challenged by the PR author or maintainers
+
+**When NOT to use it:**
+
+- Trivial PRs or reviews with no findings — single pass is fine
+- The user wants speed over rigor
+
+**How to hand off:**
+
+After saving the initial review to `PR-<NUMBER>-report.md`, invoke `/grill-and-revise` with:
+
+- **Topic & purpose**: PR review report for `<OWNER>/<REPO>#<NUMBER>`, audience is the PR author and CUBRID maintainers
+- **Output path**: the same report file (the loop revises in place)
+- **Source material**: the PR diff, JIRA ticket context, this skill's `reference.md`, any `CLAUDE.md` / `AGENTS.md` in directories of changed files
+- **Review angle**: every Finding has file:line evidence (no "might be wrong" hedging), no pre-existing / CI-caught / out-of-scope items leaked through, TL;DR verdict label matches the Findings, length budget respected (80-line target, 200 hard cap), no emoji or non-BMP unicode
+- **Round cap**: default 5

@@ -184,3 +184,28 @@ Pass the JIRA ticket number and/or topic as arguments:
 
 - `/write-jira-issue CBRD-26583 OOS compact analysis` — Write issue for specific ticket
 - `/write-jira-issue` — Interactive mode, ask user for details
+
+## Optional: Iterate with Grill-and-Revise
+
+For high-stakes issues (root-cause analyses, post-mortems, design proposals, customer-facing bug reports) where rigor matters more than speed, hand the saved draft off to the `/grill-and-revise` skill. It loops a writer subagent against a relentless reviewer subagent until the reviewer approves or a round cap is hit, producing a much sharper issue than a single pass — single-pass writing tends toward hand-wavy filler that a separate, uninvested reviewer will catch.
+
+**When to suggest it:**
+
+- The issue is load-bearing (architectural change, complex bug, regression analysis)
+- The user asks for a "thorough", "bulletproof", "peer-reviewed", "stress-tested", or "grilled" issue
+- The user says "don't ship until it's solid" or asks another agent to review
+
+**When NOT to use it:**
+
+- Trivial bugs, typos, or simple Internal Management/Task tickets — single pass is fine
+- The user wants speed over polish
+
+**How to hand off:**
+
+After saving the initial draft to `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XXXXX-slug.md`, invoke `/grill-and-revise` with:
+
+- **Topic & purpose**: JIRA ticket number, issue type (Correct Error / Improve / Development Subject / etc.), audience (CUBRID dev team, QA, customer-facing)
+- **Output path**: the same file path so the loop revises in place
+- **Source material**: relevant source files, prior analysis, `/jira CBRD-XXXXX` output, repro logs
+- **Review angle**: technical accuracy, reproducibility (Repro section is executable), adherence to CUBRID issue conventions (Korean body, English `##` headers, NO emoji, NO non-BMP unicode), TL;DR + Summary actually summarize and don't duplicate the body
+- **Round cap**: default 5

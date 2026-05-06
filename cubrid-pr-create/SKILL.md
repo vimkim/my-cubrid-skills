@@ -187,3 +187,29 @@ Head:  vimkim:feat/oos-replace-oos-oid
 - If a PR already exists for the branch, show it instead of creating a duplicate.
 - For multi-commit PRs, summarize the overall change rather than listing each commit message.
 - Always use `gh pr create` with heredoc for the body to handle multi-line Korean text correctly.
+
+## Optional: Iterate with Grill-and-Revise
+
+For high-stakes PRs (large refactors, architectural changes, customer-impacting fixes, cross-module touches) where the description quality affects review turnaround, draft the PR body to a local file first, then hand it off to the `/grill-and-revise` skill before creating the PR. The skill loops a writer subagent against a relentless reviewer subagent until the reviewer approves, producing a much sharper PR description — reviewers have limited time, and a polished body dramatically improves review quality.
+
+**When to suggest it:**
+
+- The PR is large, touches multiple modules, or changes external behavior
+- The user asks for a "thorough", "bulletproof", "stress-tested", or "review-ready" PR description
+- The user says "make this review-ready" or "polish this before posting"
+
+**When NOT to use it:**
+
+- Trivial PRs (typos, comments, single-line fixes) — single pass is fine
+- The user wants speed over polish
+
+**How to hand off:**
+
+1. **Draft to a local file first.** Instead of going straight to `gh pr create`, write the PR body to a temp file like `./pr-body-draft.md`.
+2. **Invoke `/grill-and-revise`** with:
+   - **Topic & purpose**: PR title, JIRA ticket, target reviewers (CUBRID maintainers)
+   - **Output path**: the temp draft file (the loop revises in place)
+   - **Source material**: the diff (`git diff <upstream>/<base>...HEAD`), `/jira CBRD-XXXXX` output, related issues/PRs
+   - **Review angle**: clarity for reviewers, completeness of `## Description` / `## Implementation` / `## Remarks`, adherence to CUBRID PR conventions (Korean body, English `##` headers, JIRA link at the very top, TL;DR carries a clear thesis)
+   - **Round cap**: default 5
+3. **After approval, create the PR** by passing the polished body to `gh pr create --body "$(cat ./pr-body-draft.md)"`.

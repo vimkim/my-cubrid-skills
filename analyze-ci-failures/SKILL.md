@@ -148,3 +148,28 @@ Write a structured markdown report with:
 - Check for `unloaddb`/`loaddb`/`copydb` — these require full record resolution
 - TCs with no diff details from CI may need local reproduction to diagnose
 - Group by root cause, not by symptom — multiple TCs often share a single underlying issue
+
+## Optional: Iterate with Grill-and-Revise
+
+For high-stakes CI failure reports (many failed TCs, reports that will drive a release decision, reports shared with the wider team) where the categorization and root-cause claims must hold up to scrutiny, hand the saved report off to the `/grill-and-revise` skill. It loops a writer subagent against a relentless reviewer subagent until the reviewer approves, producing a sharper report — a separate reviewer catches weak root-cause hypotheses, mis-categorized TCs, and unsupported "Related?" calls that the original writer missed.
+
+**When to suggest it:**
+
+- The failure set is large (10+ TCs) or spans multiple categories
+- The report will drive a release/merge decision or be shared with QA/maintainers
+- The user asks for a "thorough", "bulletproof", or "stress-tested" analysis
+
+**When NOT to use it:**
+
+- A handful of obviously-related failures with one clear root cause — single pass is fine
+- The user wants a quick triage, not a polished report
+
+**How to hand off:**
+
+After saving the initial report to `failed_tc_report.md`, invoke `/grill-and-revise` with:
+
+- **Topic & purpose**: CI failure analysis for `<branch>` / `<PR link>`, audience is the PR author, QA, and CUBRID maintainers
+- **Output path**: the same report file (the loop revises in place)
+- **Source material**: the failed TC list, CircleCI output, the actual test scripts and answer files, `git diff develop...HEAD` summary, key modified source files
+- **Review angle**: every "Related?" call is justified by a concrete behavioral change, root-cause hypotheses are testable (not hand-wavy), proposed fixes are concrete (file/function-level), categorization groups by underlying cause not symptom, Priority Actions are actionable
+- **Round cap**: default 5

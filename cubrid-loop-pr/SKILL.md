@@ -235,7 +235,7 @@ The grill skill leaves the tree dirty. Commit only what the grill skill changed.
 
 Loop until terminal. Each iteration:
 
-1. Sleep 600 seconds.
+1. Sleep 600 seconds. The first iteration's 600-second sleep also serves as the GitHub-side propagation delay for the new HEAD SHA after `git push` in Step 4. There can be a 30–90 second window where `gh pr view --json headRefOid` still returns the previous SHA, and Step 6's checks-by-SHA query would return an empty list against a SHA the API has not yet acknowledged. Do NOT shorten the first sleep below 60 seconds even if a future change tightens the cadence.
 2. `now=$(date +%s)`. If `now >= deadline_epoch`, go to Step 8 (timeout).
 3. Fetch checks scoped to `<pr-url>` via `gh pr checks`, which surfaces both GitHub Actions check-runs and CircleCI commit statuses (the latter is where CUBRID's `ci/circleci: test_sql` and `ci/circleci: test_medium` live). Per `gh pr checks --help`, the `--json` flag exposes a `bucket` field that categorizes the underlying `state` into `pass`, `fail`, `pending`, `skipping`, or `cancel`. Use `bucket` as the canonical decision field — it is gh's own normalization across both check sources.
    ```bash

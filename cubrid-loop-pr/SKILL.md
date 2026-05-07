@@ -111,11 +111,11 @@ The grill skill leaves the tree dirty. Commit only what the grill skill changed.
    git commit -m "fix(ci): round <round> auto-fix"
    ```
    If `git commit` fails (pre-commit hook), surface the error, do NOT push, and stop the loop. The user must fix hook issues manually.
-4. Push:
+4. Push to the auto-detected CUBRID upstream remote (do NOT rely on the branch's tracking remote being correct, and do NOT hardcode `origin` — CUBRID checkouts commonly use `cub`, `vk`, etc.). Use the `detect_cubrid_remote` helper from `cubrid-grill-and-implement`'s Shared snippets section to set `UPSTREAM_REMOTE`, then:
    ```bash
-   git push
+   git push "$UPSTREAM_REMOTE" "HEAD:<headRefName>"
    ```
-   Assume upstream is already set on the PR branch. If `git push` fails (rejected, hook block, auth), surface the error and stop the loop.
+   If `git push` fails (rejected, hook block, auth), surface the error and stop the loop. If `detect_cubrid_remote` itself fails (no remote points at CUBRID/cubrid), surface the helper's refusal and stop.
 5. Refresh `head_sha=$(git rev-parse HEAD)`. Print the new SHA.
 
 ### Step 5: Trigger CI

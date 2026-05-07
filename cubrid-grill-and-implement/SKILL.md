@@ -90,7 +90,7 @@ Always Read the resolved `reference.md` path (see Reference Files below) and any
 Capture baseline:
 
 - For `jira` / `spec-path` / `inline-spec`: `baseline_ref = $(git rev-parse HEAD)`.
-- For `pr`: assume a single remote named `origin`. Run `git fetch origin <baseRefName>` first to refresh the remote-tracking ref. Then validate with `git rev-parse --verify origin/<baseRefName>`; if that fails, refuse with: "PR mode requires a remote named `origin` exposing `<baseRefName>`. Configure or rename the remote, fetch, and re-invoke." On success: `baseline_ref = $(git merge-base HEAD origin/<baseRefName>)`. The reviewer must judge the PR's full delta, not only the writer's new edits on top of the PR head.
+- For `pr`: detect the upstream CUBRID remote (do NOT hardcode `origin`; CUBRID checkouts commonly use `cub`, `vk`, `hg`, etc.). Use the `detect_cubrid_remote` helper from Shared snippets below to set `UPSTREAM_REMOTE`. Run `git fetch "$UPSTREAM_REMOTE" <baseRefName>` to refresh the remote-tracking ref. Then validate with `git rev-parse --verify "$UPSTREAM_REMOTE/<baseRefName>"`; if that fails, refuse with the message the helper emits and stop. On success: `baseline_ref = $(git merge-base HEAD "$UPSTREAM_REMOTE/<baseRefName>")`. The reviewer must judge the PR's full delta, not only the writer's new edits on top of the PR head.
 
 Print `baseline_ref` to the user. Initialize `round=1`, `max_rounds=3` (or user override), `last_critique=""`, `last_reviewer_critique=""`, `previous_round_diff_summary=""`, `build_status="skipped"`.
 
@@ -179,6 +179,65 @@ Parse the verdict:
 - No worktree management. Assume the user is already in the working tree they want changed.
 - No CUBRID test-case generation. The writer focuses on production code; the user runs `create-testcases` separately after approval.
 - No commit/squash/rebase logic. The user owns git history.
+
+## Shared snippets
+
+### `detect_cubrid_remote`
+
+Used by both `cubrid-grill-and-implement` (Step 3 PR mode) and `cubrid-loop-pr` (Step 4 push). The helper resolves `UPSTREAM_REMOTE` to the git remote that points at the CUBRID/cubrid repository, with deterministic tie-breaks. Both skills MUST source this helper text verbatim — keep them in lockstep on edits.
+
+```bash
+detect_cubrid_remote() {
+  # Stage 1: branch upstream, only if it points at CUBRID/cubrid (case-insensitive).
+  local upstream
+  upstream=$(git rev-parse --abbrev-ref @{upstream} 2>/dev/null) || upstream=""
+  if [ -n "$upstream" ]; then
+    local up_remote="${upstream%%/*}"
+    local up_url
+    up_url=$(git remote get-url "$up_remote" 2>/dev/null) || up_url=""
+    if [ -n "$up_url" ] && printf '%s' "$up_url" \
+        | grep -qiE 'github\.com[:/]cubrid/cubrid(\.git)?$'; then
+      echo "Detected CUBRID remote via branch upstream: $up_remote ($up_url)" >&2
+      printf '%s\n' "$up_remote"
+      return 0
+    fi
+  fi
+
+  # Stage 2: scan all remotes; collect every remote whose URL matches CUBRID/cubrid.
+  local matches
+  matches=$(git remote -v | awk '
+    tolower($0) ~ /github\.com[:\/]cubrid\/cubrid(\.git)?[[:space:]]+\(fetch\)/ {
+      print $1
+    }
+  ' | sort -u)
+  if [ -z "$matches" ]; then
+    echo "No git remote points at CUBRID/cubrid (case-insensitive). Available remotes:" >&2
+    git remote -v >&2
+    return 1
+  fi
+
+  # Stage 3: tie-break. Prefer a remote literally named "origin" or "cub" (in
+  # that order); otherwise take the first match alphabetically and log the
+  # alternatives so the user sees which one was picked and which were ignored.
+  local picked=""
+  if printf '%s\n' "$matches" | grep -qx 'origin'; then
+    picked='origin'
+  elif printf '%s\n' "$matches" | grep -qx 'cub'; then
+    picked='cub'
+  else
+    picked=$(printf '%s\n' "$matches" | head -1)
+  fi
+  echo "Detected CUBRID remote via URL scan: $picked" >&2
+  local others
+  others=$(printf '%s\n' "$matches" | grep -vx "$picked" | tr '\n' ' ')
+  if [ -n "$others" ]; then
+    echo "Other CUBRID-pointing remotes (ignored): $others" >&2
+  fi
+  printf '%s\n' "$picked"
+}
+```
+
+The cascade fails closed: Stage 2 returning empty refuses the skill rather than guessing. The variable is named `UPSTREAM_REMOTE` (not `ORIGIN_REMOTE`) so the name reflects its semantics — "the remote that points at the canonical upstream repository" — regardless of whether it resolves to `origin`, `cub`, or some other local name.
 
 ## Reference Files
 

@@ -133,22 +133,29 @@ Loop until terminal. Each iteration:
 
 1. Sleep 600 seconds.
 2. `now=$(date +%s)`. If `now >= deadline_epoch`, go to Step 8 (timeout).
-3. Fetch check runs scoped to `head_sha`:
+3. Fetch checks scoped to `<pr-url>` via `gh pr checks`, which surfaces both GitHub Actions check-runs and CircleCI commit statuses (the latter is where CUBRID's `ci/circleci: test_sql` and `ci/circleci: test_medium` live). Per `gh pr checks --help`, the `--json` flag exposes a `bucket` field that categorizes the underlying `state` into `pass`, `fail`, `pending`, `skipping`, or `cancel`. Use `bucket` as the canonical decision field — it is gh's own normalization across both check sources.
    ```bash
-   gh api "repos/<OWNER>/<REPO>/commits/<head_sha>/check-runs?per_page=100" \
-     --jq '.check_runs[] | {name, status, conclusion, started_at, html_url}'
+   gh pr checks <pr-url> --json name,state,bucket,link --jq \
+     '.[] | select(.name | test("test_sql|test_medium"; "i")) | {name, state, bucket, link}'
    ```
-   Owner/repo are derived once at Step 1 from `gh pr view --json url --jq .url`.
+   The raw `gh api .../check-runs` endpoint is intentionally NOT used here: it returns ONLY GitHub Actions check-runs and silently omits CircleCI checks, so `test_sql` / `test_medium` would never appear and the loop would poll forever.
 4. From the check list pick the two whose `name` matches (case-insensitive substring) `test_sql` and `test_medium`. If either is still missing after `now - trigger_epoch > 1200` (20 minutes), print: `WARN round <round>: <missing job name> not visible 20m after trigger; will keep polling but may need a manual /run sql medium re-post if it never appears.` Keep polling.
 5. Compute elapsed-since-start in minutes and time-to-deadline in `<H>h<M>m`. Print exactly one line:
    ```
-   [round <round>] elapsed <Tm> | test_sql: <status>/<conclusion or "-"> | test_medium: <status>/<conclusion or "-"> | deadline in <H>h<M>m
+   [round <round>] elapsed <Tm> | test_sql: <bucket> | test_medium: <bucket> | deadline in <H>h<M>m
    ```
-6. Decide:
-   - **Both have `conclusion=success`** -> go to Step 7 (success).
-   - **Either has `conclusion in {failure, timed_out, cancelled, action_required}`** -> go to Step 9 (failure -> next round).
-   - **Both still `status in {queued, in_progress}`** or one already success and the other still running -> loop back to step 1.
-   - **Either has `conclusion=neutral` or `skipped`**: treat as inconclusive, surface the URL, and stop the loop with: "test_sql/test_medium reported neutral/skipped; manual investigation required."
+6. Decide based on `bucket` for each of the two checks:
+
+   | `bucket` | Loop action |
+   |----------|-------------|
+   | `pass` | success-side of decision (both must `pass` to go to Step 7) |
+   | `fail` | failure-side (go to Step 9, next round) |
+   | `pending` | keep polling (loop back to substep 1) |
+   | `skipping` | stop the loop, manual investigation required (e.g., draft skip, branch filter); print the check's `link` |
+   | `cancel` | stop the loop, manual investigation required (e.g., user cancelled CircleCI); print the check's `link` |
+   | anything else | stop the loop with: "Unrecognized check bucket `<value>` for `<name>`; manual investigation required." Any future gh CLI vocabulary expansion fails closed, not silently. |
+
+   If both checks have `bucket=pass`, go to Step 7. If either has `bucket=fail`, go to Step 9. If either is `skipping` / `cancel` / unrecognized, stop the loop. Otherwise (any pending), loop back to substep 1.
 
 ### Step 7: Success
 
@@ -216,8 +223,8 @@ If push notifications are wired up via `/oh-my-claudecode:configure-notification
 - Do NOT silently extend past 24 hours. Always ask explicitly at Step 8.
 - Do NOT push if `git commit` failed. The pre-commit hook is signal, not noise.
 - Do NOT keep looping if the grill skill returned cap-reached. Surface and stop — the user needs to look.
-- Do NOT trust check-run `name` field exactly; CircleCI emits names like `ci/circleci: test_sql` or `test_sql_long`. Use case-insensitive substring matching, but log the full matched name in the status line so the user can tell what was actually checked.
-- Do NOT interpret `conclusion=neutral` or `skipped` as success.
+- Do NOT trust check `name` field exactly; CircleCI emits names like `ci/circleci: test_sql` or `test_sql_long`. Use case-insensitive substring matching, but log the full matched name in the status line so the user can tell what was actually checked.
+- Do NOT treat `bucket` values `skipping` or `cancel` as success — both halt the loop for manual investigation. Do NOT silently treat unrecognized bucket values as any of the known states; future gh CLI vocabulary expansion must fail closed.
 
 ## Example Output
 
@@ -233,11 +240,11 @@ Round 1: invoking /cubrid-grill-and-implement.
 Round 1: grill approved at its round 2.
 Round 1: pushing 1 new commit (abc1234).
 Round 1: posted /run sql medium for abc1234; CI starting.
-[round 1] elapsed 10m | test_sql: queued/-      | test_medium: queued/-      | deadline in 23h50m
-[round 1] elapsed 20m | test_sql: in_progress/- | test_medium: in_progress/- | deadline in 23h40m
-[round 1] elapsed 50m | test_sql: in_progress/- | test_medium: in_progress/- | deadline in 23h10m
-[round 1] elapsed 80m | test_sql: failure/failure | test_medium: success/success | deadline in 22h40m
-[round 1] CI failed. test_sql=failure, test_medium=success. Starting round 2.
+[round 1] elapsed 10m | test_sql: pending | test_medium: pending | deadline in 23h50m
+[round 1] elapsed 20m | test_sql: pending | test_medium: pending | deadline in 23h40m
+[round 1] elapsed 50m | test_sql: pending | test_medium: pending | deadline in 23h10m
+[round 1] elapsed 80m | test_sql: fail    | test_medium: pass    | deadline in 22h40m
+[round 1] CI failed. test_sql=fail, test_medium=pass. Starting round 2.
 
 Round 2: invoking /cubrid-grill-and-implement with prior failure summary.
 ...

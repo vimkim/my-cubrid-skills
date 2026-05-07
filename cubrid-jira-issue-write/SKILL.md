@@ -185,20 +185,11 @@ Pass the JIRA ticket number and/or topic as arguments:
 - `/write-jira-issue CBRD-26583 OOS compact analysis` — Write issue for specific ticket
 - `/write-jira-issue` — Interactive mode, ask user for details
 
-## Optional: Iterate with Grill-and-Revise
+## Mandatory: Iterate with Grill-and-Revise
 
-For high-stakes issues (root-cause analyses, post-mortems, design proposals, customer-facing bug reports) where rigor matters more than speed, hand the saved draft off to the `/grill-and-revise` skill. It loops a writer subagent against a relentless reviewer subagent until the reviewer approves or a round cap is hit, producing a much sharper issue than a single pass — single-pass writing tends toward hand-wavy filler that a separate, uninvested reviewer will catch.
+Every JIRA issue draft must go through `/grill-and-revise` before being filed. Do not post a single-pass issue. Single-pass issues drift toward hand-wavy filler, missing or non-executable Repro steps, unsupported root-cause claims, and TL;DRs that just restate the body. JIRA tickets are read across QA, dev, and customer support by people with no other context, so unclear writing has a long blast radius.
 
-**When to suggest it:**
-
-- The issue is load-bearing (architectural change, complex bug, regression analysis)
-- The user asks for a "thorough", "bulletproof", "peer-reviewed", "stress-tested", or "grilled" issue
-- The user says "don't ship until it's solid" or asks another agent to review
-
-**When NOT to use it:**
-
-- Trivial bugs, typos, or simple Internal Management/Task tickets — single pass is fine
-- The user wants speed over polish
+This step is required, not optional. It applies to every issue. No agent-side judgment — including size, scope, perceived triviality, or perceived risk — is a valid skip criterion. The only legitimate skip is when the user, in the message that triggered this skill, explicitly says "skip grill" or "don't grill this" (or unambiguous equivalent: "no grill", "skip the grill loop", "just push it"). If in doubt, do the grill loop.
 
 **How to hand off:**
 

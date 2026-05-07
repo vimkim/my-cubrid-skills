@@ -149,20 +149,11 @@ Write a structured markdown report with:
 - TCs with no diff details from CI may need local reproduction to diagnose
 - Group by root cause, not by symptom — multiple TCs often share a single underlying issue
 
-## Optional: Iterate with Grill-and-Revise
+## Mandatory: Iterate with Grill-and-Revise
 
-For high-stakes CI failure reports (many failed TCs, reports that will drive a release decision, reports shared with the wider team) where the categorization and root-cause claims must hold up to scrutiny, hand the saved report off to the `/grill-and-revise` skill. It loops a writer subagent against a relentless reviewer subagent until the reviewer approves, producing a sharper report — a separate reviewer catches weak root-cause hypotheses, mis-categorized TCs, and unsupported "Related?" calls that the original writer missed.
+Every CI failure report must go through `/grill-and-revise` before being shared. Do not deliver a single-pass triage. Single-pass triage drifts toward weak root-cause hypotheses, mis-categorized TCs, and unsupported "Related?" calls. CI reports often drive merge or release decisions where mis-attribution is expensive.
 
-**When to suggest it:**
-
-- The failure set is large (10+ TCs) or spans multiple categories
-- The report will drive a release/merge decision or be shared with QA/maintainers
-- The user asks for a "thorough", "bulletproof", or "stress-tested" analysis
-
-**When NOT to use it:**
-
-- A handful of obviously-related failures with one clear root cause — single pass is fine
-- The user wants a quick triage, not a polished report
+This step is required, not optional. It applies to every report. No agent-side judgment — including size, scope, perceived triviality, or perceived risk — is a valid skip criterion. The only legitimate skip is when the user, in the message that triggered this skill, explicitly says "skip grill" or "don't grill this" (or unambiguous equivalent: "no grill", "skip the grill loop", "just push it"). If in doubt, do the grill loop.
 
 **How to hand off:**
 

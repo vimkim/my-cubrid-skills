@@ -41,11 +41,27 @@ If Step 2 was deferred, derive the skill name now from the workflow's verb + obj
 
 ### Step 5: Write the SKILL.md
 
-Create `<collection-root>/<skill-name>/SKILL.md` with complete content — no placeholder comments. Follow the valid skill structure below. The user can suggest `/skill-creator` for deeper iteration if the skill warrants adversarial review.
+Create `<collection-root>/<skill-name>/SKILL.md` with complete content — no placeholder comments. Follow the valid skill structure below.
 
 Note: `SKILL.md` is installed to both Claude Code and Codex via `just install`. Use `$ARGUMENTS` for input; avoid Claude-Code-only constructs unless explicitly flagged.
 
-### Step 6: Install, verify, and commit
+### Step 6: Grill the SKILL.md (mandatory)
+
+Before installing, run the freshly written `SKILL.md` through `/grill-and-revise`. Single-pass skill descriptions and trigger lists drift toward generic verbs, over-broad triggers, missing `Triggers on phrases like '...'` clauses, and steps that reference tools without exact CLI commands. Skills are loaded by description and trigger phrases that LLMs match against, so unclear writing here means the skill never fires.
+
+This step is required, not optional. It applies to every new skill. No agent-side judgment — including size, scope, perceived triviality, or perceived risk — is a valid skip criterion. The only legitimate skip is when the user, in the message that triggered this skill, explicitly says "skip grill" or "don't grill this" (or unambiguous equivalent: "no grill", "skip the grill loop", "just push it"). If in doubt, do the grill loop.
+
+Invoke `/grill-and-revise` with:
+
+- **Topic & purpose**: a new skill in the my-cubrid-skills collection, audience is Claude Code (LLM-triggered) and the user
+- **Output path**: `<collection-root>/<skill-name>/SKILL.md` (the loop revises in place)
+- **Source material**: the workflow context gathered in Step 4, real examples (`resolve-greptile-comments/SKILL.md`, `cubrid-pr-create/SKILL.md`), the valid skill structure below
+- **Review angle**: description is imperative and ends with `Triggers on phrases like '...'`; trigger phrases are concrete and not over-broad; steps are numbered, executable, and reference exact CLI commands; no placeholders, no `<!-- ... -->` comments; CUBRID prefix applied where relevant
+- **Round cap**: default 5
+
+After the reviewer approves, proceed to install.
+
+### Step 7: Install, verify, and commit
 
 ```bash
 just install

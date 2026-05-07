@@ -188,20 +188,11 @@ Head:  vimkim:feat/oos-replace-oos-oid
 - For multi-commit PRs, summarize the overall change rather than listing each commit message.
 - Always use `gh pr create` with heredoc for the body to handle multi-line Korean text correctly.
 
-## Optional: Iterate with Grill-and-Revise
+## Mandatory: Iterate with Grill-and-Revise
 
-For high-stakes PRs (large refactors, architectural changes, customer-impacting fixes, cross-module touches) where the description quality affects review turnaround, draft the PR body to a local file first, then hand it off to the `/grill-and-revise` skill before creating the PR. The skill loops a writer subagent against a relentless reviewer subagent until the reviewer approves, producing a much sharper PR description — reviewers have limited time, and a polished body dramatically improves review quality.
+Every PR description must go through `/grill-and-revise` before `gh pr create`. Do not post a single-pass body. Single-pass PR descriptions drift toward hand-wavy filler, vague TL;DRs, and `## Implementation` bullets that hide what actually changed.
 
-**When to suggest it:**
-
-- The PR is large, touches multiple modules, or changes external behavior
-- The user asks for a "thorough", "bulletproof", "stress-tested", or "review-ready" PR description
-- The user says "make this review-ready" or "polish this before posting"
-
-**When NOT to use it:**
-
-- Trivial PRs (typos, comments, single-line fixes) — single pass is fine
-- The user wants speed over polish
+This step is required, not optional. It applies to every PR. No agent-side judgment — including size, scope, perceived triviality, or perceived risk — is a valid skip criterion. The only legitimate skip is when the user, in the message that triggered this skill, explicitly says "skip grill" or "don't grill this" (or unambiguous equivalent: "no grill", "skip the grill loop", "just push it"). If in doubt, do the grill loop.
 
 **How to hand off:**
 

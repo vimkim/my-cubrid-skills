@@ -201,20 +201,11 @@ CBRD-26583 의 목표는 OOS OID 치환 재활성화. 본 PR은 그 범위 안.
 
 (JIRA Context only; Existing Comments was omitted because no unresolved top-level comments existed. `Non-blocking` and `Questions for the author` subsections are also omitted because they had no items.)
 
-## Optional: Iterate with Grill-and-Revise
+## Mandatory: Iterate with Grill-and-Revise
 
-For high-stakes reviews (large PRs, architecturally significant changes, contentious findings, reviews of load-bearing modules like storage/MVCC/broker/parser) where review quality matters more than speed, hand the saved report off to the `/grill-and-revise` skill. It loops a writer subagent against a relentless reviewer subagent until the reviewer approves or a round cap is hit, producing a sharper review with stronger evidence and tighter findings — a separate reviewer with no investment in defending the draft catches what the original writer missed.
+Every review report must go through `/grill-and-revise` before being posted or shared. Do not deliver a single-pass review. Single-pass reviews drift toward weak evidence ("might be wrong" hedges), pre-existing-issue leakage, mis-scoped findings, and verdict labels that don't match the Findings.
 
-**When to suggest it:**
-
-- The PR is large, touches load-bearing modules (storage, MVCC, broker, parser, recovery), or has architecturally significant changes
-- The user asks for a "thorough", "bulletproof", "stress-tested", or "peer-reviewed" review
-- The user wants the review to hold up if challenged by the PR author or maintainers
-
-**When NOT to use it:**
-
-- Trivial PRs or reviews with no findings — single pass is fine
-- The user wants speed over rigor
+This step is required, not optional. It applies to every review. No agent-side judgment — including size, scope, perceived triviality, or perceived risk — is a valid skip criterion. The only legitimate skip is when the user, in the message that triggered this skill, explicitly says "skip grill" or "don't grill this" (or unambiguous equivalent: "no grill", "skip the grill loop", "just push it"). If in doubt, do the grill loop.
 
 **How to hand off:**
 

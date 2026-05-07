@@ -108,11 +108,36 @@ Spawn the writer subagent. Pass:
 
 At the start of this step, compute `cubrid_grill_log = /tmp/cubrid-grill-build-${baseline_ref:0:12}-r${round}.log` and use the literal string in every command below.
 
-Detect the build command:
+Detect the build command and validate the build environment:
 
 - Check for a `build` recipe via `just --list 2>/dev/null | grep -qE '^\s*build( |$)'`.
-- If present, trust it as the CUBRID build and run: `just build > "$cubrid_grill_log" 2>&1; echo $? > "$cubrid_grill_log.status"`. Use Bash `timeout: 900000` (15 minutes). Do not pipe through `tee`; do not invoke `set -o pipefail`. Read the exit status via `cat "$cubrid_grill_log.status"`.
 - If absent, refuse the loop with: "No `just build` recipe found in this checkout. Add one or invoke `/cubrid-build` manually before re-running this skill." Do not improvise a substitute build command.
+- CUBRID's `just build` recipe reads `$env.PRESET_MODE` to pick a CMake preset. If the variable is unset or holds a stale value (e.g., a preset from another worktree that does not exist in this worktree's `CMakePresets.json`), the build fails with a `No such build preset` CMake error that has nothing to do with the user's code. Validate before invoking the build:
+  ```bash
+  if [ -z "${PRESET_MODE:-}" ]; then
+    echo "PRESET_MODE is not set. just build requires a CMake preset."
+    echo "Available presets in this worktree:"
+    cmake --list-presets 2>/dev/null
+    echo "Set PRESET_MODE to one of the above (e.g. PRESET_MODE=debug_clang) and re-invoke."
+    exit 1
+  fi
+  if ! cmake --list-presets 2>/dev/null | awk -F'"' '/"/ { print $2 }' | grep -qx "$PRESET_MODE"; then
+    echo "PRESET_MODE=$PRESET_MODE is not a valid CMake preset for this worktree."
+    echo "Available presets:"
+    cmake --list-presets 2>/dev/null
+    echo "Set PRESET_MODE to a valid preset and re-invoke."
+    exit 1
+  fi
+  ```
+  Refuse, do not default. Defaulting would couple the skill to one developer's setup and contradicts the "Do not improvise a substitute build command" anti-pattern below. The user is responsible for picking a preset.
+- Once `PRESET_MODE` is validated, trust `just build` and run:
+  ```bash
+  # The `;` between `just build` and `echo $?` is load-bearing: both must run
+  # in the same Bash invocation so `$?` reflects the just exit status. Do NOT
+  # split into separate Bash tool calls.
+  just build > "$cubrid_grill_log" 2>&1; echo $? > "$cubrid_grill_log.status"
+  ```
+  Use Bash `timeout: 900000` (15 minutes). Do not pipe through `tee`; do not invoke `set -o pipefail`. Read the exit status via `cat "$cubrid_grill_log.status"`.
 
 On non-zero status:
 

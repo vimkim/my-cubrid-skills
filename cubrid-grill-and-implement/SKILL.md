@@ -52,6 +52,7 @@ Exactly one of:
 - `previous_round_diff_summary` - the diff stat captured at the end of the most recent build-passing, non-empty round; `""` on round 1; may be stale if subsequent rounds reverted.
 - `build_status` - `pass` / `fail` / `skipped` for the most recent round.
 - `cubrid_grill_log` - the per-round build-log path, recomputed at the start of every Step 5 invocation: `/tmp/cubrid-grill-build-${baseline_ref:0:12}-r${round}.log`. Pass this literal string through state. Do not use `$$`.
+- `last_writer_summary` - the line beginning with `Summary:` from the writer subagent's response, captured at Step 4 exit; the `Summary:` prefix is stripped, and the captured value is the trimmed remainder. `""` until Step 4 has run at least once. Used by Step 6 to seed the reviewer's "Justified rename/move/reformat" check.
 
 ## Subagent Choices
 
@@ -103,6 +104,8 @@ Spawn the writer subagent. Pass:
 - The contents of `references/writer-prompt.md` verbatim.
 
 `references/writer-prompt.md` is the single source of truth for writer rules - do not duplicate any rules inline in the spawn prompt. Wait for the writer to finish before continuing.
+
+Capture `last_writer_summary` as follows: scan the writer's response from the bottom up for the first line matching `^Summary:[[:space:]]*(.*)$`; the captured group (trimmed) is `last_writer_summary`. If no such line is found (writer protocol violation against rule 3), set `last_writer_summary = ""`, surface a warning at Step 6 input, and let the reviewer flag the missing summary as a finding.
 
 ### Step 5: Build gate
 
@@ -168,7 +171,7 @@ Spawn the reviewer subagent per the fallback chain. Pass:
 - The output of `git diff --name-only <baseline_ref> --` (changed-file paths only).
 - `input_payload` so the reviewer can judge fit-to-spec.
 - `previous_round_diff_summary`.
-- The writer's one-line summary from the most recent writer round (used to verify any rename/move/reformat justification).
+- `last_writer_summary` (captured at Step 4 exit per the State definition above; used to verify any rename/move/reformat justification). If `last_writer_summary == ""`, prepend a one-line warning to the reviewer prompt: "Writer protocol violation: no `Summary:` line in the writer's response. Flag the missing summary as a finding."
 - The verdict contract: end the response with exactly one of `VERDICT: APPROVED` or `VERDICT: REVISE` on its own line, no markdown, no surrounding punctuation.
 
 Do not pass the full diff body. Instruct the reviewer to fetch each file's diff itself via `git diff <baseline_ref> -- <path>` and to Read each changed file for full-function context.

@@ -189,10 +189,31 @@ The grill skill leaves the tree dirty. Commit only what the grill skill changed.
    PY
    ```
    If the parser produces an empty NUL stream (no newly-dirty files this round even though the grill skill ran), treat it the same as substep 1's empty-`git status` case: warn and stop the loop. Do NOT use `git add -A` or `git add .` — that would pull in pre-existing dirty files the user owns.
-3. Commit:
+3. Commit. CUBRID's PR-title check requires `^\[[A-Z]+-\d+\]\s.+`; per-commit subjects are not enforced, but loop commits ship to a CBRD ticket branch and pollute `git log --grep CBRD-XXXXX` if they lack the prefix. Infer the ticket and prefix the subject. Source ranking, with rationale:
+
+   1. **`<intent>`** — closest to the user's stated objective for *this* loop run; if the user typed the ticket explicitly, that's authoritative.
+   2. **`gh pr view <pr-url> --json title`** — canonical CUBRID metadata; passes the CI check by definition once the PR is open, so a ticket here is real.
+   3. **`gh pr view <pr-url> --json body`** — secondary because the body can mention multiple tickets (linked issues, follow-ups); first-occurrence picks one but with weaker authority.
+   4. **Branch name** — least reliable; CUBRID branches commonly have non-CBRD names like `oos-refactor-oos-read-with-length`, `feat/oos`, `develop`.
+   5. **Fallback `[CBRD-UNKNOWN]`** — print a one-line warning so the user can re-prefix manually before merge.
+
    ```bash
-   git commit -m "fix(ci): round <round> auto-fix"
+   CBRD_TICKET=$(
+     printf '%s\n%s\n%s\n%s' \
+       "$intent" \
+       "$(gh pr view <pr-url> --json title --jq .title)" \
+       "$(gh pr view <pr-url> --json body --jq .body)" \
+       "$(git branch --show-current)" \
+     | grep -oE 'CBRD-[0-9]+' | head -1
+   )
+   CBRD_TICKET="${CBRD_TICKET:-CBRD-UNKNOWN}"
+   git commit -m "[$CBRD_TICKET] fix(ci): round <round> auto-fix"
+   if [ "$CBRD_TICKET" = "CBRD-UNKNOWN" ]; then
+     echo "WARN: could not infer a CBRD ticket from intent/title/body/branch."
+     echo "Commit subject prefixed with [CBRD-UNKNOWN]; re-prefix manually before merge if needed."
+   fi
    ```
+
    If `git commit` fails (pre-commit hook), surface the error, do NOT push, and stop the loop. The user must fix hook issues manually.
 4. Push to the auto-detected CUBRID upstream remote (do NOT rely on the branch's tracking remote being correct, and do NOT hardcode `origin` — CUBRID checkouts commonly use `cub`, `vk`, etc.). Use the `detect_cubrid_remote` helper from `cubrid-grill-and-implement`'s Shared snippets section to set `UPSTREAM_REMOTE`, then:
    ```bash

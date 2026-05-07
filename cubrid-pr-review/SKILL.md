@@ -1,6 +1,6 @@
 ---
 name: cubrid-pr-review
-description: "CUBRID C/C++ PR code review with LSP/clangd analysis. Use when reviewing a CUBRID pull request, when the user shares a GitHub PR URL from a CUBRID repo, asks to review or check a pull request, or requests LSP-based analysis of PR changes."
+description: "Review a CUBRID pull request and write a code review report. Use this when the user shares a CUBRID GitHub PR link or asks to review CUBRID code changes."
 argument-hint: "<pr-url>"
 allowed-tools: Bash(gh *), Bash(git *), Bash(jq *), Bash(scripts/*), Read, Write, Glob, Grep, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics_directory, mcp__plugin_oh-my-claudecode_t__lsp_hover, mcp__plugin_oh-my-claudecode_t__lsp_goto_definition, mcp__plugin_oh-my-claudecode_t__lsp_find_references, mcp__plugin_oh-my-claudecode_t__lsp_document_symbols
 ---
@@ -103,6 +103,17 @@ This is the single source of truth for how findings are written. The template ab
 - **Every finding needs evidence**: 코드 스니펫(파일:라인)이나 LSP/clangd 진단. "might be wrong" 같은 모호한 지적은 금지.
 - **Only flag issues introduced by this PR.** 이미 존재하던 문제, 이미 다른 코멘트에서 지적된 항목, 수정되지 않은 라인은 제외한다.
 - **Skip what CI catches.** 포맷팅, astyle, cppcheck 경고 등 CI가 잡는 항목은 보고하지 않는다.
+
+### Plain Language
+
+The report is read by the PR author under time pressure. Write so they can act on it in one pass.
+
+- **One idea per sentence.** Short, declarative Korean. If a finding needs three sentences, the second and third belong as evidence (code excerpt) — not as more prose.
+- **Lead with the defect, then the cause.** "X 누락 -> Y 누수" beats "전반적으로 살펴보니 ... 가능성이 있어 보입니다."
+- **No hedging or filler.** Drop "~인 것 같습니다", "혹시", "전반적으로", "본 리뷰에서는". State the fact: "에러 경로에서 `pgbuf_unfix` 누락."
+- **Keep code identifiers as-is.** Function names, file paths, macros stay in their original English form inside backticks. Don't translate them.
+- **Show, don't summarize.** When a finding hinges on a few lines of code, paste those lines (1-5 lines) instead of describing them.
+- **No CUBRID-insider shorthand without a hint.** If you must mention an internal-only concept (e.g., "6곳 룰"), one short clause should explain what it means or link to `reference.md`.
 
 ## Execution Steps
 

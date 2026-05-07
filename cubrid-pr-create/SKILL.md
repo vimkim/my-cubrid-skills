@@ -1,6 +1,6 @@
 ---
 name: cubrid-pr-create
-description: Create a GitHub PR for the CUBRID project with [CBRD-XXXXX] title format and Korean body with English section headers. Use when the user wants to create a pull request for CUBRID changes.
+description: Open a GitHub pull request for the CUBRID project. Use this when the user wants to create a PR for their CUBRID changes.
 ---
 
 # CUBRID PR Creator
@@ -74,6 +74,17 @@ The `> **TL;DR**` blockquote and `## Summary` block are **required** for every P
 - **Summary bullets**: 각 항목 한 줄. 자세한 내용은 `## Description` / `## Implementation`에서 풀어 쓴다.
 - TL;DR과 Summary는 본문의 **요약**이지 본문 자체가 아니다. 같은 문장을 그대로 복붙하지 않는다.
 - 단순 typo/주석 수정 같은 사소한 PR에서는 Summary bullets는 생략 가능하나 TL;DR 한 줄은 항상 포함한다.
+
+### Plain Language
+
+PR descriptions are read by reviewers (and later by anyone doing `git log` archaeology). Write so a reviewer can grasp the change in one pass without re-reading.
+
+- **Short sentences.** One idea per sentence. Split anything that runs past two lines.
+- **Concrete over abstract.** Name the file, function, and behavior that changed. "`heap_record_replace_oos_oids` 에러 경로에 `pgbuf_unfix` 추가" beats "에러 처리 안정성 개선."
+- **No filler.** Drop "본 PR은...", "전반적으로...", "필요에 따라...". State the fact directly.
+- **Bullets over prose** in `## Implementation`. Each bullet = one observable change with a file or function reference.
+- **Keep code identifiers in English code-style.** `pgbuf_unfix`, `MVCC`, `feat/oos` — don't translate or paraphrase.
+- **Reviewer pointers must be specific.** "리뷰 포인트" 항목은 "`heap_file.c:12345` 에러 경로 정합성"처럼 파일/함수까지 짚는다. "전반적인 흐름 확인"은 안 된다.
 
 ### Optional Sections
 

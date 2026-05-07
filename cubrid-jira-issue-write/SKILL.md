@@ -1,6 +1,6 @@
 ---
 name: cubrid-jira-issue-write
-description: Write a CUBRID JIRA issue report in Korean with English section headers (##). Analyzes codebase context, writes structured issue markdown to /home/vimkim/gh/my-cubrid-jira/issues/. Use when the user wants to write up a JIRA issue, document a bug finding, or create a feature/task report for CUBRID.
+description: Write a JIRA issue report for the CUBRID project. Use this when the user wants to draft a bug report, feature request, or task ticket for CUBRID.
 ---
 
 # CUBRID JIRA Issue Writer
@@ -159,6 +159,17 @@ The `> **TL;DR**` blockquote and `## Summary` block are **required** and must ap
 8. **Backticks** for all function names, variable names, file paths, and code references
 9. Keep paragraphs concise — prefer bullet points and tables over long prose
 10. Acceptance criteria as markdown checkboxes (`- [ ]`)
+
+### Plain Language
+
+Write the issue so a teammate from a different module — QA, customer support, a new hire — can read it once and understand. JIRA tickets travel far beyond the original author.
+
+- **Short sentences.** One idea per sentence. If a sentence runs past two lines, split it.
+- **Plain Korean over jargon.** Use ordinary words; only keep CUBRID-internal terms (function names, file paths, protocol acronyms) when they're load-bearing. Don't translate well-known English code identifiers (`pgbuf_fix`, `MVCC`, `WAL`) — keep them in code-style as-is.
+- **Define on first use.** If a term is project-specific (e.g., `OOS`, `OR_VAR_BIT`), expand it the first time it appears, then use the short form.
+- **Concrete over abstract.** "에러 코드 6곳을 모두 갱신해야 한다" beats "전반적인 일관성을 유지해야 한다." Name the file, the function, the number.
+- **No filler.** Drop phrases like "본 이슈에서는...", "필요에 따라...", "전반적으로...". State the fact directly.
+- **Reproducible Repro.** The Repro section should be copy-pasteable commands or SQL, not narrative prose.
 
 ## Reference Examples
 

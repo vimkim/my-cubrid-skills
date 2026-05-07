@@ -1,35 +1,70 @@
 ---
 name: my-cubrid-skills-create
-description: "Create a new CUBRID-related skill in the my-cubrid-skills collection. Use when the user wants to turn a workflow into a reusable skill, capture what they just did as a skill, or create a new skill for their CUBRID toolbox. Triggers on phrases like 'make this a skill', 'create a skill for this', 'save this as a skill', 'add a new skill to my-cubrid-skills'."
+description: "Create a new skill in the my-cubrid-skills collection. Use when the user wants to turn a workflow into a reusable skill, capture what they just did as a skill, or add a new skill to their CUBRID toolbox. Triggers on phrases like 'make this a skill', 'create a skill for this', 'save this as a skill', 'add a new skill to my-cubrid-skills'."
 argument-hint: "<skill-name-or-description>"
 ---
 
-# Create a New CUBRID Skill
+# Create a New Skill in my-cubrid-skills
 
-This skill creates new skills in the `my-cubrid-skills` collection at `/home/vimkim/temp/my-cubrid-skills/`, which can later be installed via `npx @anthropic-ai/claude-code-skills`.
+Scaffolds a new skill directory and writes a complete `SKILL.md` inline from gathered context.
 
-## Instructions
+## Steps
 
-1. **Determine the skill name and purpose** from `$ARGUMENTS` and conversation context. If the user says "make what I just did as a skill", extract the workflow from the current conversation history — the tools used, the sequence of steps, commands that worked, and corrections the user made.
+### Step 1: Determine the collection root
 
-2. **Create the skill directory** at `/home/vimkim/temp/my-cubrid-skills/<skill-name>/`.
+Walk up from cwd looking for a `justfile` containing `npx skills add`. If found, that directory is the collection root. Otherwise ask the user for the path.
 
-3. **Invoke `/skill-creator`** with the target path to handle the full skill creation workflow (drafting SKILL.md, writing test cases, evaluation, iteration):
+### Step 2: Derive a candidate skill name
 
-   ```
-   /skill-creator /home/vimkim/temp/my-cubrid-skills/<skill-name>
-   ```
+If `$ARGUMENTS` is empty, or would produce an empty or tautological name (e.g. `"save this as a skill"` collapses to nothing after filler removal), skip naming for now and proceed to Step 4 to gather workflow context first — then derive the name from the workflow's primary verb + object.
 
-   Pass along all context you've gathered — the workflow steps, commands, edge cases, and any user preferences.
+Otherwise, from `$ARGUMENTS`:
 
-4. After the skill is created, remind the user they can install it with:
-   ```bash
-   just install
-   ```
+- Drop filler words: `a`, `the`, `this`, `that`, `which`, `skill`, `save`, `as`.
+- Convert verbs to imperative form and lowercase-hyphenate — e.g. `"a skill that closes greptile comments"` → `close-greptile-comments`.
+- Apply the `cubrid-` prefix when the skill touches CUBRID source, tests, JIRA tooling, or CI. The prefix rule applies even when the input is already kebab-case.
 
-## Conventions
+**Propose** the candidate name and wait for confirmation or correction before continuing.
 
-- Skill names should be kebab-case (e.g., `resolve-greptile-comments`)
-- Follow the same structure as existing skills in the directory
-- CUBRID-specific skills should reference `gh` CLI for GitHub operations where applicable
-- Keep skills focused — one workflow per skill
+### Step 3: Check for conflicts
+
+Confirm `<collection-root>/<skill-name>/` does not already exist. If it does, ask: update the existing skill, or pick a different name?
+
+### Step 4: Gather context
+
+From the current conversation collect:
+- **Workflow**: the sequence of commands, tools, or actions the skill automates
+- **Tools**: CLI tools, APIs, or Claude skills involved
+- **Edge cases**: failure modes or conditions the user mentioned
+
+If Step 2 was deferred, derive the skill name now from the workflow's verb + object, confirm with the user, then run Step 3's conflict check before continuing.
+
+### Step 5: Write the SKILL.md
+
+Create `<collection-root>/<skill-name>/SKILL.md` with complete content — no placeholder comments. Follow the valid skill structure below. The user can suggest `/skill-creator` for deeper iteration if the skill warrants adversarial review.
+
+Note: `SKILL.md` is installed to both Claude Code and Codex via `just install`. Use `$ARGUMENTS` for input; avoid Claude-Code-only constructs unless explicitly flagged.
+
+### Step 6: Install, verify, and commit
+
+```bash
+just install
+just list | grep <frontmatter-name>
+```
+
+`just list` outputs frontmatter `name:` values, so grep on the name you set in the SKILL.md front matter. If the skill appears, prompt the user to commit:
+
+```bash
+git add <skill-name>/ && git commit -m "feat(<scope>): add <skill-name> skill"
+```
+
+Match `<scope>` to the style of `git log --oneline -10` (scope is often a category, not the literal skill name).
+
+## Valid skill structure
+
+- Frontmatter: `name` (kebab-case) and `description`.
+- `description`: imperative phrase, "Use when …", ends with `Triggers on phrases like 'X', 'Y', 'Z'.`
+- Body: `# Title` heading and numbered execution steps.
+- No placeholders or `<!-- ... -->` comments in the final file.
+
+Real examples: `resolve-greptile-comments/SKILL.md`, `cubrid-pr-create/SKILL.md`.

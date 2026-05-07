@@ -60,11 +60,46 @@ Spell these out at invocation and carry them through the loop:
 1. Refuse with a usage hint if `<pr-url>` or `<intent>` is empty.
 2. Validate the URL: `gh pr view <pr-url> --json number,headRefName,baseRefName,state,isDraft,url`. If exit is non-zero, refuse.
 3. If `state != OPEN`, warn once and ask whether to proceed (closed/merged PRs cannot be pushed to).
-4. Verify the working tree is on the PR's `headRefName`:
+4. Verify the working tree is on the PR's `headRefName`, AND that the local HEAD matches the PR's `headRefOid`. Branch-name match alone is not enough: a teammate may have force-pushed, or the user may not have pulled, leaving the local commit older than the PR head. The first `git push` would then either be rejected or — worse — silently fast-forward and drop the teammate's commits.
+
    ```bash
-   test "$(git branch --show-current)" = "$(gh pr view <pr-url> --json headRefName --jq .headRefName)"
+   # Branch name must match.
+   test "$(git branch --show-current)" = "$(gh pr view <pr-url> --json headRefName --jq .headRefName)" \
+     || { echo "Check out the PR's headRef first; this loop pushes to the PR branch."; exit 1; }
+
+   # Refresh remote refs (uses the auto-detected upstream remote from Step 4's
+   # detect_cubrid_remote helper; if you reach this substep before the helper
+   # has been called, just call `git fetch` against all remotes here).
+   git fetch "$UPSTREAM_REMOTE" 2>/dev/null || git fetch --all
+   local_head=$(git rev-parse HEAD)
+   pr_head=$(gh pr view <pr-url> --json headRefOid --jq .headRefOid)
+
+   if [ "$local_head" != "$pr_head" ]; then
+     # Determine ahead/behind counts so the remediation hint matches the
+     # divergence shape. git rev-list --left-right --count emits "<left> <right>".
+     read ahead behind < <(git rev-list --left-right --count "$pr_head...$local_head" \
+       | awk '{print $2, $1}')
+     # After the awk swap: $ahead = commits local has that pr_head doesn't,
+     #                     $behind = commits pr_head has that local doesn't.
+     echo "Local HEAD ($local_head) does not match PR head ($pr_head)."
+     echo "Local is ahead by $ahead, behind by $behind."
+     if [ "$ahead" = "0" ] && [ "$behind" -gt "0" ]; then
+       echo "Local is strictly behind. Fast-forward with:"
+       echo "  git pull --ff-only $UPSTREAM_REMOTE <headRefName>"
+     elif [ "$ahead" -gt "0" ] && [ "$behind" = "0" ]; then
+       echo "Local has unpushed commits ahead of the PR head."
+       echo "Either push them with 'git push' before starting the loop, or check"
+       echo "out the PR head explicitly if those commits should be discarded."
+     else
+       echo "Local and PR head have diverged ($ahead ahead, $behind behind)."
+       echo "Inspect with: git log --oneline --graph $pr_head...$local_head"
+       echo "Then either rebase your local commits onto the PR head, or reset"
+       echo "after backing up your work. This skill does not auto-resolve divergence."
+     fi
+     exit 1
+   fi
    ```
-   Refuse otherwise with: "Check out the PR's headRef first; this loop pushes to the PR branch."
+   The hint never suggests `git reset --hard` unconditionally — that would lose unpushed local work in the "ahead" and "diverged" cases. Each remediation matches its divergence shape; the user pastes whichever applies.
 5. Capture `start_epoch=$(date +%s)`, `deadline_epoch=$((start_epoch + 86400))`. Print both as ISO timestamps. (Captured here, before the baseline snapshot in substep 6, so the snapshot file path can be parameterized by `start_epoch`.)
 6. Capture working-tree baseline (replaces the previous "refuse if dirty" rule). Real CUBRID worktrees commonly carry IDE config, submodule pointer drift, and unrelated local edits; refusing on any of them blocks startup. Instead, snapshot the current dirty set in NUL-separated form so subsequent rounds can stage only what the loop's own writer adds on top:
    ```bash

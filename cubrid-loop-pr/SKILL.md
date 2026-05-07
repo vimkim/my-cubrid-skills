@@ -51,6 +51,7 @@ Spell these out at invocation and carry them through the loop:
 - `last_failure_summary` — empty on round 1; on round >= 2, the tails of the failed CI job logs from the previous round.
 - `head_sha` — refreshed after every push; checks are scoped to this SHA.
 - `trigger_epoch` — when the latest `/run sql medium` comment was posted; used to ignore stale check runs.
+- `LOOP_BASELINE_DIRTY_FILE` — path to a NUL-separated snapshot of `git status --porcelain -z` taken at Step 1 substep 6. Step 4 substep 2 subtracts this set from the per-round dirty list to stage only the loop's own additions.
 
 ## Execution Steps
 
@@ -64,9 +65,18 @@ Spell these out at invocation and carry them through the loop:
    test "$(git branch --show-current)" = "$(gh pr view <pr-url> --json headRefName --jq .headRefName)"
    ```
    Refuse otherwise with: "Check out the PR's headRef first; this loop pushes to the PR branch."
-5. Refuse if `git status --porcelain` is non-empty: "Working tree is dirty; commit or stash before starting the loop." The grill skill leaves the tree dirty per round, but round 1 must start from a clean tree so we can attribute the first round's diff to the loop.
-6. Verify `/cubrid-grill-and-implement` is available. If not, refuse with: "/cubrid-grill-and-implement is not installed. See drafts/cubrid-grill-and-implement-prompt.md to scaffold it, then re-run."
-7. Capture `start_epoch=$(date +%s)`, `deadline_epoch=$((start_epoch + 86400))`. Print both as ISO timestamps.
+5. Capture `start_epoch=$(date +%s)`, `deadline_epoch=$((start_epoch + 86400))`. Print both as ISO timestamps. (Captured here, before the baseline snapshot in substep 6, so the snapshot file path can be parameterized by `start_epoch`.)
+6. Capture working-tree baseline (replaces the previous "refuse if dirty" rule). Real CUBRID worktrees commonly carry IDE config, submodule pointer drift, and unrelated local edits; refusing on any of them blocks startup. Instead, snapshot the current dirty set in NUL-separated form so subsequent rounds can stage only what the loop's own writer adds on top:
+   ```bash
+   LOOP_BASELINE_DIRTY_FILE="/tmp/cubrid-loop-baseline-${start_epoch}.txt"
+   git status --porcelain -z > "$LOOP_BASELINE_DIRTY_FILE"
+   if [ -s "$LOOP_BASELINE_DIRTY_FILE" ]; then
+     echo "Note: working tree is dirty at loop start; baseline captured at $LOOP_BASELINE_DIRTY_FILE."
+     echo "Only files dirty AFTER baseline will be staged per round."
+   fi
+   ```
+   Carry `LOOP_BASELINE_DIRTY_FILE` through state. Step 4 reads it.
+7. Verify `/cubrid-grill-and-implement` is available. If not, refuse with: "/cubrid-grill-and-implement is not installed. See drafts/cubrid-grill-and-implement-prompt.md to scaffold it, then re-run."
 
 ### Step 2: Initialize Loop
 
@@ -102,10 +112,48 @@ When the grill skill returns:
 The grill skill leaves the tree dirty. Commit only what the grill skill changed.
 
 1. `git status --porcelain` — if empty, the grill skill made no real edits; print a warning and stop the loop with: "Round <round>: grill skill produced no diff; aborting to avoid spamming CI."
-2. Stage only the changed files reported by `git status --porcelain` (do NOT use `git add -A` — that risks pulling in stray files from other tools):
+2. Stage only the files newly dirty since `LOOP_BASELINE_DIRTY_FILE` was captured at Step 1 substep 6. The previous one-line `git status --porcelain | awk '{print $2}' | xargs git add` was broken in three ways: (a) `awk '{print $2}'` truncates filenames containing spaces; (b) on a rename line `R  old -> new`, `$2` returns `old` (the path the user wants to UN-stage); (c) `xargs` without `-0` is unsafe on shell metacharacters. The replacement uses NUL-separated porcelain (`-z`) and a bytewise parser so all three issues are fixed at once:
    ```bash
-   git status --porcelain | awk '{print $2}' | xargs -r git add --
+   ROUND_PORCELAIN_FILE="/tmp/cubrid-loop-round-${start_epoch}-r${round}.txt"
+   git status --porcelain -z > "$ROUND_PORCELAIN_FILE"
+
+   # Porcelain -z format: <XY> <SP> <path>\0[<orig-path>\0 for R/C status]
+   # Parse bytewise, advance past the orig-path token on rename/copy entries,
+   # and stage only paths newly dirty this round (round set minus baseline set).
+   python3 - "$LOOP_BASELINE_DIRTY_FILE" "$ROUND_PORCELAIN_FILE" <<'PY' \
+     | xargs -0 -r git add --
+   import sys, pathlib
+
+   def parse(path):
+       data = pathlib.Path(path).read_bytes()
+       out = set()
+       tokens = data.split(b'\x00')
+       i = 0
+       while i < len(tokens):
+           rec = tokens[i]
+           if not rec:
+               i += 1
+               continue
+           # rec is bytes like b'XY path...' (X,Y are status chars; index 2 is space)
+           status = rec[:2]
+           path_bytes = rec[3:]
+           out.add(path_bytes)
+           # Renames (R) and copies (C) carry an additional original-path token.
+           if status[:1] in (b'R', b'C') or status[1:2] in (b'R', b'C'):
+               i += 2
+           else:
+               i += 1
+       return out
+
+   baseline_paths = parse(sys.argv[1])
+   round_paths = parse(sys.argv[2])
+   new_paths = sorted(round_paths - baseline_paths)
+   if new_paths:
+       sys.stdout.buffer.write(b'\x00'.join(new_paths))
+       sys.stdout.buffer.write(b'\x00')
+   PY
    ```
+   If the parser produces an empty NUL stream (no newly-dirty files this round even though the grill skill ran), treat it the same as substep 1's empty-`git status` case: warn and stop the loop. Do NOT use `git add -A` or `git add .` — that would pull in pre-existing dirty files the user owns.
 3. Commit:
    ```bash
    git commit -m "fix(ci): round <round> auto-fix"

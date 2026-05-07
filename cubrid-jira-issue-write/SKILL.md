@@ -166,10 +166,56 @@ Write the issue so a teammate from a different module — QA, customer support, 
 
 - **Short sentences.** One idea per sentence. If a sentence runs past two lines, split it.
 - **Plain Korean over jargon.** Use ordinary words; only keep CUBRID-internal terms (function names, file paths, protocol acronyms) when they're load-bearing. Don't translate well-known English code identifiers (`pgbuf_fix`, `MVCC`, `WAL`) — keep them in code-style as-is.
-- **Define on first use.** If a term is project-specific (e.g., `OOS`, `OR_VAR_BIT`), expand it the first time it appears, then use the short form.
 - **Concrete over abstract.** "에러 코드 6곳을 모두 갱신해야 한다" beats "전반적인 일관성을 유지해야 한다." Name the file, the function, the number.
 - **No filler.** Drop phrases like "본 이슈에서는...", "필요에 따라...", "전반적으로...". State the fact directly.
 - **Reproducible Repro.** The Repro section should be copy-pasteable commands or SQL, not narrative prose.
+
+### Audience: senior CUBRID engineers
+
+Readers are the CTO, team lead, peer engineers, QA — they know the codebase. Write peer-to-peer prose, not tutorials.
+
+- **No glossary tables for CUBRID basics** (`recdes`, `attrepr`, `OOS`, `assert_release`, `MVCC`, `OR_VAR_*`, `pgbuf_*`, etc.). Senior readers grep unfamiliar names; defining them reads as patronizing.
+- **Project-specific terms on first use** get a 1-line aside, not a glossary entry — e.g., "`recdes_allocate_data_area` 가 NULL 시 자체 `er_set` 을 안 한다 (`storage_common.c:310-324`)".
+- **No meta-labels in headers.** `### 왜 (한 번만 설명)`, `### \`*is_oos\` 계약 (호출자가 알아야 할 것)` — the parenthetical is an author's note to self. Drop it.
+- **No obvious-statement filler.** If a senior reader can read the code and see it, don't say it.
+
+### Avoid translationese and AI cadence
+
+The biggest tell of LLM-written prose is rhythm. Hunt for these and rewrite.
+
+**Translationese — word-for-word English idioms:**
+
+| Avoid | Use |
+|---|---|
+| "에러가 ... 흘러간다" | "결과셋에 섞여 나간다", "그대로 반환된다" |
+| "측면도 문제다" / "측면에서는" | restructure to drop "측면" |
+| "수용한다" (limitation) | "그대로 둔다", "받아들인다" |
+| "이렇다." (앞에 두고 코드 블록) | colon `:` 찍고 코드로 |
+| "위함이다" / "기 위함이다" | "위해서다", "기 위해서다" |
+| "그렇게도 안 한다" | "그것조차 하지 않는다" |
+
+**AI lockstep cadence — multiple short "한다." sentences in a row.** Vary endings with `-므로`, `-기 때문에`, `-라`, `-도록`, longer subordinate clauses.
+
+**Structural patterns to avoid:**
+
+- **English-direct labels.** `**무엇을**:` / `**어떻게**:` / `**왜**:` are direct renderings of "What:/How:/Why:". Use Korean: `**변경**:`, `**부수 수정**:`, `**영향**:`. Same for header `### 왜` — use `### 배경` / `### 발단`.
+- **Sentence-fragment 명사구 종결 ("...없음.", "...적용.", "...불필요.") in body prose.** OK in table cells, NOT in paragraphs.
+- **`Fact: / Effect: / Ops 결론:` style bullet labels** — ITIL/RFC parody tone. Use peer-to-peer prose.
+- **`->` arrows in subheaders.** Use descriptive Korean (`#### Case 4 — 메모리 부족`).
+- **Self-narration filler.** Drop "다음과 같이 정의한다", "위 사항을 반영하여...", "본 티켓에서는 ... 한다".
+- **존댓말 leak.** JIRA bodies are 평어 (한다체). Fix any `합니다` / `입니다`.
+
+### Avoid duplication across sections
+
+The same rationale appearing in TL;DR + Summary + Description + Implementation + A/C erodes trust fast.
+
+- **TL;DR**: 2-3 sentences. WHAT changes + WHAT the user sees. NO mechanism.
+- **Summary bullets**: ≤ 1 line each, additive.
+- **Description**: the canonical "why". Restate elsewhere → back-reference or delete.
+- **A/C**: checklist items, NOT prose retellings.
+- **Out-of-scope vs. A/C**: each fact appears in ONE place.
+
+After drafting, grep for sentences appearing in 2+ sections; pick the strongest location.
 
 ## Reference Examples
 
@@ -178,6 +224,7 @@ Refer to existing issues in `/home/vimkim/gh/my-cubrid-jira/issues/` for style c
 - `CBRD-26637-refactor-error-handling.md` — Refactoring issue with implementation details
 - `CBRD-26630-oos-inline-length.md` — Spec change with before/after tables
 - `CBRD-26609-oos-physical-delete.md` — New feature with call flow diagrams and WAL design
+- `CBRD-26769-heap-attrvalue-point-variable-int-return.md` — Refactoring with Case 1..N taxonomy, executive-tone Korean (post-grill, post natural-Korean review)
 
 ## Execution Steps
 
@@ -209,5 +256,5 @@ After saving the initial draft to `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XX
 - **Topic & purpose**: JIRA ticket number, issue type (Correct Error / Improve / Development Subject / etc.), audience (CUBRID dev team, QA, customer-facing)
 - **Output path**: the same file path so the loop revises in place
 - **Source material**: relevant source files, prior analysis, `/jira CBRD-XXXXX` output, repro logs
-- **Review angle**: technical accuracy, reproducibility (Repro section is executable), adherence to CUBRID issue conventions (Korean body, English `##` headers, NO emoji, NO non-BMP unicode), TL;DR + Summary actually summarize and don't duplicate the body
+- **Review angle**: technical accuracy, reproducibility (Repro section is executable), adherence to CUBRID issue conventions (Korean body, English `##` headers, NO emoji, NO non-BMP unicode), TL;DR + Summary actually summarize and don't duplicate the body, **natural Korean prose** (the "Audience: senior CUBRID engineers" and "Avoid translationese and AI cadence" sections above must be passed to the reviewer verbatim)
 - **Round cap**: default 5

@@ -72,7 +72,9 @@ If the argument is empty, print the four input options and stop. Otherwise class
 
 ### Step 2: Verify working tree is a CUBRID checkout
 
-Run: `test -f CMakeLists.txt && grep -q '^project (CUBRID' CMakeLists.txt`. If exit is non-zero, refuse to start with: "Not in a CUBRID source checkout (CMakeLists.txt missing or does not declare project (CUBRID ...)). Re-run from a CUBRID worktree." Do not proceed past this step on failure.
+Run: `test -f CMakeLists.txt && grep -qE '^project[[:space:]]*\(CUBRID[[:space:]]*\)' CMakeLists.txt`. If exit is non-zero, refuse to start with: "Not in a CUBRID source checkout (CMakeLists.txt missing or does not declare a CUBRID project). Re-run from a CUBRID worktree." Do not proceed past this step on failure.
+
+The regex tolerates both `project(CUBRID)` (no space, the actual form in CUBRID/cubrid's CMakeLists.txt line 42) and `project (CUBRID)` (one or more spaces). The trailing `[[:space:]]*\)` anchors the close paren so unrelated forks like `project(CUBRIDdb)` are correctly rejected.
 
 ### Step 3: Fetch context and capture baseline
 

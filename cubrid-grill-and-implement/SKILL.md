@@ -184,7 +184,23 @@ Parse the verdict:
 
 ### Step 7: Terminate
 
-- Success: print `Approved at round N`, `baseline_ref`, the final `git diff --stat <baseline_ref> --`, the path of every changed file, and the list of every TODO marker the writer added during the loop. Compute the marker list with: `git diff <baseline_ref> -- | grep -nE '^\+.*\b(TODO|FIXME|XXX)\b'` (or per-file equivalent over `git diff --name-only <baseline_ref> --`), and print it under the heading "TODO markers added (review or resolve before invoking cubrid-pr-create):". Do not commit.
+- Success: print the labeled template below verbatim. The TODO-marker heading prints even when the marker list is empty (use `(none)` so the absence-of-markers signal is explicit). Do not commit.
+
+  ```
+  Approved at round <N>.
+  baseline_ref: <ref>
+
+  Final diff stat:
+  <output of `git diff --stat <baseline_ref> --`>
+
+  Changed files:
+  <output of `git diff --name-only <baseline_ref> --`, one path per line>
+
+  TODO markers added (review or resolve before invoking cubrid-pr-create):
+  <output of `git diff <baseline_ref> -- | grep -nE '^\+.*\b(TODO|FIXME|XXX)\b'`, or "(none)" if empty>
+  ```
+
+  Compute the marker list with `git diff <baseline_ref> -- | grep -nE '^\+.*\b(TODO|FIXME|XXX)\b'` (per-file equivalent: iterate `git diff --name-only <baseline_ref> --` and grep each). The heading must always print so the user always sees the absence-of-markers signal.
 - Cap reached with REVISE open: print `last_critique` verbatim. If `last_reviewer_critique` differs from `last_critique` (e.g., the cap was hit on a build-failure round), print `last_reviewer_critique` verbatim under the heading "Most recent reviewer critique (still unresolved):". Print the final diff stat, `baseline_ref`, and ask the user to choose (a) accept as-is, (b) extend cap by `N` rounds, or (c) abandon. Cap-extension protocol: if the user picks (b), prompt for `N` in a follow-up turn ("How many additional rounds? Enter a positive integer."), parse the integer reply, set `max_rounds += N`, then resume from Step 4. **Do NOT reset `round`.** Any reply that is not (a) or a valid positive integer for (b) is treated as (c) - leave the tree as-is, do not loop further unless the user re-invokes the skill. Never silently loop past the cap.
 
   Worked example. Suppose `round=4`, `max_rounds=3`, the cap-reached branch has fired, and the user picks (b) with `N=2`. The orchestrator sets `max_rounds=5` and does not touch `round`. The next loop iteration's check `round > max_rounds` evaluates `4 > 5` → false → continue from Step 4 at round 4. The loop terminates either when the reviewer approves or when `round` reaches 6 after two more REVISE rounds. Resetting `round` would silently re-do prior work and burn the extension; not resetting it preserves the "extend by N more rounds" semantics the user asked for.

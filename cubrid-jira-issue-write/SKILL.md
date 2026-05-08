@@ -1,6 +1,6 @@
 ---
 name: cubrid-jira-issue-write
-description: Write a JIRA issue report for the CUBRID project. Use this when the user wants to draft a bug report, feature request, or task ticket for CUBRID.
+description: Write a CUBRID JIRA issue report in Korean with English section headers (##). Top of issue is a fixed Issue Triage block (목적/이유/방안 — first two required) followed by an explicitly separated AI-Generated Context block. Writes structured markdown to /home/vimkim/gh/my-cubrid-jira/issues/. Use when the user wants to write up a JIRA issue, document a bug finding, or create a feature/task report for CUBRID.
 ---
 
 # CUBRID JIRA Issue Writer
@@ -60,16 +60,30 @@ If the type is unclear, ask the user before drafting.
 
 ### Required Sections by Issue Type
 
-Every issue starts with the **TL;DR + Summary** block (project-local convention, on top of the official template), then follows the official section list for that type.
+Every issue starts with the **Issue Triage** block (three required fields for fast triage), followed by an explicitly labeled **AI-Generated Context** block, then the official section list for that type.
+
+The triage block exists because AI-generated issue bodies are often too long to read end-to-end during triage. Reviewers must be able to grasp 목적 / 이유 / 방안 in 10 seconds without entering the AI-written context.
 
 #### Common Header (all types)
 
 ```markdown
 # [TAG] 한국어 제목
 
-> **TL;DR**: 1-3 문장으로 이슈 요약. 무엇이 문제이고, 무엇을 하려는지, 왜 중요한지 핵심만.
+## Issue Triage
 
-## Summary
+> **이슈 수행 목적** (필수): 무엇을 해결하려고 하는가. 1-2 문장. 결과 상태로 기술 (예: "X 가 Y 하도록 한다", "Z 버그가 재현되지 않도록 한다").
+>
+> **이슈 수행 이유** (필수): 이 문제를 왜 해결해야 하는가. 1-2 문장. 비즈니스/품질/운영 측면의 근거 (예: 고객 장애, QA 실패, 성능 저하, 기술 부채 한계).
+>
+> **이슈 수행 방안**: 어떻게 해결할 것인가. 이슈 작성 시점에 기술 가능한 수준에서만 작성하고, 세부 설계는 ANALYSIS 단계에서 구체화. 모르면 `TBD - ANALYSIS 단계에서 결정`.
+
+---
+
+## AI-Generated Context
+
+> 아래 내용은 AI 가 코드/맥락을 분석해 작성한 상세 자료입니다. 빠른 triage에는 위 **Issue Triage** 블록만으로 충분하며, 본문은 구현/리뷰 단계에서 참고하시면 됩니다.
+
+### Summary
 
 - **문제 / 목적**: 한 줄 요약
 - **원인 / 배경**: 한 줄 요약
@@ -139,19 +153,33 @@ Every issue starts with the **TL;DR + Summary** block (project-local convention,
   - `## 참고 코드` — key source file references
   - `## Remarks` — follow-up work, PR links, related tickets
 
-### Top-of-Issue Summary Rules
+### Top-of-Issue Triage Rules
 
-The `> **TL;DR**` blockquote and `## Summary` block are **required** and must appear before any detailed section. They exist so a reader can grasp the issue in under 30 seconds without reading the full body.
+The `## Issue Triage` block is **required** and must be the first content after the title. It exists so a reviewer can decide priority/assignment in under 10 seconds without reading any AI-generated context.
 
-- **TL;DR**: 1-3 문장, 평문 한국어. 결론부터 적기 (무엇/왜/영향).
-- **Summary bullets**: 각 항목 한 줄. 길어지면 자세한 내용은 아래 `## Description` / `## Implementation`으로 보낸다.
-- TL;DR과 Summary는 **요약**이지 상세 설명이 아니다. 동일한 문장을 복붙하지 말고, 아래 본문에서 더 자세히 풀어 쓴다.
+**Issue Triage block — three fields:**
+
+- **이슈 수행 목적 (필수)**: 무엇을 해결하려고 하는가. 1-2 문장. 결과 상태로 기술. NOT 분석/배경.
+- **이슈 수행 이유 (필수)**: 이 문제를 왜 해결해야 하는가. 1-2 문장. 비즈니스/품질/운영 근거.
+- **이슈 수행 방안**: 어떻게 해결할 것인가. **이슈 작성 시점에 기술 가능한 수준만 작성**. 세부 설계는 ANALYSIS 단계에서 구체화. 모르면 `TBD - ANALYSIS 단계에서 결정`이라고 명시. AI 가 임의로 추측한 구현 계획을 채워넣지 말 것.
+
+**AI-Generated Context block — separation rule:**
+
+모든 AI 분석 결과(Summary 불릿, Description, Implementation, 흐름도, 코드 인용 등)는 `## AI-Generated Context` 헤더 이후에 둔다. 이 분리는 리뷰어가 "사람이 직접 작성한 triage 요약"과 "AI 가 채운 상세 맥락"을 구분할 수 있게 해 준다.
+
+**Anti-patterns:**
+
+- TL;DR 부활시키기: `> **TL;DR**:` 블록은 더 이상 사용하지 않는다. 대신 `## Issue Triage` 의 세 필드를 채운다.
+- 목적/이유 합치기: 목적과 이유는 별개 필드다. "X 를 Y 하기 위해 Z 한다" 한 문장으로 두 필드를 동시에 채우지 말 것.
+- 방안 과잉 작성: 작성 시점에 알 수 없는 구현 디테일을 방안에 끼워 넣지 말 것. 그건 ANALYSIS 단계 / `## Implementation` 의 영역.
+- 컨텍스트 누수: AI 분석 결과를 triage 블록 안에 끌어다 두지 말 것. AI 분석은 `## AI-Generated Context` 아래에만.
 
 ### Style Guide
 
 1. **Title format**: `# [TAG] 한국어 설명` — TAG is a short category like `[OOS]`, `[BTREE]`, `[BROKER]`
-2. **Lead with TL;DR + Summary** — a human-readable executive summary before any detailed section
-3. **Use `---` horizontal rules** between major sections
+2. **Lead with Issue Triage block** (목적/이유/방안) — human-readable triage summary before any AI-generated context
+3. **Separate AI context** with `## AI-Generated Context` header — all detailed analysis lives below this divider
+4. **Use `---` horizontal rules** between major sections
 4. **Tables** for structured data (function lists, format changes, comparison)
 5. **Code blocks** with language annotation for source code
 6. **Flow diagrams** using ASCII art in code blocks for call chains
@@ -207,13 +235,14 @@ The biggest tell of LLM-written prose is rhythm. Hunt for these and rewrite.
 
 ### Avoid duplication across sections
 
-The same rationale appearing in TL;DR + Summary + Description + Implementation + A/C erodes trust fast.
+The same rationale appearing in Issue Triage + Summary + Description + Implementation + A/C erodes trust fast.
 
-- **TL;DR**: 2-3 sentences. WHAT changes + WHAT the user sees. NO mechanism.
-- **Summary bullets**: ≤ 1 line each, additive.
-- **Description**: the canonical "why". Restate elsewhere → back-reference or delete.
-- **A/C**: checklist items, NOT prose retellings.
-- **Out-of-scope vs. A/C**: each fact appears in ONE place.
+- **Issue Triage 목적/이유**: 결과 상태 + 근거. 메커니즘/구현은 NO.
+- **Issue Triage 방안**: 작성 시점에 아는 수준만. 상세 설계는 `## Implementation` 으로.
+- **Summary bullets**: ≤ 1 line each, triage 블록과는 다른 정보를 추가 (예: 영향 범위, 호환성).
+- **Description**: 정식 "why". 위에서 이미 한 말을 그대로 복붙하지 말고 깊이를 더한다.
+- **A/C**: checklist 항목. 산문 재서술 NO.
+- **Out-of-scope vs. A/C**: 각 사실은 한 곳에만 등장.
 
 After drafting, grep for sentences appearing in 2+ sections; pick the strongest location.
 
@@ -231,10 +260,11 @@ Refer to existing issues in `/home/vimkim/gh/my-cubrid-jira/issues/` for style c
 1. **Check output directory**: Verify that `/home/vimkim/gh/my-cubrid-jira/issues/` exists. If it does NOT exist, **stop immediately** and tell the user: "Error: Issue directory `/home/vimkim/gh/my-cubrid-jira/issues/` does not exist. Please clone or create the repository first." Do NOT create the directory automatically.
 2. **Determine the issue type**: Pick from `Correct Error`, `Improve Function/Performance`, `Development Subject`, `Internal Management` (or `Refactoring` / `Task`). Section structure depends on it. If unclear, ask the user.
 3. **Gather context**: Read relevant source code, prior analysis, or conversation context
-4. **Draft the TL;DR + Summary first**: Before writing detailed sections, write the top-of-issue executive summary (TL;DR blockquote + `## Summary` bullets). This forces a clear thesis and prevents the issue from devolving into an unfocused brain-dump.
-5. **Write the issue body**: Use the type-specific template above, in Korean with English `##` headers. Keep all official sections — fill `N/A` or `TBD` rather than deleting.
-6. **Save the file**: Write to `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XXXXX-slug.md`
-7. **Show the user**: Print the file path, the chosen issue type, and the TL;DR so the user can sanity-check the framing at a glance
+4. **Draft the Issue Triage block first**: Before writing any detailed section, fill `## Issue Triage` with three fields — **이슈 수행 목적** (필수), **이슈 수행 이유** (필수), **이슈 수행 방안** (작성 가능한 수준). This forces a clear thesis and gives reviewers a 10-second triage path.
+5. **Insert the AI-Generated Context divider**: After the triage block, add `## AI-Generated Context` header with the 1-line caveat note. All AI-written analysis (Summary bullets, Description, Implementation, etc.) goes below this divider.
+6. **Write the issue body**: Use the type-specific template above, in Korean with English `##` headers. Keep all official sections — fill `N/A` or `TBD` rather than deleting.
+7. **Save the file**: Write to `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XXXXX-slug.md`
+8. **Show the user**: Print the file path, the chosen issue type, and the **Issue Triage** block (목적/이유/방안 세 줄) so the user can sanity-check the framing at a glance
 
 ## Arguments
 
@@ -256,5 +286,5 @@ After saving the initial draft to `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XX
 - **Topic & purpose**: JIRA ticket number, issue type (Correct Error / Improve / Development Subject / etc.), audience (CUBRID dev team, QA, customer-facing)
 - **Output path**: the same file path so the loop revises in place
 - **Source material**: relevant source files, prior analysis, `/jira CBRD-XXXXX` output, repro logs
-- **Review angle**: technical accuracy, reproducibility (Repro section is executable), adherence to CUBRID issue conventions (Korean body, English `##` headers, NO emoji, NO non-BMP unicode), TL;DR + Summary actually summarize and don't duplicate the body, **natural Korean prose** (the "Audience: senior CUBRID engineers" and "Avoid translationese and AI cadence" sections above must be passed to the reviewer verbatim)
+- **Review angle**: technical accuracy, reproducibility (Repro section is executable), adherence to CUBRID issue conventions (Korean body, English `##` headers, NO emoji, NO non-BMP unicode), **Issue Triage block** is present at the top with all three fields (목적/이유/방안) filled and not collapsed into one sentence, **AI-Generated Context divider** clearly separates AI-written detail from the triage summary, Summary/Description don't duplicate the triage block verbatim, **natural Korean prose** (the "Audience: senior CUBRID engineers" and "Avoid translationese and AI cadence" sections above must be passed to the reviewer verbatim)
 - **Round cap**: default 5

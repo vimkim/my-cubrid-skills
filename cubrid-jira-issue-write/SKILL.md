@@ -1,6 +1,6 @@
 ---
 name: cubrid-jira-issue-write
-description: Write a CUBRID JIRA issue report in Korean with English section headers (##). Top of issue is a fixed Issue Triage block (목적/이유/방안 — first two required) followed by an explicitly separated AI-Generated Context block. Writes structured markdown to /home/vimkim/gh/my-cubrid-jira/issues/. Use when the user wants to write up a JIRA issue, document a bug finding, or create a feature/task report for CUBRID.
+description: Write a CUBRID JIRA issue report in Korean with English section headers (##). Top of issue is a fixed Issue Triage block — 목적 (필수) + 이유 (필수, 현재 동작·한계와 그 영향 두 축을 모두 포함) + 방안 (이미 합의된 스펙은 구체 bullet 로, 미결정은 TBD) — followed by an explicitly separated AI-Generated Context block. Writes structured markdown to /home/vimkim/gh/my-cubrid-jira/issues/. Use when the user wants to write up a JIRA issue, document a bug finding, or create a feature/task report for CUBRID.
 ---
 
 # CUBRID JIRA Issue Writer
@@ -66,16 +66,24 @@ The triage block exists because AI-generated issue bodies are often too long to 
 
 #### Common Header (all types)
 
+Fill the slots in `<...>`. Detail rules live in **Top-of-Issue Triage Rules** below — do not copy the prose hints from there back into the issue.
+
 ```markdown
 # [TAG] 한국어 제목
 
 ## Issue Triage
 
-> **이슈 수행 목적** (필수): 무엇을 해결하려고 하는가. 1-2 문장. 결과 상태로 기술 (예: "X 가 Y 하도록 한다", "Z 버그가 재현되지 않도록 한다").
+> **이슈 수행 목적** (필수): <결과 상태 1-2 문장>
 >
-> **이슈 수행 이유** (필수): 이 문제를 왜 해결해야 하는가. 1-2 문장. 비즈니스/품질/운영 측면의 근거 (예: 고객 장애, QA 실패, 성능 저하, 기술 부채 한계).
+> **이슈 수행 이유** (필수):
+> - **현재 동작 / 배경**: <기존 매커니즘 + 한계. 임계치는 코드의 상수/매크로 이름으로 인용>
+> - **영향**: <위 한계가 만드는 실제 문제. 해당되는 한 가지를 골라 구체 예시와 함께>
 >
-> **이슈 수행 방안**: 어떻게 해결할 것인가. 이슈 작성 시점에 기술 가능한 수준에서만 작성하고, 세부 설계는 ANALYSIS 단계에서 구체화. 모르면 `TBD - ANALYSIS 단계에서 결정`.
+> **이슈 수행 방안**:
+> - <합의된 결정 1>
+> - <합의된 결정 2>
+> - <기존 정책과의 관계 — 혼용 / 대체 / 점진적 마이그레이션>
+> - <미결정 슬롯: `TBD - ANALYSIS 단계에서 결정` 또는 `TBD - 합의 미확인`>
 
 ---
 
@@ -159,9 +167,19 @@ The `## Issue Triage` block is **required** and must be the first content after 
 
 **Issue Triage block — three fields:**
 
-- **이슈 수행 목적 (필수)**: 무엇을 해결하려고 하는가. 1-2 문장. 결과 상태로 기술. NOT 분석/배경.
-- **이슈 수행 이유 (필수)**: 이 문제를 왜 해결해야 하는가. 1-2 문장. 비즈니스/품질/운영 근거.
-- **이슈 수행 방안**: 어떻게 해결할 것인가. **이슈 작성 시점에 기술 가능한 수준만 작성**. 세부 설계는 ANALYSIS 단계에서 구체화. 모르면 `TBD - ANALYSIS 단계에서 결정`이라고 명시. AI 가 임의로 추측한 구현 계획을 채워넣지 말 것.
+The Common Header above defines the schema. The rules below define what counts as a *good* fill.
+
+- **이슈 수행 목적 (필수)**: 결과 상태 1-2 문장. 분석·배경은 금지 — 그건 이유로 간다.
+- **이슈 수행 이유 (필수)**: 두 축(**현재 동작·한계** + **영향**)을 모두 짚는다.
+  - **현재 동작 / 배경 요건**: 임계치·매개변수·조건은 코드의 매크로/상수/함수 이름으로 인용한다 (예: `DB_PAGESIZE/8`, `pgbuf_fix`). 파일·라인 번호도 곁들이면 가장 좋다. "현재 약 512 바이트" 같은 어림 표기 금지.
+  - **영향 요건**: 해당되는 한 가지(고객 장애 · QA 실패 · 성능 저하 · 설계 의도 훼손 · 기술 부채 중 하나)를 골라 구체 예시와 함께 적는다. 다섯 가지를 모두 늘어놓으면 menu-padding 이 된다.
+  - 추상적 한 줄("일관성 유지", "성능 개선 필요") 금지.
+  - **Correct Error 특례**: 버그 티켓은 두 축이 짧게 collapse 한다 — 현재 동작 = 한 줄 재현 요약, 영향 = 사용자가 보는 실패 모드. 그래도 두 항목은 분리해서 적는다.
+- **이슈 수행 방안**: 결정된 스펙은 구체적으로 적고, 미결정만 TBD 로 남긴다.
+  - 합의된 결정(임계치, 알고리즘, 적용 옵션, 외부 레퍼런스, 기존 정책과의 관계)은 bullet 로 명시. 합의된 내용을 "TBD" 로 덮어쓰지 말 것.
+  - **무엇이 "합의된" 것인가**: 이 세션 사용자 메시지의 인용 가능한 구체 결정 · 인용 가능한 JIRA 코멘트 · 명시적 설계 문서 — 이 세 출처만 합의로 간주한다. 사용자 메시지를 근거로 들 때는 원문 일부를 큰따옴표로 함께 적는다 ("사용자 인용: \"...\""). 유사 티켓과의 유추, AI 의 그럴듯한 추론은 합의가 아니다.
+  - **TBD 마커 선택**: 분석 단계로 미루는 것이 명시적으로 합의된 영역은 `TBD - ANALYSIS 단계에서 결정`. 결정 존재 여부 자체가 불확실하면 `TBD - 합의 미확인` 을 쓴다. 헷갈리면 `TBD - 합의 미확인` 으로 보수적으로 표기해서 리뷰어가 명시적으로 잡아내도록 한다. 대화형 세션이면 사용자에게 직접 묻는다.
+  - 세부 코드 흐름/자료구조는 `## Implementation` 으로 미룬다. 방안에는 "무엇을 결정했는가" 만.
 
 **AI-Generated Context block — separation rule:**
 
@@ -169,10 +187,34 @@ The `## Issue Triage` block is **required** and must be the first content after 
 
 **Anti-patterns:**
 
-- TL;DR 부활시키기: `> **TL;DR**:` 블록은 더 이상 사용하지 않는다. 대신 `## Issue Triage` 의 세 필드를 채운다.
-- 목적/이유 합치기: 목적과 이유는 별개 필드다. "X 를 Y 하기 위해 Z 한다" 한 문장으로 두 필드를 동시에 채우지 말 것.
-- 방안 과잉 작성: 작성 시점에 알 수 없는 구현 디테일을 방안에 끼워 넣지 말 것. 그건 ANALYSIS 단계 / `## Implementation` 의 영역.
-- 컨텍스트 누수: AI 분석 결과를 triage 블록 안에 끌어다 두지 말 것. AI 분석은 `## AI-Generated Context` 아래에만.
+- TL;DR 부활시키기: `> **TL;DR**:` 블록은 더 이상 쓰지 않으므로, 대신 `## Issue Triage` 의 세 필드를 채운다.
+- 목적/이유 합치기: 목적과 이유는 별개 필드라, "X 를 Y 하기 위해 Z 한다" 한 문장으로 두 필드를 한꺼번에 메우지 말 것.
+- 이유 빈약 작성: "성능 개선이 필요하다" 같은 추상적 한 줄로 끝내지 말 것. 구체적 수치/임계치/조건이 빠진 이유는 미흡한 이유다.
+- 방안 양극단 — 둘 다 reject: (1) 합의되지 않은 구현 계획을 방안에 추가 (과잉 추측), (2) 합의된 스펙을 "TBD" 로 덮음 (과소 작성). 무엇이 합의인지 모르겠으면 위 "무엇이 합의된 것인가" 항을 따른다.
+- 컨텍스트 누수: AI 분석 결과를 triage 블록 안에 끌어다 두지 말 것. AI 분석은 `## AI-Generated Context` 아래에만 둔다.
+
+**구조 라벨 예외 (triage 블록 한정)**: 다음 다섯 개 라벨만 "Avoid translationese" 의 영문 직역 라벨 금지 규정에서 예외다 — `**이슈 수행 목적**`, `**이슈 수행 이유**`, `**이슈 수행 방안**`, `**현재 동작 / 배경**`, `**영향**`. 이외의 영문/혼용 라벨(`**Fact**:`, `**Risk**:`, `**Mitigation**:`, `**무엇을**:` 등)은 본문 어디에서도 금지 규정을 따른다. 본문 산문이 아니라 triage 슬롯 식별자라서 예외를 둔다.
+
+**Worked example (OOS migration policy change — Improve Function):**
+
+```markdown
+## Issue Triage
+
+> **이슈 수행 목적**: heap 레코드의 큰 가변 컬럼이 OOS 의도대로 일관되게 외부로 이관되도록 한다.
+>
+> **이슈 수행 이유**:
+> - **현재 동작 / 배경**: 현재 코드는 레코드 총 길이가 `DB_PAGESIZE/8` 을 넘는 경우에만 512 바이트 초과 가변 컬럼을 OOS 로 보내므로, 511 바이트 가변 컬럼만 있는 레코드는 임계치에 못 미친 채 overflow 경로로 빠진다 (개발 편의 목적의 임시 임계치).
+> - **영향**: 설계 의도 훼손 — OOS 도입 의도와 달리 511 바이트 가변 컬럼 페이로드는 OOS 대상에서 누락된 채 heap 내부 overflow 로 빠지므로 OOS 도입 효과가 무력화된다.
+>
+> **이슈 수행 방안**:
+> - 레코드 총 길이가 `DB_PAGESIZE/4` 를 넘으면 가장 큰 가변 컬럼부터 순차적으로 OOS 로 이관하며, `DB_PAGESIZE/4` 이하가 될 때까지 반복한다.
+> - OOS 이관 시 lz4 압축을 적용하되, P 사 기본값인 EXTENDED 모드를 차용한다.
+> - P 사의 다른 정책(MAIN, EXTERNAL, PLAIN 등)은 본 이슈 범위 밖이며 CBRD-26536 으로 분리한다.
+> - btree/schema 등 기존 overflow 정책은 유지하고, heap 의 고정 컬럼 overflow 만 점진적으로 대체한다.
+> - lz4 압축 레벨 세부값: `TBD - 합의 미확인`.
+```
+
+핵심: **이유** 가 임계치를 매크로 이름으로 인용하고 영향을 한 카테고리(설계 의도 훼손) + 구체 시나리오로 좁혔으며, **방안** 이 합의된 결정만 bullet 로 적되 범위 밖 항목은 별도 티켓으로 분리하고 미확인 항목은 보수적 마커로 표기했다.
 
 ### Style Guide
 
@@ -180,13 +222,13 @@ The `## Issue Triage` block is **required** and must be the first content after 
 2. **Lead with Issue Triage block** (목적/이유/방안) — human-readable triage summary before any AI-generated context
 3. **Separate AI context** with `## AI-Generated Context` header — all detailed analysis lives below this divider
 4. **Use `---` horizontal rules** between major sections
-4. **Tables** for structured data (function lists, format changes, comparison)
-5. **Code blocks** with language annotation for source code
-6. **Flow diagrams** using ASCII art in code blocks for call chains
-7. **Bold** for emphasis on key terms
-8. **Backticks** for all function names, variable names, file paths, and code references
-9. Keep paragraphs concise — prefer bullet points and tables over long prose
-10. Acceptance criteria as markdown checkboxes (`- [ ]`)
+5. **Tables** for structured data (function lists, format changes, comparison)
+6. **Code blocks** with language annotation for source code
+7. **Flow diagrams** using ASCII art in code blocks for call chains
+8. **Bold** for emphasis on key terms
+9. **Backticks** for all function names, variable names, file paths, and code references
+10. Keep paragraphs concise — prefer bullet points and tables over long prose
+11. Acceptance criteria as markdown checkboxes (`- [ ]`)
 
 ### Plain Language
 
@@ -260,7 +302,7 @@ Refer to existing issues in `/home/vimkim/gh/my-cubrid-jira/issues/` for style c
 1. **Check output directory**: Verify that `/home/vimkim/gh/my-cubrid-jira/issues/` exists. If it does NOT exist, **stop immediately** and tell the user: "Error: Issue directory `/home/vimkim/gh/my-cubrid-jira/issues/` does not exist. Please clone or create the repository first." Do NOT create the directory automatically.
 2. **Determine the issue type**: Pick from `Correct Error`, `Improve Function/Performance`, `Development Subject`, `Internal Management` (or `Refactoring` / `Task`). Section structure depends on it. If unclear, ask the user.
 3. **Gather context**: Read relevant source code, prior analysis, or conversation context
-4. **Draft the Issue Triage block first**: Before writing any detailed section, fill `## Issue Triage` with three fields — **이슈 수행 목적** (필수), **이슈 수행 이유** (필수), **이슈 수행 방안** (작성 가능한 수준). This forces a clear thesis and gives reviewers a 10-second triage path.
+4. **Draft the Issue Triage block first**: Fill the Common Header schema per the **Top-of-Issue Triage Rules** above. This forces a clear thesis before any detailed section and gives reviewers a 10-second triage path with enough context to commit to the approach.
 5. **Insert the AI-Generated Context divider**: After the triage block, add `## AI-Generated Context` header with the 1-line caveat note. All AI-written analysis (Summary bullets, Description, Implementation, etc.) goes below this divider.
 6. **Write the issue body**: Use the type-specific template above, in Korean with English `##` headers. Keep all official sections — fill `N/A` or `TBD` rather than deleting.
 7. **Save the file**: Write to `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XXXXX-slug.md`
@@ -286,5 +328,13 @@ After saving the initial draft to `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XX
 - **Topic & purpose**: JIRA ticket number, issue type (Correct Error / Improve / Development Subject / etc.), audience (CUBRID dev team, QA, customer-facing)
 - **Output path**: the same file path so the loop revises in place
 - **Source material**: relevant source files, prior analysis, `/jira CBRD-XXXXX` output, repro logs
-- **Review angle**: technical accuracy, reproducibility (Repro section is executable), adherence to CUBRID issue conventions (Korean body, English `##` headers, NO emoji, NO non-BMP unicode), **Issue Triage block** is present at the top with all three fields (목적/이유/방안) filled and not collapsed into one sentence, **AI-Generated Context divider** clearly separates AI-written detail from the triage summary, Summary/Description don't duplicate the triage block verbatim, **natural Korean prose** (the "Audience: senior CUBRID engineers" and "Avoid translationese and AI cadence" sections above must be passed to the reviewer verbatim)
+- **Review angle**:
+  - Technical accuracy, reproducibility (Repro section is executable).
+  - CUBRID conventions: Korean body, English `##` headers, NO emoji, NO non-BMP unicode.
+  - **Issue Triage block** present at the top with all three fields (목적/이유/방안) filled and not collapsed into one sentence.
+  - **Triage depth — 이유**: cites current behavior with code-named thresholds/macros/functions AND names the resulting impact. Abstract one-liners ("성능 개선 필요", "일관성 유지") are reject criteria.
+  - **Triage depth — 방안**: already-decided spec listed as concrete bullets (thresholds, algorithms, options, external references, scope splits with ticket numbers). Pure-TBD 방안 when decisions exist is a reject. AI-invented implementation details are a reject.
+  - **AI-Generated Context divider** clearly separates AI-written detail from the triage summary.
+  - Summary/Description don't duplicate the triage block verbatim.
+  - **Natural Korean prose**: the "Audience: senior CUBRID engineers" and "Avoid translationese and AI cadence" sections above must be passed to the reviewer verbatim.
 - **Round cap**: default 5

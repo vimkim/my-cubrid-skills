@@ -244,6 +244,16 @@ Write the issue so a teammate from a different module — QA, customer support, 
 - **No filler.** Drop phrases like "본 이슈에서는...", "필요에 따라...", "전반적으로...". State the fact directly.
 - **Reproducible Repro.** The Repro section should be copy-pasteable commands or SQL, not narrative prose.
 
+### Local-only tooling (justfile, personal aliases, dotfiles)
+
+JIRA issues are read by every dev, QA, and CS person — most of them do not share the author's personal tooling. Keep commands in the issue portable.
+
+- **Never write `just <recipe>` in an issue body, Repro, Acceptance Criteria, or table.** The `justfile` lives in the author's local workspace; a reader running `just shell-debug` gets `command not found`. Substitute the underlying command the recipe wraps (e.g., `ctp.sh shell -c shell_ci.conf`, plus a 1-line note on how to point the conf's `scenario` at the test path if relevant).
+- **Same for personal aliases / functions** (`my-rerun`, `cb`, custom shell helpers, sourced dotfiles). If it isn't in the public CTP/CUBRID toolchain or shipped with the project, it doesn't belong in the issue body.
+- **Acceptable wrappers** (these are universal to a CUBRID engineer's environment): `ctp.sh ...`, `cubrid ...`, `csql ...`, `make ...`, `cmake ...`, `gh ...`, raw `bash ...`, `sh ...`. Prefer these over anything custom.
+- **If a personal recipe is the easiest repro path for the author**, paraphrase the underlying command in the issue and keep the `just`/alias form in private notes only. Do not put both — readers will copy-paste the unportable one.
+- **Pre-upload scan**: `rg -nP '\bjust\s+\w' file.md` must return zero hits. Same for any other author-local tool the reviewer flags (project-specific aliases, wrapper scripts not in `$PATH` of a fresh CUBRID dev VM).
+
 ### Audience: senior CUBRID engineers
 
 Readers are the CTO, team lead, peer engineers, QA — they know the codebase. Write peer-to-peer prose, not tutorials.

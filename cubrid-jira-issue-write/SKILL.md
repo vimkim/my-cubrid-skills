@@ -239,10 +239,12 @@ The Common Header above defines the schema. The rules below define what counts a
 Write the issue so a teammate from a different module — QA, customer support, a new hire — can read it once and understand. JIRA tickets travel far beyond the original author.
 
 - **Short sentences.** One idea per sentence. If a sentence runs past two lines, split it.
-- **Plain Korean over jargon.** Use ordinary words; only keep CUBRID-internal terms (function names, file paths, protocol acronyms) when they're load-bearing. Don't translate well-known English code identifiers (`pgbuf_fix`, `MVCC`, `WAL`) — keep them in code-style as-is.
+- **Plain Korean over jargon.** Use ordinary words; only keep CUBRID-internal terms (function names, file paths, protocol acronyms) when they're load-bearing. Don't translate well-known English code identifiers (`pgbuf_fix`, `MVCC`, `WAL`) — keep them in code-style as-is, and gloss them on first use per the rule above.
+- **Lead with what changed, then where, then why.** "heap 의 OOS 이관 임계치를 `DB_PAGESIZE/8` 에서 `DB_PAGESIZE/4` 로 올린다 (`heap_file.c:12300` 부근) — 511 바이트 가변 컬럼이 OOS 대상에서 빠지는 문제 때문" reads in one pass; the same facts in scrambled order do not.
 - **Concrete over abstract.** "에러 코드 6곳을 모두 갱신해야 한다" beats "전반적인 일관성을 유지해야 한다." Name the file, the function, the number.
 - **No filler.** Drop phrases like "본 이슈에서는...", "필요에 따라...", "전반적으로...". State the fact directly.
 - **Reproducible Repro.** The Repro section should be copy-pasteable commands or SQL, not narrative prose.
+- **One-pass readability check.** After drafting, re-read each paragraph and ask: "Could a new hire who knows C/C++ but has never opened this file follow this sentence?" If not, either gloss the term or restructure.
 
 ### Local-only tooling (justfile, personal aliases, dotfiles)
 
@@ -254,14 +256,19 @@ JIRA issues are read by every dev, QA, and CS person — most of them do not sha
 - **If a personal recipe is the easiest repro path for the author**, paraphrase the underlying command in the issue and keep the `just`/alias form in private notes only. Do not put both — readers will copy-paste the unportable one.
 - **Pre-upload scan**: `rg -nP '\bjust\s+\w' file.md` must return zero hits. Same for any other author-local tool the reviewer flags (project-specific aliases, wrapper scripts not in `$PATH` of a fresh CUBRID dev VM).
 
-### Audience: senior CUBRID engineers
+### Audience: any CUBRID engineer, including new hires
 
-Readers are the CTO, team lead, peer engineers, QA — they know the codebase. Write peer-to-peer prose, not tutorials.
+Readers include the CTO, team lead, and senior peers — but also QA, customer support, and engineers who joined last month and have never opened this module. JIRA tickets travel far beyond the original author. Write so a new hire who can read C/C++ but has not internalized this subsystem's jargon can follow on one read.
 
-- **No glossary tables for CUBRID basics** (`recdes`, `attrepr`, `OOS`, `assert_release`, `MVCC`, `OR_VAR_*`, `pgbuf_*`, etc.). Senior readers grep unfamiliar names; defining them reads as patronizing.
-- **Project-specific terms on first use** get a 1-line aside, not a glossary entry — e.g., "`recdes_allocate_data_area` 가 NULL 시 자체 `er_set` 을 안 한다 (`storage_common.c:310-324`)".
+- **Gloss internal terms on first use.** Acronyms and module-specific identifiers (`OOS`, `recdes`, `attrepr`, `pgbuf_*`, `OR_VAR_*`, `assert_release`, `WAL`, `MVCC`, `latch`, `OID`, `heap`/`btree` policy names, build-mode names) get a short inline aside on first mention — one clause, not a paragraph. Examples:
+  - "`OOS` (Out-of-row Storage — heap 의 큰 가변 컬럼을 외부 페이지로 분리하는 저장 방식)"
+  - "`pgbuf_fix` (페이지 버퍼 풀에서 페이지를 잠가 가져오는 함수)"
+  - "`recdes` (heap 레코드 디스크립터 구조체)"
+- **Once is enough.** After the first gloss, use the term raw — do not re-define it in every section. If a term appears once and is universal C/DB knowledge (`malloc`, `free`, `assert`, `mutex`), skip the gloss.
+- **Explain the "왜 중요한지" for non-obvious thresholds and policies.** A magic number with no rationale is unreadable. "`DB_PAGESIZE/8` 미만이면 OOS 이관이 일어나지 않아 큰 가변 컬럼이 heap 내부로 흘러들어간다" beats a bare "`DB_PAGESIZE/8`".
+- **Still no tutorial mode.** A 1-line gloss is fine; a paragraph explaining what a heap is, is not. Readers know relational databases — they just do not know *this* codebase's spelling.
 - **No meta-labels in headers.** `### 왜 (한 번만 설명)`, `### \`*is_oos\` 계약 (호출자가 알아야 할 것)` — the parenthetical is an author's note to self. Drop it.
-- **No obvious-statement filler.** If a senior reader can read the code and see it, don't say it.
+- **No obvious-statement filler.** If reading the diff or running the Repro makes it obvious, do not say it.
 
 ### Avoid translationese and AI cadence
 
@@ -350,5 +357,6 @@ After saving the initial draft to `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XX
   - **Triage depth — 방안**: already-decided spec listed as concrete bullets (thresholds, algorithms, options, external references, scope splits with ticket numbers). Pure-TBD 방안 when decisions exist is a reject. AI-invented implementation details are a reject.
   - **AI-Generated Context divider** clearly separates AI-written detail from the triage summary.
   - Summary/Description don't duplicate the triage block verbatim.
-  - **Natural Korean prose**: the "Audience: senior CUBRID engineers" and "Avoid translationese and AI cadence" sections above must be passed to the reviewer verbatim.
+  - **New-hire readability**: every CUBRID-internal acronym or module-specific identifier on first use has a one-clause inline gloss; every threshold/magic number has a one-clause rationale. A junior engineer who can read C/C++ but has not opened this file should be able to follow the issue on one read. Untreated insider shorthand is a reject.
+  - **Natural Korean prose**: the "Audience: any CUBRID engineer, including new hires" and "Avoid translationese and AI cadence" sections above must be passed to the reviewer verbatim.
 - **Round cap**: default 5

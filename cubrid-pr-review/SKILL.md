@@ -106,14 +106,14 @@ This is the single source of truth for how findings are written. The template ab
 
 ### Plain Language
 
-The report is read by the PR author under time pressure. Write so they can act on it in one pass.
+The report is read by the PR author under time pressure — and the author may be a recent hire who hasn't memorized every acronym in the module. Write so a junior engineer who can read C/C++ but hasn't lived in this file can act on the report in one pass.
 
 - **One idea per sentence.** Short, declarative Korean. If a finding needs three sentences, the second and third belong as evidence (code excerpt) — not as more prose.
-- **Lead with the defect, then the cause.** "X 누락 -> Y 누수" beats "전반적으로 살펴보니 ... 가능성이 있어 보입니다."
+- **Lead with the defect, then the cause, then the consequence.** "에러 경로에서 `pgbuf_unfix` 누락 -> 페이지 핀이 영구히 잠긴 채 남아 다른 트랜잭션이 해당 페이지를 잡을 수 없음" beats "전반적으로 살펴보니 ... 가능성이 있어 보입니다." The consequence clause is what tells the author *why* this is blocking, not just *what* is wrong.
 - **No hedging or filler.** Drop "~인 것 같습니다", "혹시", "전반적으로", "본 리뷰에서는". State the fact: "에러 경로에서 `pgbuf_unfix` 누락."
 - **Keep code identifiers as-is.** Function names, file paths, macros stay in their original English form inside backticks. Don't translate them.
 - **Show, don't summarize.** When a finding hinges on a few lines of code, paste those lines (1-5 lines) instead of describing them.
-- **No CUBRID-insider shorthand without a hint.** If you must mention an internal-only concept (e.g., "6곳 룰"), one short clause should explain what it means or link to `reference.md`.
+- **Gloss CUBRID-internal terms on first use.** On the first mention of an internal-only concept in the report (`OOS`, `pgbuf_*`, `recdes`, `OR_VAR_*`, "6곳 룰", build-mode names like `SERVER_MODE`/`SA_MODE`, latch protocols), add a one-clause aside in parentheses: "`pgbuf_unfix` (페이지 버퍼 핀 해제)", "6곳 룰 (새 에러 코드는 `error_code.h`, `error_code.c` 등 6개 파일을 모두 갱신해야 함)", "`SERVER_MODE` (서버 프로세스 빌드 모드)". After the first gloss, use the term raw. Universal C/DB vocabulary (`malloc`, `mutex`, `assert`) does not need glossing. If `reference.md` already has the long-form explanation, gloss in one clause and link by name.
 
 ## Execution Steps
 
@@ -225,5 +225,5 @@ After saving the initial review to `PR-<NUMBER>-report.md`, invoke `/grill-and-r
 - **Topic & purpose**: PR review report for `<OWNER>/<REPO>#<NUMBER>`, audience is the PR author and CUBRID maintainers
 - **Output path**: the same report file (the loop revises in place)
 - **Source material**: the PR diff, JIRA ticket context, this skill's `reference.md`, any `CLAUDE.md` / `AGENTS.md` in directories of changed files
-- **Review angle**: every Finding has file:line evidence (no "might be wrong" hedging), no pre-existing / CI-caught / out-of-scope items leaked through, TL;DR verdict label matches the Findings, length budget respected (80-line target, 200 hard cap), no emoji or non-BMP unicode
+- **Review angle**: every Finding has file:line evidence (no "might be wrong" hedging), no pre-existing / CI-caught / out-of-scope items leaked through, TL;DR verdict label matches the Findings, length budget respected (80-line target, 200 hard cap), no emoji or non-BMP unicode, every CUBRID-internal term on first use has a one-clause inline gloss (a junior engineer who has not opened this file should follow the report on one read), every blocking finding spells out the consequence (defect -> cause -> impact), not just the symptom
 - **Round cap**: default 5

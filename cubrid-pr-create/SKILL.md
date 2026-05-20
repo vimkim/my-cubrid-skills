@@ -77,9 +77,11 @@ The `> **TL;DR**` blockquote and `## Summary` block are **required** for every P
 
 ### Plain Language
 
-PR descriptions are read by reviewers (and later by anyone doing `git log` archaeology). Write so a reviewer can grasp the change in one pass without re-reading.
+PR descriptions are read by reviewers (and later by anyone doing `git log` archaeology). Reviewers may include engineers who joined recently or who own a neighboring module but not this one. Write so a reviewer who hasn't read the JIRA ticket and hasn't opened this file can grasp the change in one pass.
 
 - **Short sentences.** One idea per sentence. Split anything that runs past two lines.
+- **TL;DR must stand alone.** A reviewer who never clicks the JIRA link should still know what changed and why. Bad: "CBRD-26583 의 후속 작업으로 OOS 이관 로직 재활성화." Good: "heap 의 OOS (Out-of-row Storage — 큰 가변 컬럼을 외부 페이지로 분리) 이관 로직을 `feat/oos` 브랜치에서 다시 켠다. 직전에 안전을 위해 꺼 두었고 부수 회귀가 없음을 확인했기 때문."
+- **Gloss internal terms on first use.** On the first mention in the PR body of a CUBRID-internal concept (`OOS`, `pgbuf_*`, `recdes`, `OR_VAR_*`, `latch`, build-mode names like `SERVER_MODE`), add a one-clause aside in parentheses. After the first gloss, use the term raw. Universal C/DB vocabulary (`malloc`, `mutex`, `assert`) does not need glossing.
 - **Concrete over abstract.** Name the file, function, and behavior that changed. "`heap_record_replace_oos_oids` 에러 경로에 `pgbuf_unfix` 추가" beats "에러 처리 안정성 개선."
 - **No filler.** Drop "본 PR은...", "전반적으로...", "필요에 따라...". State the fact directly.
 - **Bullets over prose** in `## Implementation`. Each bullet = one observable change with a file or function reference.
@@ -212,6 +214,6 @@ This step is required, not optional. It applies to every PR. No agent-side judgm
    - **Topic & purpose**: PR title, JIRA ticket, target reviewers (CUBRID maintainers)
    - **Output path**: the temp draft file (the loop revises in place)
    - **Source material**: the diff (`git diff <upstream>/<base>...HEAD`), `/jira CBRD-XXXXX` output, related issues/PRs
-   - **Review angle**: clarity for reviewers, completeness of `## Description` / `## Implementation` / `## Remarks`, adherence to CUBRID PR conventions (Korean body, English `##` headers, JIRA link at the very top, TL;DR carries a clear thesis)
+   - **Review angle**: clarity for reviewers, completeness of `## Description` / `## Implementation` / `## Remarks`, adherence to CUBRID PR conventions (Korean body, English `##` headers, JIRA link at the very top, TL;DR carries a clear thesis), TL;DR stands alone without requiring the reviewer to open the JIRA ticket first, every CUBRID-internal term on first use has a one-clause inline gloss so a recently-onboarded reviewer can follow the body on one read
    - **Round cap**: default 5
 3. **After approval, create the PR** by passing the polished body to `gh pr create --body "$(cat ./pr-body-draft.md)"`.

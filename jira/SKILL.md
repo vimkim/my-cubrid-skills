@@ -15,11 +15,20 @@ $ARGUMENTS
 Steps:
 1. First, verify the `uv` executable exists in PATH by running `which uv`. If it does not exist, **halt immediately** and tell the user: "Error: `uv` is not installed or not in PATH. Install it first: https://docs.astral.sh/uv/getting-started/installation/"
 
-2. Use the Bash tool to run:
+2. Verify `cubrid-jira-search` exists in PATH by running `which cubrid-jira-search`. If it does not exist, **halt immediately** and tell the user:
 
-```
-cubrid-jira-search TICKET_ID
-```
+   ```
+   Error: `cubrid-jira-search` is not installed.
 
-3. Present the output to the user as-is. The command searches local cache first and fetches from JIRA if missing, outputting readable markdown.
-4. If the command fails, inform the user that the JIRA instance may be unreachable or `cubrid-jira-search` is not installed (`uv tool install cubrid-jira-fetcher`).
+   Install it:
+       uv tool install git+https://github.com/vimkim/cubrid-jira
+   ```
+
+3. Use the Bash tool to run:
+
+   ```
+   cubrid-jira-search TICKET_ID
+   ```
+
+4. Present the output to the user as-is. The command searches local cache first and fetches from JIRA if missing, outputting readable markdown.
+5. If the command fails after a successful preflight, the JIRA instance is likely unreachable — report the exact error to the user rather than guessing.

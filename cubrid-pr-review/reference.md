@@ -84,6 +84,35 @@ Adding a new error code requires updates in **6 places**:
 
 ---
 
+## Comment & Convention Hygiene (CI-invisible)
+
+Rules below are NOT enforced by `codestyle.sh` or any CI check. The review must catch them.
+
+### No Stale File:Line References in Source Comments
+
+- **Ban `filename:line` or `filename line NNNN` references in source-code comments.** These become wrong the moment any line is added or removed above the target. Flag any new comment that names a file path together with a line number.
+- **Exception: stable header data-structure docs.** A comment in a rarely-changing header (e.g., `or_mvcc.h` documenting `OR_MVCC_FLAG_*` bit layout) may reference another header by name (without line number) because the target is a named symbol, not a position.
+- **What to write instead:** reference the *symbol name* (`see pgbuf_unfix()`, `defined in OR_MVCC_FLAG_HAS_OOS`). Symbol names survive refactors; line numbers do not.
+
+### Comment Understandability
+
+- A comment must be understandable on its own without opening another file. If a reader needs to `grep` to understand the comment, the comment is incomplete.
+- Do not write comments that only make sense at the time of writing (e.g., "added for the OOS refactor", "fixes the bug from last week"). These rot as context fades.
+- Comments referencing JIRA tickets (`CBRD-XXXXX`) are acceptable only as a *why* annotation on a non-obvious workaround, not as a substitute for explaining the code.
+
+### License / Copyright Headers
+
+- Every new `.c` / `.h` / `.cpp` / `.hpp` file must carry the project's standard license header. Flag new files missing it.
+- Do not flag modifications to existing files that already have (or already lack) the header — that is pre-existing.
+
+### Conventions `codestyle.sh` Misses
+
+- **`#include` order**: CUBRID convention is `config.h` first (for `HAVE_*` macros), then system headers, then CUBRID headers. `codestyle.sh` does not enforce order.
+- **Magic numbers without named constants**: bare numeric literals in logic (other than 0, 1, -1, `NULL`) should be a `#define` or `enum`. CI does not flag this.
+- **Commented-out code blocks**: dead code left in `#if 0` or `/* ... */` blocks should be removed, not preserved "for reference". Version control is the reference.
+
+---
+
 ## False Positive Guidance
 
 Do NOT flag:

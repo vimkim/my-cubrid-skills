@@ -158,13 +158,38 @@ If the diff touches the SQL parser, broker protocol, or CCI client interface, al
 
 If `reference.md` is present and flags a rule (e.g., new error code -> 6 places), don't restate the rule body — link to it by name and point to the file:line that needs updating.
 
+### Step 3b: Sanity Check (mandatory sub-agent)
+
+After the main review pass, spawn a **separate sub-agent** (`subagent_type: "code-reviewer"`) to run a focused sanity scan on the diff. This step is mandatory and cannot be skipped — it catches convention violations that `codestyle.sh` and CI do not enforce.
+
+The sub-agent receives:
+- The full PR diff
+- The `reference.md` "Comment & Convention Hygiene" section
+- Any `CLAUDE.md` from directories of changed files
+
+The sub-agent checks **only** these categories (no logic/concurrency/memory — the main review covers those):
+
+1. **Stale file:line references in comments** — any new comment that pairs a filename with a line number. Flag with: "`<file>:<line>` — 주석에 파일명+라인번호 참조 금지. 심볼 이름으로 교체 필요."
+2. **Incomprehensible comments** — comments that only make sense at write-time ("added for the refactor", "fixes last week's bug") or require opening another file to understand.
+3. **License header on new files** — every new `.c`/`.h`/`.cpp`/`.hpp` file must have the standard license header.
+4. **Commented-out code blocks** — `#if 0` or large `/* ... */` dead code blocks in new code.
+5. **`#include` order violations** — `config.h` must come first, then system, then CUBRID headers.
+6. **Magic numbers** — bare numeric literals (other than 0, 1, -1, NULL) without a named constant.
+
+The sub-agent returns a flat list of findings (file:line + one-sentence description). Merge these into the main report's Findings section under the appropriate severity:
+- Stale file:line refs and incomprehensible comments -> **Non-blocking (should consider)**
+- Missing license header -> **Blocking (must fix)**
+- Commented-out code, include order, magic numbers -> **Non-blocking (should consider)**
+
+If the sub-agent finds nothing, it returns an empty list and no sanity items appear in the report.
+
 ### Step 4: Filter
 
 Drop findings that are:
 
 - **Pre-existing** (not introduced by this PR)
 - **Already raised** in existing PR comments
-- **Stylistic** (formatting, naming) unless CLAUDE.md mandates it
+- **Stylistic** (formatting, naming) unless CLAUDE.md mandates it — but **never drop Step 3b sanity findings** (comment hygiene, license headers, include order, etc.); those exist precisely because CI does not catch them
 - **On unmodified lines**
 - **Out of the PR's stated scope** — don't critique the design of code the PR didn't intend to change, even if the diff exposed it
 

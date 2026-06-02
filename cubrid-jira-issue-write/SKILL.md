@@ -336,15 +336,15 @@ Pass the JIRA ticket number and/or topic as arguments:
 - `/write-jira-issue CBRD-26583 OOS compact analysis` — Write issue for specific ticket
 - `/write-jira-issue` — Interactive mode, ask user for details
 
-## Mandatory: Iterate with Grill-and-Revise
+## Mandatory: Iterate with Grill-with-Docs
 
-Every JIRA issue draft must go through `/grill-and-revise` before being filed. Do not post a single-pass issue. Single-pass issues drift toward hand-wavy filler, missing or non-executable Repro steps, unsupported root-cause claims, and TL;DRs that just restate the body. JIRA tickets are read across QA, dev, and customer support by people with no other context, so unclear writing has a long blast radius.
+Every JIRA issue draft must go through `/grill-with-docs` before being filed. Do not post a single-pass issue. Single-pass issues drift toward hand-wavy filler, missing or non-executable Repro steps, unsupported root-cause claims, and TL;DRs that just restate the body. JIRA tickets are read across QA, dev, and customer support by people with no other context, so unclear writing has a long blast radius.
 
 This step is required, not optional. It applies to every issue. No agent-side judgment — including size, scope, perceived triviality, or perceived risk — is a valid skip criterion. The only legitimate skip is when the user, in the message that triggered this skill, explicitly says "skip grill" or "don't grill this" (or unambiguous equivalent: "no grill", "skip the grill loop", "just push it"). If in doubt, do the grill loop.
 
 **How to hand off:**
 
-After saving the initial draft to `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XXXXX-slug.md`, invoke `/grill-and-revise` with:
+After saving the initial draft to `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XXXXX-slug.md`, invoke `/grill-with-docs` with:
 
 - **Topic & purpose**: JIRA ticket number, issue type (Correct Error / Improve / Development Subject / etc.), audience (CUBRID dev team, QA, customer-facing)
 - **Output path**: the same file path so the loop revises in place

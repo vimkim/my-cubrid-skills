@@ -237,15 +237,15 @@ CBRD-26583 의 목표는 OOS OID 치환 재활성화. 본 PR은 그 범위 안.
 
 (JIRA Context only; Existing Comments was omitted because no unresolved top-level comments existed. `Non-blocking` and `Questions for the author` subsections are also omitted because they had no items.)
 
-## Mandatory: Iterate with Grill-and-Revise
+## Mandatory: Iterate with Grill-with-Docs
 
-Every review report must go through `/grill-and-revise` before being posted or shared. Do not deliver a single-pass review. Single-pass reviews drift toward weak evidence ("might be wrong" hedges), pre-existing-issue leakage, mis-scoped findings, and verdict labels that don't match the Findings.
+Every review report must go through `/grill-with-docs` before being posted or shared. Do not deliver a single-pass review. Single-pass reviews drift toward weak evidence ("might be wrong" hedges), pre-existing-issue leakage, mis-scoped findings, and verdict labels that don't match the Findings.
 
 This step is required, not optional. It applies to every review. No agent-side judgment — including size, scope, perceived triviality, or perceived risk — is a valid skip criterion. The only legitimate skip is when the user, in the message that triggered this skill, explicitly says "skip grill" or "don't grill this" (or unambiguous equivalent: "no grill", "skip the grill loop", "just push it"). If in doubt, do the grill loop.
 
 **How to hand off:**
 
-After saving the initial review to `PR-<NUMBER>-report.md`, invoke `/grill-and-revise` with:
+After saving the initial review to `PR-<NUMBER>-report.md`, invoke `/grill-with-docs` with:
 
 - **Topic & purpose**: PR review report for `<OWNER>/<REPO>#<NUMBER>`, audience is the PR author and CUBRID maintainers
 - **Output path**: the same report file (the loop revises in place)

@@ -201,16 +201,16 @@ Head:  vimkim:feat/oos-replace-oos-oid
 - For multi-commit PRs, summarize the overall change rather than listing each commit message.
 - Always use `gh pr create` with heredoc for the body to handle multi-line Korean text correctly.
 
-## Mandatory: Iterate with Grill-and-Revise
+## Mandatory: Iterate with Grill-with-Docs
 
-Every PR description must go through `/grill-and-revise` before `gh pr create`. Do not post a single-pass body. Single-pass PR descriptions drift toward hand-wavy filler, vague TL;DRs, and `## Implementation` bullets that hide what actually changed.
+Every PR description must go through `/grill-with-docs` before `gh pr create`. Do not post a single-pass body. Single-pass PR descriptions drift toward hand-wavy filler, vague TL;DRs, and `## Implementation` bullets that hide what actually changed.
 
 This step is required, not optional. It applies to every PR. No agent-side judgment — including size, scope, perceived triviality, or perceived risk — is a valid skip criterion. The only legitimate skip is when the user, in the message that triggered this skill, explicitly says "skip grill" or "don't grill this" (or unambiguous equivalent: "no grill", "skip the grill loop", "just push it"). If in doubt, do the grill loop.
 
 **How to hand off:**
 
 1. **Draft to a local file first.** Instead of going straight to `gh pr create`, write the PR body to a temp file like `./pr-body-draft.md`.
-2. **Invoke `/grill-and-revise`** with:
+2. **Invoke `/grill-with-docs`** with:
    - **Topic & purpose**: PR title, JIRA ticket, target reviewers (CUBRID maintainers)
    - **Output path**: the temp draft file (the loop revises in place)
    - **Source material**: the diff (`git diff <upstream>/<base>...HEAD`), `/jira CBRD-XXXXX` output, related issues/PRs

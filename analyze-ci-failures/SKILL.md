@@ -149,15 +149,15 @@ Write a structured markdown report with:
 - TCs with no diff details from CI may need local reproduction to diagnose
 - Group by root cause, not by symptom — multiple TCs often share a single underlying issue
 
-## Mandatory: Iterate with Grill-and-Revise
+## Mandatory: Iterate with Grill-with-Docs
 
-Every CI failure report must go through `/grill-and-revise` before being shared. Do not deliver a single-pass triage. Single-pass triage drifts toward weak root-cause hypotheses, mis-categorized TCs, and unsupported "Related?" calls. CI reports often drive merge or release decisions where mis-attribution is expensive.
+Every CI failure report must go through `/grill-with-docs` before being shared. Do not deliver a single-pass triage. Single-pass triage drifts toward weak root-cause hypotheses, mis-categorized TCs, and unsupported "Related?" calls. CI reports often drive merge or release decisions where mis-attribution is expensive.
 
 This step is required, not optional. It applies to every report. No agent-side judgment — including size, scope, perceived triviality, or perceived risk — is a valid skip criterion. The only legitimate skip is when the user, in the message that triggered this skill, explicitly says "skip grill" or "don't grill this" (or unambiguous equivalent: "no grill", "skip the grill loop", "just push it"). If in doubt, do the grill loop.
 
 **How to hand off:**
 
-After saving the initial report to `failed_tc_report.md`, invoke `/grill-and-revise` with:
+After saving the initial report to `failed_tc_report.md`, invoke `/grill-with-docs` with:
 
 - **Topic & purpose**: CI failure analysis for `<branch>` / `<PR link>`, audience is the PR author, QA, and CUBRID maintainers
 - **Output path**: the same report file (the loop revises in place)

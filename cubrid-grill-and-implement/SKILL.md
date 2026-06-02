@@ -9,13 +9,13 @@ allowed-tools: Bash(gh *), Bash(git *), Bash(jq *), Bash(just *), Bash(tee *), B
 
 Iteratively implement CUBRID code changes by looping a writer subagent (plans, then writes code) against a relentless reviewer subagent (CUBRID PR-style review with LSP/clangd) until the reviewer approves or a round cap is hit. The loop guarantees the final tree compiles, every reviewer concern is addressed in code (not in argument), and the writer never short-circuits with self-approval.
 
-This is the code-implementation counterpart to `/grill-and-revise`. Same two-agent loop and `VERDICT` contract; the artifact is a working CUBRID code change in the user's tree, not a document.
+This is the code-implementation counterpart to `/grill-with-docs`. Same two-agent loop and `VERDICT` contract; the artifact is a working CUBRID code change in the user's tree, not a document.
 
 > NOTE for installers: The agent-spawning tool in this Claude Code harness is named `Agent`. If your runtime exposes it as `Task` instead, substitute `Task` for `Agent` in the `allowed-tools` frontmatter and in every spawn step below. Do not list both.
 
 ## Cost Characteristic
 
-Each round runs an opus writer plus a critic-class reviewer over a possibly-large CUBRID diff with LSP, plus a full build (15-min timeout). Roughly 10x more expensive per round than `/grill-and-revise`. Default `max_rounds=3`. If at any reviewer round the cumulative line count from `git diff --stat <baseline_ref> --` exceeds 5000, print a warning and require an explicit `yes` from the user before continuing past round 2.
+Each round runs an opus writer plus a critic-class reviewer over a possibly-large CUBRID diff with LSP, plus a full build (15-min timeout). Roughly 10x more expensive per round than `/grill-with-docs`. Default `max_rounds=3`. If at any reviewer round the cumulative line count from `git diff --stat <baseline_ref> --` exceeds 5000, print a warning and require an explicit `yes` from the user before continuing past round 2.
 
 ## When to Use
 

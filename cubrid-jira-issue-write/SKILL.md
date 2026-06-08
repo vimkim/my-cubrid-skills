@@ -1,6 +1,6 @@
 ---
 name: cubrid-jira-issue-write
-description: Write a CUBRID JIRA issue report in Korean with English section headers (##). Top of issue is a fixed Issue Triage block — 목적 (필수) + 이유 (필수, 현재 동작·한계와 그 영향 두 축을 모두 포함) + 방안 (이미 합의된 스펙은 구체 bullet 로, 미결정은 TBD) — followed by an explicitly separated AI-Generated Context block. Writes structured markdown to /home/vimkim/gh/my-cubrid-jira/issues/. Use when the user wants to write up a JIRA issue, document a bug finding, or create a feature/task report for CUBRID.
+description: Write a CUBRID JIRA issue report in Korean with English section headers (##). Top of issue is an Issue Triage block — 목적 (필수) + 이유 (필수, 현재 동작·한계와 그 영향 두 축을 모두 포함) + 방안 (합의된 스펙은 구체적으로, 미결정은 TBD) — written in whatever format reads best (short prose, mini-tables, ASCII call-flow diagrams, callouts — NOT forced dot-lists), followed by an explicitly separated AI-Generated Context block. Favors diagrams and comparison tables for call flows and option trade-offs. Writes structured markdown to /home/vimkim/gh/my-cubrid-jira/issues/. Use when the user wants to write up a JIRA issue, document a bug finding, or create a feature/task report for CUBRID.
 ---
 
 # CUBRID JIRA Issue Writer
@@ -66,26 +66,18 @@ The triage block exists because AI-generated issue bodies are often too long to 
 
 #### Common Header (all types)
 
-Fill the slots in `<...>`. Detail rules live in **Top-of-Issue Triage Rules** below — do not copy the prose hints from there back into the issue.
+Fill the slots in `<...>`. The three concerns — **목적 / 이유 / 방안** — are required, but their *formatting is free*: use short prose, a mini-table, an ASCII call-flow diagram, or a callout — whatever reads in one pass. Do **not** force every field into a bullet dot-list. Detail rules live in **Top-of-Issue Triage Rules** below — do not copy the prose hints from there back into the issue.
 
 ```markdown
 # [TAG] 한국어 제목
 
 ## Issue Triage
 
-**이슈 수행 목적** (필수): <결과 상태 1-2 문장>
+**이슈 수행 목적** (필수): <결과 상태 1-2 문장. 짧은 산문.>
 
-**이슈 수행 이유** (필수):
+**이슈 수행 이유** (필수): <현재 동작·한계 + 영향 두 축을 모두 짚는다. 짧은 산문 한두 문단이 기본. 임계치/조건이 많으면 mini-table, 호출 경로가 핵심이면 ASCII 흐름도(★ 로 한계 지점 표시)로 대신해도 된다. 임계치는 코드의 상수/매크로 이름으로 인용.>
 
-- **현재 동작 / 배경**: <기존 매커니즘 + 한계. 임계치는 코드의 상수/매크로 이름으로 인용>
-- **영향**: <위 한계가 만드는 실제 문제. 해당되는 한 가지를 골라 구체 예시와 함께>
-
-**이슈 수행 방안**:
-
-- <합의된 결정 1>
-- <합의된 결정 2>
-- <기존 정책과의 관계 — 혼용 / 대체 / 점진적 마이그레이션>
-- <미결정 슬롯: `TBD - ANALYSIS 단계에서 결정` 또는 `TBD - 합의 미확인`>
+**이슈 수행 방안**: <합의된 결정은 구체적으로, 미결정은 TBD. 결정이 평면 목록이면 짧은 bullet, 후보 비교/트레이드오프면 ranked 표, 기존 정책과의 관계가 핵심이면 산문으로. 형식은 내용에 맞춘다.>
 
 ---
 
@@ -172,13 +164,13 @@ The `## Issue Triage` block is **required** and must be the first content after 
 The Common Header above defines the schema. The rules below define what counts as a *good* fill.
 
 - **이슈 수행 목적 (필수)**: 결과 상태 1-2 문장. 분석·배경은 금지 — 그건 이유로 간다.
-- **이슈 수행 이유 (필수)**: 두 축(**현재 동작·한계** + **영향**)을 모두 짚는다.
-  - **현재 동작 / 배경 요건**: 임계치·매개변수·조건은 코드의 매크로/상수/함수 이름으로 인용한다 (예: `DB_PAGESIZE/8`, `pgbuf_fix`). 파일·라인 번호도 곁들이면 가장 좋다. "현재 약 512 바이트" 같은 어림 표기 금지.
+- **이슈 수행 이유 (필수)**: 두 축(**현재 동작·한계** + **영향**)을 모두 짚는다. 형식은 자유 — 짧은 산문이 기본이고, 조건/임계치가 여럿이면 mini-table, 호출 경로가 핵심이면 ASCII 흐름도(★ 로 한계 지점 표시)로 대신해도 된다.
+  - **현재 동작 / 배경 요건**: 임계치·매개변수·조건은 코드의 매크로/상수/함수 이름으로 인용한다 (예: `DB_PAGESIZE/8`, `LZ4_MAX_INPUT_SIZE`, `pgbuf_fix`). 파일·라인 번호도 곁들이면 가장 좋다. "현재 약 512 바이트" 같은 어림 표기 금지 — 단, 매크로 값을 괄호로 풀어 주는 것은 권장 (`LZ4_MAX_INPUT_SIZE`(0x7E000000, 약 2.11GB)).
   - **영향 요건**: 해당되는 한 가지(고객 장애 · QA 실패 · 성능 저하 · 설계 의도 훼손 · 기술 부채 중 하나)를 골라 구체 예시와 함께 적는다. 다섯 가지를 모두 늘어놓으면 menu-padding 이 된다.
   - 추상적 한 줄("일관성 유지", "성능 개선 필요") 금지.
   - **Correct Error 특례**: 버그 티켓은 두 축이 짧게 collapse 한다 — 현재 동작 = 한 줄 재현 요약, 영향 = 사용자가 보는 실패 모드. 그래도 두 항목은 분리해서 적는다.
 - **이슈 수행 방안**: 결정된 스펙은 구체적으로 적고, 미결정만 TBD 로 남긴다.
-  - 합의된 결정(임계치, 알고리즘, 적용 옵션, 외부 레퍼런스, 기존 정책과의 관계)은 bullet 로 명시. 합의된 내용을 "TBD" 로 덮어쓰지 말 것.
+  - 합의된 결정(임계치, 알고리즘, 적용 옵션, 외부 레퍼런스, 기존 정책과의 관계)은 구체적으로 명시한다. 형식은 내용에 맞춘다 — 평면 목록이면 짧은 bullet, 후보·트레이드오프 비교면 ranked 표(CBRD-26890 의 후보 비교 표 참고), 기존 정책과의 관계가 핵심이면 산문. 합의된 내용을 "TBD" 로 덮어쓰지 말 것.
   - **무엇이 "합의된" 것인가**: 이 세션 사용자 메시지의 인용 가능한 구체 결정 · 인용 가능한 JIRA 코멘트 · 명시적 설계 문서 — 이 세 출처만 합의로 간주한다. 사용자 메시지를 근거로 들 때는 원문 일부를 큰따옴표로 함께 적는다 ("사용자 인용: \"...\""). 유사 티켓과의 유추, AI 의 그럴듯한 추론은 합의가 아니다.
   - **TBD 마커 선택**: 분석 단계로 미루는 것이 명시적으로 합의된 영역은 `TBD - ANALYSIS 단계에서 결정`. 결정 존재 여부 자체가 불확실하면 `TBD - 합의 미확인` 을 쓴다. 헷갈리면 `TBD - 합의 미확인` 으로 보수적으로 표기해서 리뷰어가 명시적으로 잡아내도록 한다. 대화형 세션이면 사용자에게 직접 묻는다.
   - 세부 코드 흐름/자료구조는 `## Implementation` 으로 미룬다. 방안에는 "무엇을 결정했는가" 만.
@@ -193,6 +185,7 @@ The Common Header above defines the schema. The rules below define what counts a
 - 목적/이유 합치기: 목적과 이유는 별개 필드라, "X 를 Y 하기 위해 Z 한다" 한 문장으로 두 필드를 한꺼번에 메우지 말 것.
 - 이유 빈약 작성: "성능 개선이 필요하다" 같은 추상적 한 줄로 끝내지 말 것. 구체적 수치/임계치/조건이 빠진 이유는 미흡한 이유다.
 - 방안 양극단 — 둘 다 reject: (1) 합의되지 않은 구현 계획을 방안에 추가 (과잉 추측), (2) 합의된 스펙을 "TBD" 로 덮음 (과소 작성). 무엇이 합의인지 모르겠으면 위 "무엇이 합의된 것인가" 항을 따른다.
+- 닷 리스트 강박: 목적/이유/방안을 무조건 `-` 불릿으로 쪼개지 말 것. 불릿이 4개를 넘거나, 각 불릿이 두 줄을 넘거나, 항목 간에 비교·순위·흐름 관계가 있으면 그건 불릿이 아니라 표·흐름도·산문으로 가야 한다는 신호다. 형식은 내용 구조를 따른다 — 평면 목록만 불릿.
 - 컨텍스트 누수: AI 분석 결과를 triage 블록 안에 끌어다 두지 말 것. AI 분석은 `## AI-Generated Context` 아래에만 둔다.
 
 **구조 라벨 예외 (triage 블록 한정)**: 다음 다섯 개 라벨만 "Avoid translationese" 의 영문 직역 라벨 금지 규정에서 예외다 — `**이슈 수행 목적**`, `**이슈 수행 이유**`, `**이슈 수행 방안**`, `**현재 동작 / 배경**`, `**영향**`. 이외의 영문/혼용 라벨(`**Fact**:`, `**Risk**:`, `**Mitigation**:`, `**무엇을**:` 등)은 본문 어디에서도 금지 규정을 따른다. 본문 산문이 아니라 triage 슬롯 식별자라서 예외를 둔다.
@@ -218,7 +211,50 @@ The Common Header above defines the schema. The rules below define what counts a
 - lz4 압축 레벨 세부값: `TBD - 합의 미확인`.
 ```
 
-핵심: **이유** 가 임계치를 매크로 이름으로 인용하고 영향을 한 카테고리(설계 의도 훼손) + 구체 시나리오로 좁혔으며, **방안** 이 합의된 결정만 bullet 로 적되 범위 밖 항목은 별도 티켓으로 분리하고 미확인 항목은 보수적 마커로 표기했다.
+핵심: **이유** 가 임계치를 매크로 이름으로 인용하고 영향을 한 카테고리(설계 의도 훼손) + 구체 시나리오로 좁혔으며, **방안** 이 합의된 결정만 bullet 로 적되 범위 밖 항목은 별도 티켓으로 분리하고 미확인 항목은 보수적 마커로 표기했다. 이 예시의 방안은 **평면 목록이라** bullet 이 맞는다 — 후보 비교였다면 아래 toolkit 의 ranked 표를 썼을 것이다.
+
+### Readability Toolkit — 닷 리스트 대신 쓸 것 (모델: CBRD-26890, CBRD-26788)
+
+불릿은 평면 목록 한 종류에만 맞는다. 내용에 구조가 있으면 아래 도구를 골라 쓴다. CBRD-26890 / CBRD-26788 이 네 가지를 모두 실전에서 보여 주므로, 막히면 그 두 이슈를 펼쳐 보고 형식을 베낀다.
+
+**1. ASCII 호출 흐름도 — 압축/해제, scan, 복구 같은 호출 체인.** `★` 로 한계 지점·분기점을 표시한다 (CBRD-26890 §압축 코드 흐름).
+
+````markdown
+```
+[압축] 직렬화(DB_VALUE -> 디스크)
+ mr_data_writeval_string()                  object_primitive.c
+   └ pr_do_db_value_string_compression()
+        └ cubcompress::compress<LZ4>()       compressor.hpp
+ ★ 크기 게이트: charlen > LZ4_MAX_INPUT_SIZE -> 압축 스킵, 원본 저장
+```
+````
+
+**2. Ranked 후보 비교 표 — 방안이 "여러 선택지 중 고르기" 일 때.** 권장 순서대로 행을 놓고, 마지막 칸에 권장 이유/고려사항을 적는다 (CBRD-26890 §상세 내용).
+
+```markdown
+| 순위 | 후보 | 권장 이유 / 고려사항 |
+|------|------|---------------------|
+| 1 | zstd 도입 | 4GB+ 단일 호출 처리, DB 채택 검증. 외부 의존성 추가 비용. |
+| 2 | LZ4 frame 청킹 | 라이브러리 교체 없음. 스트리밍 해제 설계 필요. |
+| 3 | 비압축 fallback | 가장 단순. 압축 이득 포기 — 단기 baseline. |
+```
+
+**3. 현황 조사 표 — 타입/경로/조건별 상태를 한눈에.** "무엇이 영향을 받고 무엇이 안 받는가" 를 산문으로 늘어놓는 대신 표로 (CBRD-26890 §현황 조사).
+
+```markdown
+| 가변 타입 | 최대 길이 | 압축 적용 |
+|-----------|-----------|-----------|
+| VARCHAR | 약 1 GiB (0x3fffffff) | O (LZ4) |
+| internal LOB (신규) | 4 GB | 대상이나 LZ4 로는 불가 |
+```
+
+**4. 요지 callout — 표/도식 뒤에 한 문단으로 핵심을 박는다.** JIRA `{panel:title=요지}` 의 markdown 대응은 blockquote 다.
+
+```markdown
+> **요지**: 컬럼 값 압축 대상은 ~1 GiB 라 LZ4 한계 안이었다. 4GB LOB 만 한계를 넘어 새 방안을 요구한다.
+```
+
+조사/설계 이슈(CBRD-26788 류)는 `## 주요 검토 항목` 을 번호 매긴 `###` 소제목(1. Scan Path 분석, 2. Prefetch 적용 가능성 ...)으로 펼치고, 결정 못 한 부분은 `## Open Questions` 로 모은다 — 억지로 방안 bullet 에 욱여넣지 않는다.
 
 ### Style Guide
 
@@ -226,12 +262,12 @@ The Common Header above defines the schema. The rules below define what counts a
 2. **Lead with Issue Triage block** (목적/이유/방안) — human-readable triage summary before any AI-generated context
 3. **Separate AI context** with `## AI-Generated Context` header — all detailed analysis lives below this divider
 4. **Use `---` horizontal rules** between major sections
-5. **Tables** for structured data (function lists, format changes, comparison)
+5. **Tables** for structured data — function lists, format changes, type/limit surveys, ranked candidate comparison (see Readability Toolkit #2, #3)
 6. **Code blocks** with language annotation for source code
-7. **Flow diagrams** using ASCII art in code blocks for call chains
+7. **Flow diagrams** using ASCII art in code blocks for call chains; mark limit/branch points with `★` (Readability Toolkit #1)
 8. **Bold** for emphasis on key terms
 9. **Backticks** for all function names, variable names, file paths, and code references
-10. Keep paragraphs concise — prefer bullet points and tables over long prose
+10. **Match format to content structure** — a flat list is bullets; a comparison or ranking is a table; a call chain is a diagram; a single thesis is prose. Do not default everything to dot-lists (see "닷 리스트 강박" anti-pattern). Keep paragraphs concise.
 11. Acceptance criteria as markdown checkboxes (`- [ ]`)
 
 ### Plain Language
@@ -311,7 +347,12 @@ After drafting, grep for sentences appearing in 2+ sections; pick the strongest 
 
 ## Reference Examples
 
-Refer to existing issues in `/home/vimkim/gh/my-cubrid-jira/issues/` for style consistency. Key examples:
+**Format models (read these first for the free-form, diagram-rich style):**
+
+- `CBRD-26890-lob-compression-algorithm.md` — the canonical readability model. ASCII call-flow diagrams with `★` limit markers, a type/limit survey table, a `> **요지**` callout, and a ranked candidate-comparison table for 방안.
+- `CBRD-26788-scan-prefetch-mechanism.md` — the investigation/design model. Natural sections with numbered `###` review items; undecided parts collected rather than forced into a 방안 bullet list.
+
+Other examples for on-disk conventions (English `##` headers, Korean body):
 
 - `CBRD-26637-refactor-error-handling.md` — Refactoring issue with implementation details
 - `CBRD-26630-oos-inline-length.md` — Spec change with before/after tables
@@ -327,7 +368,7 @@ Refer to existing issues in `/home/vimkim/gh/my-cubrid-jira/issues/` for style c
 5. **Insert the AI-Generated Context divider**: After the triage block, add `## AI-Generated Context` header with the 1-line caveat note. All AI-written analysis (Summary bullets, Description, Implementation, etc.) goes below this divider.
 6. **Write the issue body**: Use the type-specific template above, in Korean with English `##` headers. Keep all official sections — fill `N/A` or `TBD` rather than deleting.
 7. **Save the file**: Write to `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XXXXX-slug.md`
-8. **Show the user**: Print the file path, the chosen issue type, and the **Issue Triage** block (목적/이유/방안 세 줄) so the user can sanity-check the framing at a glance
+8. **Show the user**: Print the file path, the chosen issue type, and the **Issue Triage** block (목적/이유/방안, in whatever format it took) so the user can sanity-check the framing at a glance
 
 ## Arguments
 
@@ -354,7 +395,8 @@ After saving the initial draft to `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XX
   - CUBRID conventions: Korean body, English `##` headers, NO emoji, NO non-BMP unicode.
   - **Issue Triage block** present at the top with all three fields (목적/이유/방안) filled and not collapsed into one sentence.
   - **Triage depth — 이유**: cites current behavior with code-named thresholds/macros/functions AND names the resulting impact. Abstract one-liners ("성능 개선 필요", "일관성 유지") are reject criteria.
-  - **Triage depth — 방안**: already-decided spec listed as concrete bullets (thresholds, algorithms, options, external references, scope splits with ticket numbers). Pure-TBD 방안 when decisions exist is a reject. AI-invented implementation details are a reject.
+  - **Triage depth — 방안**: already-decided spec stated concretely (thresholds, algorithms, options, external references, scope splits with ticket numbers). Pure-TBD 방안 when decisions exist is a reject. AI-invented implementation details are a reject.
+  - **Format matches content (readability)**: the triage fields must not be reflexively dot-listed. A comparison/ranking belongs in a table, a call chain in an ASCII diagram (with `★` limit markers), a single thesis in prose. Bullets with 4+ items, multi-line items, or items that compare/rank/flow are a reject — point the reviewer at the Readability Toolkit and CBRD-26890 / CBRD-26788.
   - **AI-Generated Context divider** clearly separates AI-written detail from the triage summary.
   - Summary/Description don't duplicate the triage block verbatim.
   - **New-hire readability**: every CUBRID-internal acronym or module-specific identifier on first use has a one-clause inline gloss; every threshold/magic number has a one-clause rationale. A junior engineer who can read C/C++ but has not opened this file should be able to follow the issue on one read. Untreated insider shorthand is a reject.

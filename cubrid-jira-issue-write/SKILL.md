@@ -187,6 +187,7 @@ The Common Header above defines the schema. The rules below define what counts a
 - 방안 양극단 — 둘 다 reject: (1) 합의되지 않은 구현 계획을 방안에 추가 (과잉 추측), (2) 합의된 스펙을 "TBD" 로 덮음 (과소 작성). 무엇이 합의인지 모르겠으면 위 "무엇이 합의된 것인가" 항을 따른다.
 - 닷 리스트 강박: 목적/이유/방안을 무조건 `-` 불릿으로 쪼개지 말 것. 불릿이 4개를 넘거나, 각 불릿이 두 줄을 넘거나, 항목 간에 비교·순위·흐름 관계가 있으면 그건 불릿이 아니라 표·흐름도·산문으로 가야 한다는 신호다. 형식은 내용 구조를 따른다 — 평면 목록만 불릿.
 - 컨텍스트 누수: AI 분석 결과를 triage 블록 안에 끌어다 두지 말 것. AI 분석은 `## AI-Generated Context` 아래에만 둔다.
+- 가독성 목표 명시: 독자 대상이나 가독성 목표("신입도 읽을 수 있게 작성", "독자 대상: ...", "11학년 수준", "이 이슈는 ... 수준으로 작성되었다")를 이슈 본문에 적지 말 것. 가독성은 작성자에게 주는 지침이지 본문에 쓰는 내용이 아니다 — 독자는 결과로 누리되, 그게 목표였다는 말은 듣지 않는다.
 
 **구조 라벨 예외 (triage 블록 한정)**: 다음 다섯 개 라벨만 "Avoid translationese" 의 영문 직역 라벨 금지 규정에서 예외다 — `**이슈 수행 목적**`, `**이슈 수행 이유**`, `**이슈 수행 방안**`, `**현재 동작 / 배경**`, `**영향**`. 이외의 영문/혼용 라벨(`**Fact**:`, `**Risk**:`, `**Mitigation**:`, `**무엇을**:` 등)은 본문 어디에서도 금지 규정을 따른다. 본문 산문이 아니라 triage 슬롯 식별자라서 예외를 둔다.
 
@@ -296,6 +297,8 @@ JIRA issues are read by every dev, QA, and CS person — most of them do not sha
 
 Readers include the CTO, team lead, and senior peers — but also QA, customer support, and engineers who joined last month and have never opened this module. JIRA tickets travel far beyond the original author. Write so a new hire who can read C/C++ but has not internalized this subsystem's jargon can follow on one read.
 
+**This audience target is writer-side guidance, not issue content.** It shapes *how* you write; it is never a thing to write down. Never state the intended audience or a readability target anywhere in the issue — no "신입도 읽을 수 있도록 작성했다", no "독자 대상: ...", no reading-grade-level note, no "이 이슈는 ... 수준으로 작성되었다". The reader should silently benefit from the clarity, never be told that clarity was the goal. If a sentence describes the issue's own readability rather than the bug/feature, delete it.
+
 - **Gloss internal terms on first use.** Acronyms and module-specific identifiers (`OOS`, `recdes`, `attrepr`, `pgbuf_*`, `OR_VAR_*`, `assert_release`, `WAL`, `MVCC`, `latch`, `OID`, `heap`/`btree` policy names, build-mode names) get a short inline aside on first mention — one clause, not a paragraph. Examples:
   - "`OOS` (Out-of-row Storage — heap 의 큰 가변 컬럼을 외부 페이지로 분리하는 저장 방식)"
   - "`pgbuf_fix` (페이지 버퍼 풀에서 페이지를 잠가 가져오는 함수)"
@@ -399,6 +402,6 @@ After saving the initial draft to `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XX
   - **Format matches content (readability)**: the triage fields must not be reflexively dot-listed. A comparison/ranking belongs in a table, a call chain in an ASCII diagram (with `★` limit markers), a single thesis in prose. Bullets with 4+ items, multi-line items, or items that compare/rank/flow are a reject — point the reviewer at the Readability Toolkit and CBRD-26890 / CBRD-26788.
   - **AI-Generated Context divider** clearly separates AI-written detail from the triage summary.
   - Summary/Description don't duplicate the triage block verbatim.
-  - **New-hire readability**: every CUBRID-internal acronym or module-specific identifier on first use has a one-clause inline gloss; every threshold/magic number has a one-clause rationale. A junior engineer who can read C/C++ but has not opened this file should be able to follow the issue on one read. Untreated insider shorthand is a reject.
+  - **New-hire readability**: every CUBRID-internal acronym or module-specific identifier on first use has a one-clause inline gloss; every threshold/magic number has a one-clause rationale. A junior engineer who can read C/C++ but has not opened this file should be able to follow the issue on one read. Untreated insider shorthand is a reject. The readability target itself must never appear in the issue body — any sentence stating the intended audience or reading level ("신입도 읽을 수 있게 작성", "독자 대상: ...", "11학년 수준") is a reject; that target is writer-side guidance, not issue content.
   - **Natural Korean prose**: the "Audience: any CUBRID engineer, including new hires" and "Avoid translationese and AI cadence" sections above must be passed to the reviewer verbatim.
 - **Round cap**: default 5

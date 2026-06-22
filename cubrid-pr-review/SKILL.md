@@ -1,6 +1,6 @@
 ---
 name: cubrid-pr-review
-description: "Review a CUBRID pull request with the host CLI's native review engine and write a local code review report. Uses Claude Code's built-in /code-review workflow or Codex CLI's built-in /review workflow, then applies CUBRID-specific checks. Use this when the user shares a CUBRID GitHub PR link or asks to review CUBRID code changes."
+description: "Review a CUBRID pull request from a CUBRID Git worktree whose current HEAD exactly matches the supplied PR number or URL, using the host CLI's native review engine and a local report. Uses Claude Code's built-in /code-review workflow or Codex CLI's built-in /review workflow, then applies CUBRID-specific checks. Use when the user requests review of the CUBRID PR currently checked out in the working directory."
 allowed-tools: Bash(gh *), Bash(git *), Bash(jq *), Bash(codex review *), Bash(scripts/*), Read, Write, Glob, Grep, Skill, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics_directory, mcp__plugin_oh-my-claudecode_t__lsp_hover, mcp__plugin_oh-my-claudecode_t__lsp_goto_definition, mcp__plugin_oh-my-claudecode_t__lsp_find_references, mcp__plugin_oh-my-claudecode_t__lsp_document_symbols
 ---
 
@@ -10,15 +10,16 @@ Review CUBRID database engine pull requests and produce a concise Korean review 
 
 ## When to Use
 
-- User shares a CUBRID GitHub PR URL (e.g., `https://github.com/CUBRID/cubrid/pull/6950`)
+- User supplies a CUBRID PR number or URL for the PR currently checked out in the working directory
 - User says "review this PR", "PR 리뷰", "코드 리뷰 부탁", "리뷰해줘"
 - User requests LSP/clangd analysis of PR changes
-- Even if the user just pastes a CUBRID PR link without explicit instructions, this skill applies.
+- Even if the user just pastes a CUBRID PR link without explicit instructions, this skill applies only when the current worktree is at that PR's exact head commit.
 
 ## Arguments
 
-- `/cubrid-pr-review <pr-url>` — Review the given PR
-- `/cubrid-pr-review` — Ask the user for a PR URL
+- `/cubrid-pr-review <pr-number>` — Review that PR when the current worktree HEAD matches it
+- `/cubrid-pr-review <pr-url>` — Review that PR when the current worktree HEAD matches it
+- `/cubrid-pr-review` — Ask the user for a PR number or URL
 
 ## Output Format
 
@@ -118,13 +119,15 @@ The report is read by the PR author under time pressure — and the author may b
 
 ### Step 1: Setup
 
-Parse the PR URL with the helper script and capture metadata in one shot:
+Validate the invocation and capture metadata in one shot:
 
 ```bash
-scripts/check-prereqs.sh "$PR_URL"
+scripts/check-prereqs.sh "$PR_NUMBER_OR_URL"
 ```
 
-The script prints JSON with `owner`, `repo`, `number`, `head_sha`, `base_ref`, `title`, `body`, `author`, `state`, `draft`. If it exits non-zero, surface the message and stop. If the PR is not open, or is marked draft, warn the user once and ask whether to proceed before continuing.
+The script is the mandatory gate. It accepts only a PR number or canonical `https://github.com/CUBRID/cubrid/pull/<number>` URL, requires the current directory to be inside a Git worktree, verifies that the PR targets `CUBRID/cubrid`, and requires the current worktree's `HEAD` SHA to equal the PR head SHA. It prints JSON with `owner`, `repo`, `number`, `repo_root`, `local_head`, `head_sha`, `base_ref`, `title`, `body`, `author`, `state`, and `draft` only after all checks pass.
+
+If it exits non-zero, surface the error and stop immediately. Do not fetch, checkout, switch branches, create a worktree, or offer to review the remote diff anyway. The user must place the current worktree at the exact PR head and rerun the skill. If the checks pass but the PR is not open or is marked draft, warn the user once and ask whether to proceed before continuing.
 
 ### Step 2: Gather Context (parallel)
 
@@ -144,6 +147,8 @@ Run these in parallel:
 
 Use the current host CLI's built-in reviewer as the **primary review pass**. Determine the host from runtime-provided identity or capabilities; do not infer it from whether `claude` or `codex` binaries happen to be installed, because both may coexist.
 
+Immediately before invoking the native reviewer, rerun `scripts/check-prereqs.sh "$PR_NUMBER_OR_URL"`. Abort if it fails or returns a different `head_sha` from Step 1. Immediately after the native reviewer finishes, run the gate once more. If it fails or the PR head changed, discard all candidate findings and stop without writing a report. This prevents reviewing or reporting against a PR that moved after setup.
+
 #### Claude Code
 
 Invoke the built-in `/code-review` workflow exactly once for the PR URL. Supply the PR diff, relevant `CLAUDE.md` files, PR metadata, and the CUBRID `reference.md` rules as review context.
@@ -160,7 +165,7 @@ Invoke the built-in `/review` workflow exactly once. In a shell-capable Codex ru
 codex review --base "origin/<BASE_REF>" "Review PR <OWNER>/<REPO>#<NUMBER>. Use the supplied PR/JIRA context and CUBRID review rules. Report only issues introduced by this PR, with file:line evidence. Do not modify files or publish anything."
 ```
 
-Run it from a checkout whose `HEAD` is exactly `<head_sha>` and where `origin/<BASE_REF>` resolves to the PR base. Fetch those refs if their objects are not already present. If the current checkout does not meet both conditions, create an isolated temporary worktree at `<head_sha>`, run the review there, then remove only that temporary worktree. Do not switch, reset, clean, or otherwise mutate the user's existing checkout. Capture stdout as candidate findings. Treat a non-zero exit or empty output as a review-engine failure; surface it instead of silently replacing the native review with a weaker ad-hoc pass.
+Run it from the current worktree already validated by Step 1. Do not fetch, checkout, switch branches, reset, clean, or create another worktree. Capture stdout as candidate findings. Treat a non-zero exit or empty output as a review-engine failure; surface it instead of silently replacing the native review with a weaker ad-hoc pass.
 
 #### Shared Review Brief
 

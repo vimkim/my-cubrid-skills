@@ -8,7 +8,7 @@ A collection of Claude Code skills for CUBRID database engine development. These
 |-------|-------------|
 | `jira` | Look up CUBRID JIRA issue context (CBRD-XXXXX) |
 | `analyze-ci-failures` | Analyze CircleCI shell test failures with root cause categorization |
-| `cubrid-pr-review` | Deep C/C++ PR code review with LSP/clangd analysis (3 parallel agents) |
+| `cubrid-pr-review` | Deep C/C++ PR review using Claude Code `/code-review` or Codex `/review`, plus CUBRID-specific validation |
 | `cubrid-pr-create` | Create GitHub PRs with `[CBRD-XXXXX]` title format and Korean body |
 | `cubrid-jira-issue-write` | Write structured JIRA issue reports in Korean |
 | `cubrid-manual` | Search the CUBRID manual (RST docs) for SQL syntax, config, APIs |

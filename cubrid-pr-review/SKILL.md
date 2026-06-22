@@ -1,8 +1,7 @@
 ---
 name: cubrid-pr-review
-description: "Review a CUBRID pull request and write a code review report. Use this when the user shares a CUBRID GitHub PR link or asks to review CUBRID code changes."
-argument-hint: "<pr-url>"
-allowed-tools: Bash(gh *), Bash(git *), Bash(jq *), Bash(scripts/*), Read, Write, Glob, Grep, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics_directory, mcp__plugin_oh-my-claudecode_t__lsp_hover, mcp__plugin_oh-my-claudecode_t__lsp_goto_definition, mcp__plugin_oh-my-claudecode_t__lsp_find_references, mcp__plugin_oh-my-claudecode_t__lsp_document_symbols
+description: "Review a CUBRID pull request with the host CLI's native review engine and write a local code review report. Uses Claude Code's built-in /code-review workflow or Codex CLI's built-in /review workflow, then applies CUBRID-specific checks. Use this when the user shares a CUBRID GitHub PR link or asks to review CUBRID code changes."
+allowed-tools: Bash(gh *), Bash(git *), Bash(jq *), Bash(codex review *), Bash(scripts/*), Read, Write, Glob, Grep, Skill, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics_directory, mcp__plugin_oh-my-claudecode_t__lsp_hover, mcp__plugin_oh-my-claudecode_t__lsp_goto_definition, mcp__plugin_oh-my-claudecode_t__lsp_find_references, mcp__plugin_oh-my-claudecode_t__lsp_document_symbols
 ---
 
 # CUBRID PR Reviewer
@@ -141,47 +140,43 @@ Run these in parallel:
 4. **Read `reference.md`** (sibling file in this skill's directory) for CUBRID-specific review knowledge: error-code six-place rule, memory/error-handling conventions, lock/page-buffer/WAL/MVCC protocols, build-mode guards, key data structures, false-positive guidance. If `reference.md` is missing on this checkout, warn the user once and proceed using only the review categories listed in Step 3 below — do not invent CUBRID-specific rules.
 5. **Read any CLAUDE.md / AGENTS.md** in directories containing changed files. Use Glob to walk ancestor directories of each changed file looking for these context files.
 
-### Step 3: Review
+### Step 3: Run the Native Review Engine
 
-Read the **full functions** surrounding each diff hunk, not just the hunk. Trace call chains where it matters. Aim for **signal**: prefer reading one suspicious function carefully over skimming ten safe ones. Investigate broadly, report narrowly — deep reading is for filtering findings, not justifying long reports.
+Use the current host CLI's built-in reviewer as the **primary review pass**. Determine the host from runtime-provided identity or capabilities; do not infer it from whether `claude` or `codex` binaries happen to be installed, because both may coexist.
 
-Focus on these high-signal categories for CUBRID. One sentence each — the detailed sub-checklists live in `reference.md`:
+#### Claude Code
 
-- **Logic & correctness**: did the change introduce a wrong branch, a missing error path, or an uninitialized read?
-- **Memory safety**: are CUBRID's allocator/free-and-init conventions followed and are all error paths leak-free?
-- **Concurrency & thread safety**: is shared state protected, and is lock/latch ordering preserved across all paths?
-- **Architecture vs JIRA intent**: does the implementation match the ticket's stated goal, and are build-mode guards (`SERVER_MODE`/`SA_MODE`/`CS_MODE`) and updated callers correct?
+Invoke the built-in `/code-review` workflow exactly once for the PR URL. Supply the PR diff, relevant `CLAUDE.md` files, PR metadata, and the CUBRID `reference.md` rules as review context.
 
-If the diff touches the SQL parser, broker protocol, or CCI client interface, also check buffer/integer overflow and unchecked input. Skip generic security checklists otherwise.
+Override the built-in workflow's publishing step: **analysis only, never call `gh pr comment`, submit a review, or mutate GitHub**. Capture its high-confidence findings locally as candidate findings. This local-only constraint is higher priority than `/code-review`'s default behavior. If the runtime cannot invoke `/code-review` without publishing, stop before invocation and clearly report that the installed command is incompatible with this skill's local-only contract.
+
+If `/code-review` is unavailable, report that `code-review@claude-plugins-official` must be enabled. Do not silently substitute a generic agent review.
+
+#### Codex CLI
+
+Invoke the built-in `/review` workflow exactly once. In a shell-capable Codex runtime, this is the native `codex review` command:
+
+```bash
+codex review --base "origin/<BASE_REF>" "Review PR <OWNER>/<REPO>#<NUMBER>. Use the supplied PR/JIRA context and CUBRID review rules. Report only issues introduced by this PR, with file:line evidence. Do not modify files or publish anything."
+```
+
+Run it from a checkout whose `HEAD` is exactly `<head_sha>` and where `origin/<BASE_REF>` resolves to the PR base. Fetch those refs if their objects are not already present. If the current checkout does not meet both conditions, create an isolated temporary worktree at `<head_sha>`, run the review there, then remove only that temporary worktree. Do not switch, reset, clean, or otherwise mutate the user's existing checkout. Capture stdout as candidate findings. Treat a non-zero exit or empty output as a review-engine failure; surface it instead of silently replacing the native review with a weaker ad-hoc pass.
+
+#### Shared Review Brief
+
+Require the native reviewer to:
+
+- Read the full functions surrounding suspicious hunks and trace call chains where needed.
+- Check logic/correctness, memory safety, concurrency/thread safety, JIRA intent, build-mode guards, and the `reference.md` "Comment & Convention Hygiene" rules.
+- Check buffer/integer overflow and unchecked input when the diff touches the SQL parser, broker protocol, or CCI client interface; skip generic security checklists otherwise.
+- Ignore pre-existing, CI-caught, already-commented, unmodified-line, and out-of-scope issues.
+- Return evidence for every finding; no speculative or filler findings.
+
+After the native pass, verify its candidate findings against the actual diff and `reference.md`. The host skill remains responsible for CUBRID-specific validation and report formatting; do not blindly copy native output.
 
 **LSP analysis (optional).** If `compile_commands.json` is available, run `lsp_diagnostics` on changed files for clangd warnings on changed lines, `lsp_hover`/`lsp_goto_definition` on suspicious types, and `lsp_find_references` if a function signature changed. Skip silently if LSP is unavailable.
 
-If `reference.md` is present and flags a rule (e.g., new error code -> 6 places), don't restate the rule body — link to it by name and point to the file:line that needs updating.
-
-### Step 3b: Sanity Check (mandatory sub-agent)
-
-After the main review pass, spawn a **separate sub-agent** (`subagent_type: "code-reviewer"`) to run a focused sanity scan on the diff. This step is mandatory and cannot be skipped — it catches convention violations that `codestyle.sh` and CI do not enforce.
-
-The sub-agent receives:
-- The full PR diff
-- The `reference.md` "Comment & Convention Hygiene" section
-- Any `CLAUDE.md` from directories of changed files
-
-The sub-agent checks **only** these categories (no logic/concurrency/memory — the main review covers those):
-
-1. **Stale file:line references in comments** — any new comment that pairs a filename with a line number. Flag with: "`<file>:<line>` — 주석에 파일명+라인번호 참조 금지. 심볼 이름으로 교체 필요."
-2. **Incomprehensible comments** — comments that only make sense at write-time ("added for the refactor", "fixes last week's bug") or require opening another file to understand.
-3. **License header on new files** — every new `.c`/`.h`/`.cpp`/`.hpp` file must have the standard license header.
-4. **Commented-out code blocks** — `#if 0` or large `/* ... */` dead code blocks in new code.
-5. **`#include` order violations** — `config.h` must come first, then system, then CUBRID headers.
-6. **Magic numbers** — bare numeric literals (other than 0, 1, -1, NULL) without a named constant.
-
-The sub-agent returns a flat list of findings (file:line + one-sentence description). Merge these into the main report's Findings section under the appropriate severity:
-- Stale file:line refs and incomprehensible comments -> **Non-blocking (should consider)**
-- Missing license header -> **Blocking (must fix)**
-- Commented-out code, include order, magic numbers -> **Non-blocking (should consider)**
-
-If the sub-agent finds nothing, it returns an empty list and no sanity items appear in the report.
+If `reference.md` flags a rule (e.g., new error code -> 6 places), do not restate the rule body; link to it by name and point to the file:line that needs updating.
 
 ### Step 4: Filter
 
@@ -189,7 +184,7 @@ Drop findings that are:
 
 - **Pre-existing** (not introduced by this PR)
 - **Already raised** in existing PR comments
-- **Stylistic** (formatting, naming) unless CLAUDE.md mandates it — but **never drop Step 3b sanity findings** (comment hygiene, license headers, include order, etc.); those exist precisely because CI does not catch them
+- **Stylistic** (formatting, naming) unless CLAUDE.md or the `reference.md` "Comment & Convention Hygiene" section mandates it
 - **On unmodified lines**
 - **Out of the PR's stated scope** — don't critique the design of code the PR didn't intend to change, even if the diff exposed it
 

@@ -23,7 +23,7 @@ Review CUBRID database engine pull requests and produce a concise Korean review 
 
 ## Output Format
 
-Write the report to `PR-<NUMBER>-report.md` in the repo root (or current directory). The report is **local-only** — never post it to GitHub.
+Write the report to `PR-<NUMBER>-report-<AGENT>.md` in the repo root (or current directory), where `<AGENT>` is the current host CLI: `claude` for Claude Code or `codex` for Codex CLI. For example, the same PR reviewed by both agents produces `PR-6950-report-claude.md` and `PR-6950-report-codex.md`; never use the shared legacy name `PR-6950-report.md`. The report is **local-only** — never post it to GitHub.
 
 ### Language Rules
 
@@ -147,6 +147,8 @@ Run these in parallel:
 
 Use the current host CLI's built-in reviewer as the **primary review pass**. Determine the host from runtime-provided identity or capabilities; do not infer it from whether `claude` or `codex` binaries happen to be installed, because both may coexist.
 
+Set `<AGENT>` for the report path from that same host identity: `claude` under Claude Code and `codex` under Codex CLI. Keep this value unchanged for the remainder of the workflow.
+
 Immediately before invoking the native reviewer, rerun `scripts/check-prereqs.sh "$PR_NUMBER_OR_URL"`. Abort if it fails or returns a different `head_sha` from Step 1. Immediately after the native reviewer finishes, run the gate once more. If it fails or the PR head changed, discard all candidate findings and stop without writing a report. This prevents reviewing or reporting against a PR that moved after setup.
 
 #### Claude Code
@@ -200,7 +202,7 @@ Every surviving finding needs a code snippet or diagnostic as evidence.
 1. **Draft the TL;DR + Summary first.** Write the verdict label and conclusion before the body — this forces a clear stance and reveals whether the rest of the report supports it.
 2. **Write Findings tightly.** One sentence per item. Group as Blocking / Non-blocking / Questions, omitting any subsection that has no items. If no category has any items, replace the section body with a single `없음` line and omit all three subsections.
 3. **Add JIRA Context and Existing Comments only if useful.** Omit empty sections.
-4. **Save** to `PR-<NUMBER>-report.md` in the repo root (or cwd).
+4. **Save** to `PR-<NUMBER>-report-<AGENT>.md` in the repo root (or cwd), using the host-derived `claude` or `codex` value from Step 3.
 5. **Print** three things so the user can sanity-check the call at a glance: (1) the saved file path, (2) the verdict label extracted from the TL;DR (`Blocking` / `Non-blocking` / `작성자 확인 필요`), (3) the TL;DR sentence(s) without the label prefix.
 
 ## Example Output
@@ -245,7 +247,7 @@ This step is required, not optional. It applies to every review. No agent-side j
 
 **How to hand off:**
 
-After saving the initial review to `PR-<NUMBER>-report.md`, invoke `/grill-with-docs` with:
+After saving the initial review to `PR-<NUMBER>-report-<AGENT>.md`, invoke `/grill-with-docs` with:
 
 - **Topic & purpose**: PR review report for `<OWNER>/<REPO>#<NUMBER>`, audience is the PR author and CUBRID maintainers
 - **Output path**: the same report file (the loop revises in place)

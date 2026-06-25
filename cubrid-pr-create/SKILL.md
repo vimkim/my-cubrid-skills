@@ -1,122 +1,122 @@
 ---
 name: cubrid-pr-create
-description: Open a GitHub pull request for the CUBRID project. Use this when the user wants to create a PR for their CUBRID changes.
+description: Open a GitHub pull request for the CUBRID project with a [CBRD-XXXXX] title, Korean PR body, linked detailed doc, and pre-publish material checks. Use when the user wants to create, draft, push, or publish a CUBRID PR, including requests like "create pr", "make pr", "PR 만들어", "PR 올려", or "풀리퀘".
 ---
 
 # CUBRID PR Creator
 
 Create GitHub pull requests for the CUBRID project following team conventions.
 
-## When to Use
+## Non-Negotiable Output Contracts
 
-- User says "create pr", "make pr", "PR 만들어", "PR 올려", "풀리퀘"
-- User wants to push changes and open a PR against CUBRID/CUBRID or a fork
+- The PR body always uses exactly these `##` sections, in this order: `## Purpose`, `## Implementation`, `## Remarks`.
+- Keep `##` headers in English and body prose in plain Korean.
+- Put the JIRA issue URL at the very top, before `## Purpose`.
+- Keep the whole PR body to one screen, roughly 25-35 lines.
+- Put deep technical detail in the separate markdown doc, not in the PR body.
+- Never include local absolute paths, `file://` URLs, or machine-specific workspace paths in PR material. Use repo-relative paths or public GitHub/JIRA URLs.
+- Never include project shortcut commands beginning with the `just` task runner in PR material. Replace them with the actual public verification command, or describe the verification outcome in words.
+- Run the bundled material checker before showing the body draft, before committing the doc repo, and before creating the PR.
 
 ## Arguments
 
 Pass optional arguments to customize:
 
-- `/cubrid-pr-create CBRD-26583` — Use this JIRA ticket number
-- `/cubrid-pr-create CBRD-26583 feat/oos` — Ticket + base branch
-- `/cubrid-pr-create` — Interactive: detect from branch name or ask
+- `/cubrid-pr-create CBRD-26583` - Use this JIRA ticket number
+- `/cubrid-pr-create CBRD-26583 feat/oos` - Ticket plus base branch
+- `/cubrid-pr-create` - Detect from branch name or ask
 
-## Conventions
+## Title Format
 
-### Title Format
-
-```
+```text
 [CBRD-XXXXX] Short English description
 ```
 
-- The JIRA ticket number is **required**. Extract from branch name (e.g., `cbrd-26583-oos-compact` → `CBRD-26583`) or ask the user.
-- Description should be concise (<60 chars after the tag), in English.
-- Use imperative mood: "Fix", "Add", "Refactor", "Support", not "Fixed", "Adding".
+- The JIRA ticket number is required. Extract it from arguments or from branch names like `cbrd-26583-oos-compact`; otherwise ask the user.
+- Keep the description concise, under 60 characters after the tag.
+- Use imperative mood: `Fix`, `Add`, `Refactor`, `Support`; not `Fixed` or `Adding`.
 
-### Two artifacts, two audiences
+## Two Artifacts, Two Audiences
 
-This skill produces **two** things, and keeping them separate is the whole point:
+Produce two separate artifacts:
 
-1. **The PR body** — a short, plain-Korean, **one-screen** summary. It answers "what / why / where to look" in language a Korean 11th-grade student (고2) could follow. It carries **no** deep detail.
-2. **The detailed explanation doc** — a separate markdown file in the `my-cubrid-docs` repo that holds the full technical write-up. The PR body links to it.
+1. The PR body: a short, plain-Korean one-screen summary. It answers what changed, why it matters, and where reviewers should look.
+2. The detailed explanation doc: a separate markdown file in the `my-cubrid-docs` repo. It holds the full technical write-up, and the PR body links to it.
 
-Never put the deep detail in the PR body. If a paragraph is too technical for a smart teenager, it belongs in the doc.
+Do not put deep detail in the PR body. If a paragraph is too technical for a Korean 11th-grade student with no CUBRID-internal knowledge, move it to the doc.
 
-### Body Format (the one-screen summary)
+## PR Body Format
 
-- **Section headers (`##`)**: Always in **English**
-- **Body text**: Always in **Korean**, plain and simple
-- **Code snippets, function names, file paths**: Keep as-is (English/code)
-- **Length**: The whole body must fit on one screen — roughly **25–35 lines**. If it grows past that, move detail into the doc.
-
-The JIRA issue link **must** appear at the very top, before any header. The body has three short sections and ends with a link to the detailed doc:
+Use this exact section shape for every PR, including trivial typo or comment fixes:
 
 ```markdown
 https://jira.cubrid.org/browse/CBRD-XXXXX
 
-> **TL;DR**: 이 PR이 무엇을 바꾸는지·왜 바꾸는지 1–2문장, 쉬운 한국어로.
+## Purpose
 
-## What Changed
+- 이 PR이 해결하려는 문제와 필요한 이유를 1-3줄로 설명합니다.
 
-- 무엇을 바꿨는지 쉬운 말로 2–4줄. 바꾼 파일/함수 이름은 그대로 적는다.
+## Implementation
 
-## Why
+- 실제로 바꾼 내용을 2-5줄로 설명합니다.
+- 파일명, 함수명, 브랜치명은 `src/...`, `heap_record_replace_oos_oids`, `feat/oos`처럼 그대로 씁니다.
 
-- 왜 이 변경이 필요한지 1–2줄. 배경과 문제를 쉬운 말로.
-
-## Review Points
-
-- 리뷰어가 꼭 봐야 할 곳. `heap_file.c:12345`처럼 파일/함수까지 짚는다.
-
----
-
-📖 **자세한 설명**: https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-XXXXX/CBRD-XXXXX-<slug>.md
-```
-
-The 📖 line is the canonical pointer to the doc. **If the link needs context** — a caveat, a follow-up note, or "여기를 먼저 읽으세요" guidance — add a short `## Remarks` section just above the `---` and put the md file's GitHub URL there instead of (or in addition to) the bare 📖 line:
-
-```markdown
 ## Remarks
 
-- 이 변경은 `feat/oos`에서만 적용됩니다. 배경과 엣지 케이스는 아래 문서를 참고하세요.
+- 리뷰어가 먼저 봐야 할 곳, 제한 사항, 후속 작업을 적습니다.
 - 자세한 설명: https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-XXXXX/CBRD-XXXXX-<slug>.md
 ```
 
-Either way, the doc's GitHub URL appears in the body exactly once — don't duplicate the bare 📖 line and the Remarks link. Keep whichever fits, and keep the body within one screen.
+Rules:
 
-For a trivial PR (typo/comment fix), the `## What Changed`/`## Why`/`## Review Points` sections may be dropped, but the TL;DR line and the doc link (📖 line or Remarks) are always present.
+- Do not use `## What Changed`, `## Why`, `## Review Points`, `## Description`, or a top-level `## Test Plan` in the PR body.
+- Do not drop any of the three required sections. If a section is small, keep it short.
+- Put the detailed doc URL exactly once, normally as the last bullet in `## Remarks`.
+- The body must stand alone: a reviewer who does not open JIRA or the doc still understands the change at a high level.
 
-### Writing for an 11th-Grade Korean Reader
+## Writing for an 11th-Grade Korean Reader
 
-The PR body must be understandable by a Korean high-school 11th grader (고2): fluent in Korean, but with **zero** CUBRID-internal knowledge. This is a **clarity** bar, not a precision tradeoff — stay concrete (name the real file, function, behavior) but phrase every explanation in plain words.
+The PR body must be understandable by a Korean high-school 11th grader: fluent in Korean, but with zero CUBRID-internal knowledge.
 
-- **Short sentences.** One idea per sentence. No sentence runs past two lines.
-- **Plain words over jargon.** Prefer everyday Korean. When a CUBRID/DB term is unavoidable, gloss it in one clause on first use: "OOS (큰 컬럼 값을 따로 떼어 다른 페이지에 저장하는 방식)". After the first gloss, use the term raw.
-- **Explain the "why" like you would to a smart teenager.** A one-line analogy is welcome if it earns its place.
-- **No filler.** Drop "본 PR은...", "전반적으로...", "필요에 따라...". State the fact directly.
-- **Keep code identifiers in English code-style.** `pgbuf_unfix`, `MVCC`, `feat/oos` — don't translate or paraphrase.
-- **The body stands alone.** A reviewer who never clicks the JIRA link or the doc still knows what changed and why, on one screen.
-- **Depth goes to the doc, not the body.** If you want a third paragraph, that paragraph belongs in the detailed markdown file.
+- Use short sentences. One idea per sentence.
+- Prefer everyday Korean. When a CUBRID or database term is unavoidable, gloss it once: `OOS (큰 컬럼 값을 따로 떼어 다른 페이지에 저장하는 방식)`.
+- Keep code identifiers, file paths, branch names, and function names in English code style.
+- Explain the reason for the change concretely. Avoid filler like `본 PR은`, `전반적으로`, and `필요에 따라`.
+- Move any third paragraph of technical explanation into the detailed doc.
 
-### Detailed Explanation Doc (separate repo)
+## Detailed Explanation Doc
 
 Every PR's deep technical write-up lives in the `my-cubrid-docs` repo, not in the PR body.
 
-- **Repo path**: `/home/vimkim/gh/my-cubrid-docs` (remote `origin` → `github.com/vimkim/my-cubrid-docs`)
-- **Directory**: `cbrd-XXXXX/` — **lowercase** `cbrd-` + the JIRA number. Create it if missing.
-- **Filename**: `CBRD-XXXXX-<slug>.md` — **uppercase** `CBRD-` in the filename, `<slug>` is a short kebab-case description, e.g. `CBRD-26583-reenable-oos-oid-replacement.md`
-- **Published URL** (after commit + push):
-  `https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-XXXXX/CBRD-XXXXX-<slug>.md`
-  (directory listing: `https://github.com/vimkim/my-cubrid-docs/tree/main/cbrd-XXXXX/`)
+- Resolve the local docs repo as `${CUBRID_PR_DOCS_REPO:-$HOME/gh/my-cubrid-docs}`.
+- Its `origin` remote should point to `github.com/vimkim/my-cubrid-docs`.
+- Directory: `cbrd-XXXXX/` using lowercase `cbrd-`.
+- Filename: `CBRD-XXXXX-<slug>.md` using uppercase `CBRD-` in the filename.
+- Published URL: `https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-XXXXX/CBRD-XXXXX-<slug>.md`.
 
-The doc holds what used to be the long PR body and more — it can be as technical as CUBRID maintainers need:
+Use the same top-level section contract in the doc:
 
-- `## Description` — 왜 이 변경이 필요한지 배경 설명
-- `## Implementation` — 주요 변경 내용을 bullet로. 파일명, 함수명 포함.
-- `## Remarks` — 제한 사항, 주의점, 후속 작업
-- `## Test Plan` (관련 있으면) — 테스트 방법 및 검증 계획
-- 다이어그램, 엣지 케이스, 호환성/성능 영향 등 필요한 만큼
+- `## Purpose` - background, problem, and intended outcome
+- `## Implementation` - full technical change list with repo-relative file paths and function names
+- `## Remarks` - limits, risks, compatibility notes, reviewer focus, follow-up, and verification notes
 
-Doc convention matches the PR body: English `##` headers, Korean prose, code identifiers as-is.
+If test details need structure, put `### Test Plan` under `## Remarks` instead of adding another top-level PR-format section.
+
+Doc convention matches the PR body: English headers, Korean prose, code identifiers as-is.
+
+## Material Checker
+
+Use the bundled checker at `scripts/check-pr-material.sh`, relative to this skill directory. Resolve it once as `checker="<this-skill-directory>/scripts/check-pr-material.sh"` before running commands from the CUBRID worktree. It validates the PR body section contract and rejects forbidden machine-local material.
+
+Run it on the generated PR body file and the detailed doc before the user confirms, before committing the docs repo, and again immediately before `gh pr create`:
+
+```bash
+body_file="$(mktemp)"
+# Write the PR body into "$body_file".
+bash "$checker" --body "$body_file" "$doc_file"
+```
+
+If it fails, edit the PR body and doc until it passes. Do not ask the user to approve material that still contains local paths, `file://` URLs, machine-specific workspace paths, old PR headings, or task-runner shortcut commands.
 
 ## Execution Steps
 
@@ -124,73 +124,84 @@ Doc convention matches the PR body: English `##` headers, Korean prose, code ide
 
 Run these in parallel:
 
-1. `git status` — check for uncommitted changes
-2. `git branch -vv` — current branch and tracking info
-3. `git remote -v` — available remotes
+1. `git status` - check for uncommitted changes
+2. `git branch -vv` - current branch and tracking info
+3. `git remote -v` - available remotes
 
 If there are uncommitted changes, warn the user and ask whether to proceed or commit first.
 
 ### Step 2: Determine PR Parameters
 
-1. **JIRA ticket**: Extract from arguments, branch name (`cbrd-XXXXX` or `CBRD-XXXXX` pattern), or ask.
-2. **Base branch**: If not specified, detect:
-   - For `feat/oos*` branches → base is `feat/oos`
-   - For `CBRD-*` branches → base is `develop`
-   - For `cubvec/*` branches → base is `cubvec/cubvec`
-   - Otherwise ask the user
-3. **Target repo**: Default `CUBRID/CUBRID`. Use `--repo` if different.
-4. **Source**: Determine the user's fork remote (typically `vk` for `vimkim/cubrid`). The head ref format is `<github-user>:<branch>`.
-5. **Docs repo**: Confirm `/home/vimkim/gh/my-cubrid-docs` exists (it should). The doc directory will be `cbrd-XXXXX/`.
+1. JIRA ticket: extract from arguments, branch name (`cbrd-XXXXX` or `CBRD-XXXXX`), or ask.
+2. Base branch:
+   - For `feat/oos*` branches, use `feat/oos`.
+   - For `CBRD-*` branches, use `develop`.
+   - For `cubvec/*` branches, use `cubvec/cubvec`.
+   - Otherwise ask the user.
+3. Target repo: default to `CUBRID/CUBRID` unless the user specifies another repo.
+4. Source: determine the user's fork remote and use `<github-user>:<branch>` for the PR head.
+5. Docs repo: set `docs_repo="${CUBRID_PR_DOCS_REPO:-$HOME/gh/my-cubrid-docs}"` and confirm it exists.
 
 ### Step 3: Analyze Changes
 
-1. Fetch the base branch: `git fetch <upstream-remote> <base-branch>`
-2. Show commits: `git log --oneline <upstream>/<base>..HEAD`
-3. Show diff stat: `git diff <upstream>/<base>...HEAD --stat`
+1. Fetch the base branch: `git fetch <upstream-remote> <base-branch>`.
+2. Show commits: `git log --oneline <upstream>/<base>..HEAD`.
+3. Show diff stat: `git diff <upstream>/<base>...HEAD --stat`.
 4. Read the full diff to understand all changes.
 5. If a JIRA ticket was identified, fetch context with `/jira CBRD-XXXXX` for richer description.
 
 ### Step 4: Write the Detailed Explanation Doc
 
-1. Pick a short kebab-case `<slug>` from the change (e.g. `reenable-oos-oid-replacement`).
-2. Create the directory and file:
-   `/home/vimkim/gh/my-cubrid-docs/cbrd-XXXXX/CBRD-XXXXX-<slug>.md`
-3. Write the full technical explanation there: `## Description`, `## Implementation`, `## Remarks`, and `## Test Plan` if relevant — with file/function names, diagrams, edge cases.
-4. **Grill it.** Run the detailed doc through `/grill-with-docs` (see the Mandatory section below). The doc is the substantive artifact, so this is where the grill loop applies.
+1. Pick a short kebab-case `<slug>` from the change, such as `reenable-oos-oid-replacement`.
+2. Create `doc_dir="$docs_repo/cbrd-XXXXX"` and `doc_file="$doc_dir/CBRD-XXXXX-<slug>.md"`.
+3. Write the full technical explanation with `## Purpose`, `## Implementation`, and `## Remarks`.
+4. Use repo-relative paths like `src/storage/heap_file.c`, never local absolute paths.
+5. Grill the doc using the mandatory loop below. The doc is the substantive artifact, so the grill loop applies there.
 
-### Step 5: Commit and Push the Docs Repo
+### Step 5: Draft the One-Screen PR Body
+
+1. Write the PR body to `body_file="$(mktemp)"`.
+2. Use only the required section order: `## Purpose`, `## Implementation`, `## Remarks`.
+3. Keep it within 25-35 lines and at the 11th-grade-reader bar.
+4. Put the detailed doc URL exactly once as the final bullet in `## Remarks`.
+
+### Step 6: Run the Material Checker
+
+Run:
 
 ```bash
-git -C /home/vimkim/gh/my-cubrid-docs add cbrd-XXXXX/
-git -C /home/vimkim/gh/my-cubrid-docs commit -m "$(cat <<'EOF'
-docs(CBRD-XXXXX): add PR explanation for <slug>
-
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
-EOF
-)"
-git -C /home/vimkim/gh/my-cubrid-docs push origin main
+bash "$checker" --body "$body_file" "$doc_file"
 ```
 
-After pushing, the doc is live at:
-`https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-XXXXX/CBRD-XXXXX-<slug>.md`
+Fix every failure, then re-run. This check is required before showing the body to the user, before committing the docs repo, and before creating the PR.
 
-This is the URL you put in the PR body's 📖 link. (`.omc` is git-ignored in this repo, so `git add cbrd-XXXXX/` won't pick up agent state.)
+### Step 7: Confirm With the User
 
-### Step 6: Draft the One-Screen PR Body
+Show the draft title, base branch, head branch, doc URL, and PR body. Ask for confirmation before publishing.
 
-Write the simple, one-screen Korean body — TL;DR + `## What Changed` + `## Why` + `## Review Points` — and end it with the 📖 link to the doc from Step 5. Keep it within 25–35 lines and at the 11th-grade-reader bar.
+### Step 8: Commit and Push the Docs Repo
 
-**Draft the TL;DR first**, before the body sections. This forces a clear thesis and reveals when the PR is doing too many unrelated things.
+After the checker passes and the user confirms:
 
-Show the draft to the user and ask for confirmation before creating.
+```bash
+git -C "$docs_repo" add "cbrd-XXXXX/"
+git -C "$docs_repo" commit -m "docs(CBRD-XXXXX): add PR explanation for <slug>"
+git -C "$docs_repo" push origin main
+```
 
-### Step 7: Push the Branch and Create the PR
+After pushing, use the published GitHub URL in the PR body's `## Remarks` section.
+
+### Step 9: Push the Branch and Create the PR
 
 1. Push the branch to the user's fork:
    ```bash
    git push <fork-remote> <branch> -u
    ```
-2. Create the PR using `gh`:
+2. Re-run the checker:
+   ```bash
+   bash "$checker" --body "$body_file" "$doc_file"
+   ```
+3. Create the PR:
    ```bash
    gh pr create --repo CUBRID/CUBRID \
      --draft \
@@ -198,34 +209,13 @@ Show the draft to the user and ask for confirmation before creating.
      --head <user>:<branch> \
      --assignee vimkim \
      --title "[CBRD-XXXXX] Title" \
-     --body "$(cat <<'EOF'
-   https://jira.cubrid.org/browse/CBRD-XXXXX
-
-   > **TL;DR**: 한두 문장, 쉬운 한국어 요약.
-
-   ## What Changed
-
-   - 쉬운 말로 무엇을 바꿨는지...
-
-   ## Why
-
-   - 쉬운 말로 왜 바꿨는지...
-
-   ## Review Points
-
-   - `파일.c:줄번호` 짚어주기...
-
-   ---
-
-   📖 **자세한 설명**: https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-XXXXX/CBRD-XXXXX-<slug>.md
-   EOF
-   )"
+     --body-file "$body_file"
    ```
-3. Print the resulting PR URL.
+4. Print the resulting PR URL.
 
 ## Example Output
 
-```
+```text
 Doc pushed: https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-26583/CBRD-26583-reenable-oos-oid-replacement.md
 PR created: https://github.com/CUBRID/cubrid/pull/6950
 
@@ -237,26 +227,23 @@ Head:  vimkim:feat/oos-replace-oos-oid
 ## Tips
 
 - If the branch has already been pushed, skip the branch push step.
-- If a PR already exists for the branch, show it instead of creating a duplicate. If the doc has changed, still commit/push the docs repo and update the PR body link.
+- If a PR already exists for the branch, show it instead of creating a duplicate. If the doc has changed, still update the docs repo and PR body link.
 - For multi-commit PRs, summarize the overall change rather than listing each commit message.
-- Always use `gh pr create` with heredoc for the body to handle multi-line Korean text correctly.
+- Use `--body-file "$body_file"` for multi-line Korean text.
 - The one-screen rule is a hard limit. When in doubt, cut a sentence from the body and add it to the doc.
 
 ## Mandatory: Iterate with Grill-with-Docs
 
-The **detailed explanation doc** (Step 4) must go through `/grill-with-docs` before the docs repo is committed and pushed. Do not push a single-pass doc. Single-pass write-ups drift toward hand-wavy filler and `## Implementation` bullets that hide what actually changed.
+The detailed explanation doc must go through `/grill-with-docs` before the docs repo is committed and pushed. Do not push a single-pass doc.
 
-This step is required, not optional. It applies to every PR. No agent-side judgment — including size, scope, perceived triviality, or perceived risk — is a valid skip criterion. The only legitimate skip is when the user, in the message that triggered this skill, explicitly says "skip grill" or "don't grill this" (or unambiguous equivalent: "no grill", "skip the grill loop", "just push it"). If in doubt, do the grill loop.
+This applies to every PR. The only legitimate skip is when the user explicitly says `skip grill`, `do not grill this`, `no grill`, or an unambiguous equivalent in the message that triggered this skill.
 
-**How to hand off:**
+Hand off with:
 
-1. **Draft the doc to its real path** (`/home/vimkim/gh/my-cubrid-docs/cbrd-XXXXX/CBRD-XXXXX-<slug>.md`) — the loop revises it in place.
-2. **Invoke `/grill-with-docs`** with:
-   - **Topic & purpose**: PR title, JIRA ticket, target reviewers (CUBRID maintainers)
-   - **Output path**: the doc file (the loop revises in place)
-   - **Source material**: the diff (`git diff <upstream>/<base>...HEAD`), `/jira CBRD-XXXXX` output, related issues/PRs
-   - **Review angle**: completeness and correctness of `## Description` / `## Implementation` / `## Remarks`, adherence to CUBRID doc conventions (Korean body, English `##` headers), every CUBRID-internal term glossed on first use
-   - **Round cap**: default 5
-3. **After approval**, commit + push the docs repo (Step 5), then draft the one-screen PR body (Step 6) and create the PR (Step 7).
+1. Topic and purpose: PR title, JIRA ticket, and target reviewers.
+2. Output path: the `doc_file`; the loop revises it in place.
+3. Source material: the diff, JIRA output, related issues, and related PRs.
+4. Review angle: completeness and correctness of `## Purpose`, `## Implementation`, and `## Remarks`; CUBRID doc conventions; every CUBRID-internal term glossed on first use.
+5. Round cap: default 5.
 
-The one-screen PR body is then derived from the approved doc — keep it simple, precise, and at the 11th-grade-reader bar. The body does not need its own grill loop; its job is only to summarize and link.
+After approval, run the material checker, draft the PR body, confirm with the user, publish the docs repo, and create the PR.

@@ -161,17 +161,25 @@ If `/code-review` is unavailable, report that `code-review@claude-plugins-offici
 
 #### Codex CLI
 
-Invoke the built-in `/review` workflow exactly once. In a shell-capable Codex runtime, this is the native `codex review` command:
+Invoke the built-in `/review` workflow exactly once. In the installed Codex CLI shape, `--base` is mutually
+exclusive with a prompt argument, so the mandatory native reviewer command is:
 
 ```bash
-codex review --base "origin/<BASE_REF>" "Review PR <OWNER>/<REPO>#<NUMBER>. Use the supplied PR/JIRA context and CUBRID review rules. Report only issues introduced by this PR, with file:line evidence. Do not modify files or publish anything."
+codex review --base "origin/<BASE_REF>"
 ```
 
-Run it from the current worktree already validated by Step 1. Do not fetch, checkout, switch branches, reset, clean, or create another worktree. Capture stdout as candidate findings. Treat a non-zero exit or empty output as a review-engine failure; surface it instead of silently replacing the native review with a weaker ad-hoc pass.
+Do not append a prompt argument or pipe prompt-specific instructions on stdin with `-` when `--base` is used.
+Run it from the current worktree already validated by Step 1. The host workflow must gather PR diff, PR/JIRA
+context, existing comments, `reference.md`, and relevant `CLAUDE.md` / `AGENTS.md` files before this native pass,
+then perform CUBRID-specific validation, filtering, and report formatting after it. Do not fetch, checkout, switch
+branches, reset, clean, or create another worktree. Capture stdout as candidate findings. Treat a non-zero exit or
+empty output as a review-engine failure; surface it instead of silently replacing the native review with a weaker
+ad-hoc pass.
 
 #### Shared Review Brief
 
-Require the native reviewer to:
+For Claude Code, supply this brief to the native reviewer. For Codex CLI's `--base`-only command, do not pass it via
+argv or stdin; apply it during host-side verification and filtering after the native pass:
 
 - Read the full functions surrounding suspicious hunks and trace call chains where needed.
 - Check logic/correctness, memory safety, concurrency/thread safety, JIRA intent, build-mode guards, and the `reference.md` "Comment & Convention Hygiene" rules.

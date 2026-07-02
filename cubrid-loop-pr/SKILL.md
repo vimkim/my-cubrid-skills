@@ -2,7 +2,7 @@
 name: cubrid-loop-pr
 description: Auto-iterate on a CUBRID PR by looping fix -> commit -> push -> trigger CI -> wait, until both `test_sql` and `test_medium` checks pass or a 24-hour cap is hit. Use when the user wants hands-off iteration on a PR until CI is green and is willing to leave the session running. Triggers on phrases like 'loop pr', 'loop on pr', 'auto-fix until ci passes', 'keep fixing until tests pass', 'iterate until sql and medium pass', 'run pr loop'.
 argument-hint: <pr-url> <intent>
-allowed-tools: Bash(gh *), Bash(git *), Bash(jq *), Bash(date *), Bash(sleep *), Bash(awk *), Bash(grep *), Bash(sed *), Bash(tail *), Bash(head *), Read, Write, Edit, Glob, Grep, Skill
+allowed-tools: Bash(bash *), Bash(gh *), Bash(git *), Bash(jq *), Bash(date *), Bash(sleep *), Bash(awk *), Bash(grep *), Bash(sed *), Bash(tail *), Bash(head *), Read, Write, Edit, Glob, Grep, Skill
 ---
 
 # CUBRID PR CI Loop
@@ -51,25 +51,29 @@ Spell these out at invocation and carry them through the loop:
 - `last_failure_summary` — empty on round 1; on round >= 2, the tails of the failed CI job logs from the previous round.
 - `head_sha` — refreshed after every push; checks are scoped to this SHA.
 - `trigger_epoch` — when the latest `/run sql medium` comment was posted; used to ignore stale check runs.
-- `LOOP_BASELINE_DIRTY_FILE` — path to a NUL-separated snapshot of `git status --porcelain -z` taken at Step 1 substep 6. Step 4 substep 2 subtracts this set from the per-round dirty list to stage only the loop's own additions.
+- `LOOP_BASELINE_DIRTY_FILE` — path to a NUL-separated snapshot of `git status --porcelain -z` taken at Step 1 substep 7. Step 4 substep 2 subtracts this set from the per-round dirty list to stage only the loop's own additions.
 
 ## Execution Steps
 
 ### Step 1: Parse and Validate
 
 1. Refuse with a usage hint if `<pr-url>` or `<intent>` is empty.
-2. Validate the URL: `gh pr view <pr-url> --json number,headRefName,baseRefName,state,isDraft,url`. If exit is non-zero, refuse.
-3. If `state != OPEN`, warn once and ask whether to proceed (closed/merged PRs cannot be pushed to).
-4. Verify the working tree is on the PR's `headRefName`, AND that the local HEAD matches the PR's `headRefOid`. Branch-name match alone is not enough: a teammate may have force-pushed, or the user may not have pulled, leaving the local commit older than the PR head. The first `git push` would then either be rejected or — worse — silently fast-forward and drop the teammate's commits.
+2. Source the shared helper from `cubrid-common` and resolve `UPSTREAM_REMOTE=$(cubrid_detect_remote)`. If no remote points at `CUBRID/cubrid`, surface the helper's error and stop.
+   ```bash
+   common="<this-skill-dir>/../cubrid-common/scripts/cubrid-common.sh"
+   source "$common"
+   UPSTREAM_REMOTE=$(cubrid_detect_remote)
+   ```
+3. Validate the URL: `gh pr view <pr-url> --json number,headRefName,baseRefName,state,isDraft,url`. If exit is non-zero, refuse.
+4. If `state != OPEN`, warn once and ask whether to proceed (closed/merged PRs cannot be pushed to).
+5. Verify the working tree is on the PR's `headRefName`, AND that the local HEAD matches the PR's `headRefOid`. Branch-name match alone is not enough: a teammate may have force-pushed, or the user may not have pulled, leaving the local commit older than the PR head. The first `git push` would then either be rejected or — worse — silently fast-forward and drop the teammate's commits.
 
    ```bash
    # Branch name must match.
    test "$(git branch --show-current)" = "$(gh pr view <pr-url> --json headRefName --jq .headRefName)" \
      || { echo "Check out the PR's headRef first; this loop pushes to the PR branch."; exit 1; }
 
-   # Refresh remote refs (uses the auto-detected upstream remote from Step 4's
-   # detect_cubrid_remote helper; if you reach this substep before the helper
-   # has been called, just call `git fetch` against all remotes here).
+   # Refresh remote refs using the auto-detected CUBRID upstream remote.
    git fetch "$UPSTREAM_REMOTE" 2>/dev/null || git fetch --all
    local_head=$(git rev-parse HEAD)
    pr_head=$(gh pr view <pr-url> --json headRefOid --jq .headRefOid)
@@ -100,8 +104,8 @@ Spell these out at invocation and carry them through the loop:
    fi
    ```
    The hint never suggests `git reset --hard` unconditionally — that would lose unpushed local work in the "ahead" and "diverged" cases. Each remediation matches its divergence shape; the user pastes whichever applies.
-5. Capture `start_epoch=$(date +%s)`, `deadline_epoch=$((start_epoch + 86400))`. Print both as ISO timestamps. (Captured here, before the baseline snapshot in substep 6, so the snapshot file path can be parameterized by `start_epoch`.)
-6. Capture working-tree baseline (replaces the previous "refuse if dirty" rule). Real CUBRID worktrees commonly carry IDE config, submodule pointer drift, and unrelated local edits; refusing on any of them blocks startup. Instead, snapshot the current dirty set in NUL-separated form so subsequent rounds can stage only what the loop's own writer adds on top:
+6. Capture `start_epoch=$(date +%s)`, `deadline_epoch=$((start_epoch + 86400))`. Print both as ISO timestamps. (Captured here, before the baseline snapshot in substep 7, so the snapshot file path can be parameterized by `start_epoch`.)
+7. Capture working-tree baseline (replaces the previous "refuse if dirty" rule). Real CUBRID worktrees commonly carry IDE config, submodule pointer drift, and unrelated local edits; refusing on any of them blocks startup. Instead, snapshot the current dirty set in NUL-separated form so subsequent rounds can stage only what the loop's own writer adds on top:
    ```bash
    LOOP_BASELINE_DIRTY_FILE="/tmp/cubrid-loop-baseline-${start_epoch}.txt"
    git status --porcelain -z > "$LOOP_BASELINE_DIRTY_FILE"
@@ -147,7 +151,7 @@ When the grill skill returns:
 The grill skill leaves the tree dirty. Commit only what the grill skill changed.
 
 1. `git status --porcelain` — if empty, the grill skill made no real edits; print a warning and stop the loop with: "Round <round>: grill skill produced no diff; aborting to avoid spamming CI."
-2. Stage only the files newly dirty since `LOOP_BASELINE_DIRTY_FILE` was captured at Step 1 substep 6. The previous one-line `git status --porcelain | awk '{print $2}' | xargs git add` was broken in three ways: (a) `awk '{print $2}'` truncates filenames containing spaces; (b) on a rename line `R  old -> new`, `$2` returns `old` (the path the user wants to UN-stage); (c) `xargs` without `-0` is unsafe on shell metacharacters. The replacement uses NUL-separated porcelain (`-z`) and a bytewise parser so all three issues are fixed at once:
+2. Stage only the files newly dirty since `LOOP_BASELINE_DIRTY_FILE` was captured at Step 1 substep 7. The previous one-line `git status --porcelain | awk '{print $2}' | xargs git add` was broken in three ways: (a) `awk '{print $2}'` truncates filenames containing spaces; (b) on a rename line `R  old -> new`, `$2` returns `old` (the path the user wants to UN-stage); (c) `xargs` without `-0` is unsafe on shell metacharacters. The replacement uses NUL-separated porcelain (`-z`) and a bytewise parser so all three issues are fixed at once:
    ```bash
    ROUND_PORCELAIN_FILE="/tmp/cubrid-loop-round-${start_epoch}-r${round}.txt"
    git status --porcelain -z > "$ROUND_PORCELAIN_FILE"
@@ -215,11 +219,11 @@ The grill skill leaves the tree dirty. Commit only what the grill skill changed.
    ```
 
    If `git commit` fails (pre-commit hook), surface the error, do NOT push, and stop the loop. The user must fix hook issues manually.
-4. Push to the auto-detected CUBRID upstream remote (do NOT rely on the branch's tracking remote being correct, and do NOT hardcode `origin` — CUBRID checkouts commonly use `cub`, `vk`, etc.). Use the `detect_cubrid_remote` helper from `cubrid-grill-and-implement`'s Shared snippets section to set `UPSTREAM_REMOTE`, then:
+4. Push to the auto-detected CUBRID upstream remote (do NOT rely on the branch's tracking remote being correct, and do NOT hardcode `origin` — CUBRID checkouts commonly use `cub`, `vk`, etc.). Use `cubrid_detect_remote` from the shared `cubrid-common` helper to set `UPSTREAM_REMOTE`, then:
    ```bash
    git push "$UPSTREAM_REMOTE" "HEAD:<headRefName>"
    ```
-   If `git push` fails (rejected, hook block, auth), surface the error and stop the loop. If `detect_cubrid_remote` itself fails (no remote points at CUBRID/cubrid), surface the helper's refusal and stop.
+   If `git push` fails (rejected, hook block, auth), surface the error and stop the loop. If `cubrid_detect_remote` itself fails (no remote points at CUBRID/cubrid), surface the helper's refusal and stop.
 5. Refresh `head_sha=$(git rev-parse HEAD)`. Print the new SHA.
 
 ### Step 5: Trigger CI

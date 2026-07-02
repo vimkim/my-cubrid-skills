@@ -2,7 +2,7 @@
 name: cubrid-grill-and-implement
 description: "Iteratively implement CUBRID C/C++ code changes by looping a writer subagent against a relentless CUBRID PR-style reviewer subagent, with a build gate every round, until the reviewer explicitly approves or a round cap is hit. Accepts a JIRA issue, a GitHub PR URL, a spec path, or an inline spec - refuses to start without one. Trigger on phrases like 'implement and grill', 'grill the implementation', 'CUBRID grill-and-revise', 'implement CBRD-XXXXX with grill', 'implement and adversarially review', or 'grill until it compiles and passes review'."
 argument-hint: "<CBRD-XXXXX | pr-url | spec-path | inline-spec>"
-allowed-tools: Bash(gh *), Bash(git *), Bash(jq *), Bash(just *), Bash(tee *), Bash(tail *), Bash(cat *), Bash(test *), Bash(grep *), Bash(realpath *), Read, Write, Edit, Glob, Grep, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics_directory, mcp__plugin_oh-my-claudecode_t__lsp_hover, mcp__plugin_oh-my-claudecode_t__lsp_goto_definition, mcp__plugin_oh-my-claudecode_t__lsp_find_references, mcp__plugin_oh-my-claudecode_t__lsp_document_symbols, Agent
+allowed-tools: Bash(bash *), Bash(gh *), Bash(git *), Bash(jq *), Bash(just *), Bash(tee *), Bash(tail *), Bash(cat *), Bash(test *), Bash(grep *), Bash(realpath *), Read, Write, Edit, Glob, Grep, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics_directory, mcp__plugin_oh-my-claudecode_t__lsp_hover, mcp__plugin_oh-my-claudecode_t__lsp_goto_definition, mcp__plugin_oh-my-claudecode_t__lsp_find_references, mcp__plugin_oh-my-claudecode_t__lsp_document_symbols, Agent
 ---
 
 # CUBRID Grill-and-Implement
@@ -73,9 +73,15 @@ If the argument is empty, print the four input options and stop. Otherwise class
 
 ### Step 2: Verify working tree is a CUBRID checkout
 
-Run: `test -f CMakeLists.txt && grep -qE '^project[[:space:]]*\(CUBRID[[:space:]]*\)' CMakeLists.txt`. If exit is non-zero, refuse to start with: "Not in a CUBRID source checkout (CMakeLists.txt missing or does not declare a CUBRID project). Re-run from a CUBRID worktree." Do not proceed past this step on failure.
+Resolve and source the shared helper from the sibling `cubrid-common` skill, then require a CUBRID source checkout:
 
-The regex tolerates both `project(CUBRID)` (no space, the actual form in CUBRID/cubrid's CMakeLists.txt line 42) and `project (CUBRID)` (one or more spaces). The trailing `[[:space:]]*\)` anchors the close paren so unrelated forks like `project(CUBRIDdb)` are correctly rejected.
+```bash
+common="<this-skill-dir>/../cubrid-common/scripts/cubrid-common.sh"
+source "$common"
+cubrid_require_source_tree "$PWD"
+```
+
+If this fails, refuse to start with the helper's message. Do not proceed past this step. The helper owns the `project(CUBRID)` detection regex so this rule stays consistent with the other CUBRID skills.
 
 ### Step 3: Fetch context and capture baseline
 
@@ -91,7 +97,7 @@ Always Read the resolved `reference.md` path (see Reference Files below) and any
 Capture baseline:
 
 - For `jira` / `spec-path` / `inline-spec`: `baseline_ref = $(git rev-parse HEAD)`.
-- For `pr`: detect the upstream CUBRID remote (do NOT hardcode `origin`; CUBRID checkouts commonly use `cub`, `vk`, `hg`, etc.). Use the `detect_cubrid_remote` helper from Shared snippets below to set `UPSTREAM_REMOTE`. Run `git fetch "$UPSTREAM_REMOTE" <baseRefName>` to refresh the remote-tracking ref. Then validate with `git rev-parse --verify "$UPSTREAM_REMOTE/<baseRefName>"`; if that fails, refuse with the message the helper emits and stop. On success: `baseline_ref = $(git merge-base HEAD "$UPSTREAM_REMOTE/<baseRefName>")`. The reviewer must judge the PR's full delta, not only the writer's new edits on top of the PR head.
+- For `pr`: detect the upstream CUBRID remote (do NOT hardcode `origin`; CUBRID checkouts commonly use `cub`, `vk`, `hg`, etc.). Use `UPSTREAM_REMOTE=$(cubrid_detect_remote)` from the shared `cubrid-common` helper. Run `git fetch "$UPSTREAM_REMOTE" <baseRefName>` to refresh the remote-tracking ref. Then validate with `git rev-parse --verify "$UPSTREAM_REMOTE/<baseRefName>"`; if that fails, refuse with the message the helper emits and stop. On success: `baseline_ref = $(git merge-base HEAD "$UPSTREAM_REMOTE/<baseRefName>")`. The reviewer must judge the PR's full delta, not only the writer's new edits on top of the PR head.
 
 Print `baseline_ref` to the user. Initialize `round=1`, `max_rounds=3` (or user override), `last_critique=""`, `last_reviewer_critique=""`, `previous_round_diff_summary=""`, `build_status="skipped"`.
 
@@ -113,24 +119,11 @@ At the start of this step, compute `cubrid_grill_log = /tmp/cubrid-grill-build-$
 
 Detect the build command and validate the build environment:
 
-- Check for a `build` recipe via `just --list 2>/dev/null | grep -qE '^\s*build( |$)'`.
-- If absent, refuse the loop with: "No `just build` recipe found in this checkout. Add one or invoke `/cubrid-build` manually before re-running this skill." Do not improvise a substitute build command.
+- Source the shared `cubrid-common` helper if it is not already sourced.
+- Run `cubrid_require_just_build_recipe "$PWD"`. If absent, refuse the loop with: "No `just build` recipe found in this checkout. Add one or invoke `/cubrid-build` manually before re-running this skill." Do not improvise a substitute build command.
 - CUBRID's `just build` recipe reads `$env.PRESET_MODE` to pick a CMake preset. If the variable is unset or holds a stale value (e.g., a preset from another worktree that does not exist in this worktree's `CMakePresets.json`), the build fails with a `No such build preset` CMake error that has nothing to do with the user's code. Validate before invoking the build:
   ```bash
-  if [ -z "${PRESET_MODE:-}" ]; then
-    echo "PRESET_MODE is not set. just build requires a CMake preset."
-    echo "Available presets in this worktree:"
-    cmake --list-presets 2>/dev/null
-    echo "Set PRESET_MODE to one of the above (e.g. PRESET_MODE=debug_clang) and re-invoke."
-    exit 1
-  fi
-  if ! cmake --list-presets 2>/dev/null | awk -F'"' '/"/ { print $2 }' | grep -qx "$PRESET_MODE"; then
-    echo "PRESET_MODE=$PRESET_MODE is not a valid CMake preset for this worktree."
-    echo "Available presets:"
-    cmake --list-presets 2>/dev/null
-    echo "Set PRESET_MODE to a valid preset and re-invoke."
-    exit 1
-  fi
+  cubrid_require_valid_preset_mode "$PWD" || exit 1
   ```
   Refuse, do not default. Defaulting would couple the skill to one developer's setup and contradicts the "Do not improvise a substitute build command" anti-pattern below. The user is responsible for picking a preset.
 - Once `PRESET_MODE` is validated, trust `just build` and run:
@@ -228,62 +221,15 @@ Parse the verdict:
 
 ## Shared snippets
 
-### `detect_cubrid_remote`
+### Shared CUBRID Helpers
 
-Used by both `cubrid-grill-and-implement` (Step 3 PR mode) and `cubrid-loop-pr` (Step 4 push). The helper resolves `UPSTREAM_REMOTE` to the git remote that points at the CUBRID/cubrid repository, with deterministic tie-breaks. Both skills MUST source this helper text verbatim — keep them in lockstep on edits.
+Use `cubrid-common/scripts/cubrid-common.sh` for common preflight helpers. It provides:
 
-```bash
-detect_cubrid_remote() {
-  # Stage 1: branch upstream, only if it points at CUBRID/cubrid (case-insensitive).
-  local upstream
-  upstream=$(git rev-parse --abbrev-ref @{upstream} 2>/dev/null) || upstream=""
-  if [ -n "$upstream" ]; then
-    local up_remote="${upstream%%/*}"
-    local up_url
-    up_url=$(git remote get-url "$up_remote" 2>/dev/null) || up_url=""
-    if [ -n "$up_url" ] && printf '%s' "$up_url" \
-        | grep -qiE 'github\.com[:/]cubrid/cubrid(\.git)?$'; then
-      echo "Detected CUBRID remote via branch upstream: $up_remote ($up_url)" >&2
-      printf '%s\n' "$up_remote"
-      return 0
-    fi
-  fi
+- `cubrid_require_source_tree "$PWD"` for CUBRID checkout validation.
+- `cubrid_require_just_build_recipe "$PWD"` and `cubrid_require_valid_preset_mode "$PWD"` for the build gate.
+- `cubrid_detect_remote` for resolving `UPSTREAM_REMOTE`.
 
-  # Stage 2: scan all remotes; collect every remote whose URL matches CUBRID/cubrid.
-  local matches
-  matches=$(git remote -v | awk '
-    tolower($0) ~ /github\.com[:\/]cubrid\/cubrid(\.git)?[[:space:]]+\(fetch\)/ {
-      print $1
-    }
-  ' | sort -u)
-  if [ -z "$matches" ]; then
-    echo "No git remote points at CUBRID/cubrid (case-insensitive). Available remotes:" >&2
-    git remote -v >&2
-    return 1
-  fi
-
-  # Stage 3: tie-break. Prefer a remote literally named "origin" or "cub" (in
-  # that order); otherwise take the first match alphabetically and log the
-  # alternatives so the user sees which one was picked and which were ignored.
-  local picked=""
-  if printf '%s\n' "$matches" | grep -qx 'origin'; then
-    picked='origin'
-  elif printf '%s\n' "$matches" | grep -qx 'cub'; then
-    picked='cub'
-  else
-    picked=$(printf '%s\n' "$matches" | head -1)
-  fi
-  echo "Detected CUBRID remote via URL scan: $picked" >&2
-  local others
-  others=$(printf '%s\n' "$matches" | grep -vx "$picked" | tr '\n' ' ')
-  if [ -n "$others" ]; then
-    echo "Other CUBRID-pointing remotes (ignored): $others" >&2
-  fi
-  printf '%s\n' "$picked"
-}
-```
-
-The cascade fails closed: Stage 2 returning empty refuses the skill rather than guessing. The variable is named `UPSTREAM_REMOTE` (not `ORIGIN_REMOTE`) so the name reflects its semantics — "the remote that points at the canonical upstream repository" — regardless of whether it resolves to `origin`, `cub`, or some other local name.
+`cubrid_detect_remote` fails closed when no git remote points at `CUBRID/cubrid`, rather than guessing. The variable is named `UPSTREAM_REMOTE` (not `ORIGIN_REMOTE`) so the name reflects its semantics — "the remote that points at the canonical upstream repository" — regardless of whether it resolves to `origin`, `cub`, or some other local name.
 
 ## Reference Files
 

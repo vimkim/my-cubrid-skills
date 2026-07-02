@@ -1,6 +1,6 @@
 ---
 name: cubrid-jira-issue-write
-description: Write a CUBRID JIRA issue report in Korean with English section headers (##). Top of issue is an Issue Triage block — 목적 (필수) + 이유 (필수, 현재 동작·한계와 그 영향 두 축을 모두 포함) + 방안 (합의된 스펙은 구체적으로, 미결정은 TBD) — written in whatever format reads best (short prose, mini-tables, ASCII call-flow diagrams, callouts — NOT forced dot-lists), followed by an explicitly separated AI-Generated Context block. Favors diagrams and comparison tables for call flows and option trade-offs. Writes structured markdown to /home/vimkim/gh/my-cubrid-jira/issues/. Use when the user wants to write up a JIRA issue, document a bug finding, or create a feature/task report for CUBRID.
+description: Write a CUBRID JIRA issue report in Korean with English section headers (##). Top of issue is an Issue Triage block — 목적 (필수) + 이유 (필수, 현재 동작·한계와 그 영향 두 축을 모두 포함, 가능하면 AS-IS/TO-BE 대비 명시) + 방안 (합의된 스펙은 구체적으로, 미결정은 TBD) — written in whatever format reads best (short prose, mini-tables, ASCII call-flow diagrams, callouts — NOT forced dot-lists), followed by an explicitly separated AI-Generated Context block. Favors diagrams and comparison tables for call flows and option trade-offs. Writes structured markdown to /home/vimkim/gh/my-cubrid-jira/issues/. Use when the user wants to write up a JIRA issue, document a bug finding, or create a feature/task report for CUBRID.
 ---
 
 # CUBRID JIRA Issue Writer
@@ -50,9 +50,9 @@ Every issue is two stacked layers separated by an explicit divider:
 
 **이슈 수행 목적** (필수): <결과 상태 1-2 문장. 분석/메커니즘 금지.>
 
-**이슈 수행 이유** (필수): <현재 동작·한계 + 영향, 두 축을 모두. 형식 자유.>
+**이슈 수행 이유** (필수): <현재 동작·한계 + 영향, 두 축을 모두. 전/후 대비가 명확하면 AS-IS / TO-BE 를 명시. 형식 자유.>
 
-**이슈 수행 방안**: <합의된 결정은 구체적으로, 미결정은 TBD.>
+**이슈 수행 방안**: <합의된 결정은 구체적으로, 가능하면 TO-BE 의 구현 방향으로 연결. 미결정은 TBD.>
 
 ---
 
@@ -136,15 +136,18 @@ The litmus test: **Triage = conclusions, Description = mechanism, Summary = scop
 
 - **목적 (필수)**: result state, 1-2 sentences. Analysis/background belongs in 이유, not here.
 - **이유 (필수)**: cover both axes —
-  - **현재 동작 / 배경**: cite thresholds/params/conditions by their code name (`DB_PAGESIZE/8`, `LZ4_MAX_INPUT_SIZE`, `pgbuf_fix`), ideally with file:line. No "약 512 바이트" hand-waving; expanding a macro in parens is encouraged (`LZ4_MAX_INPUT_SIZE`(0x7E000000, 약 2.11GB)).
+  - **AS-IS (현재 동작 / 배경)**: cite thresholds/params/conditions by their code name (`DB_PAGESIZE/8`, `LZ4_MAX_INPUT_SIZE`, `pgbuf_fix`), ideally with file:line. No "약 512 바이트" hand-waving; expanding a macro in parens is encouraged (`LZ4_MAX_INPUT_SIZE`(0x7E000000, 약 2.11GB)).
+  - **TO-BE (목표 상태 / 기대 동작)**: when the source material clearly states a desired behavior, write it explicitly as the contrast to AS-IS. Keep it at behavior/spec level here; code flow still belongs in `## Implementation`. If TO-BE is not decided, write `TBD - 합의 미확인` instead of inventing it. For a pure bug with an obvious expected result, TO-BE can be the one-line expected behavior.
   - **영향**: pick the one applicable category (고객 장애 · QA 실패 · 성능 저하 · 설계 의도 훼손 · 기술 부채) with a concrete example. Listing all five is menu-padding. Abstract one-liners ("일관성 유지", "성능 개선 필요") are rejected.
-  - **Correct Error 특례**: 현재 동작 = one-line repro summary, 영향 = the failure mode the user sees. Still write them as two separate items.
+  - **Correct Error 특례**: AS-IS = one-line repro summary, TO-BE = one-line expected result, 영향 = the failure mode the user sees. Still write them as separate items.
 - **방안**: state already-decided spec concretely; leave only the undecided as TBD.
   - "합의된" = quotable concrete decision from this session's user messages · a quotable JIRA comment · an explicit design doc. Nothing else (analogy to a sibling ticket, plausible AI inference) counts. When citing a user message, quote the original fragment ("사용자 인용: \"...\"").
   - TBD markers: `TBD - ANALYSIS 단계에서 결정` when deferral is itself agreed; `TBD - 합의 미확인` when even the existence of a decision is unclear (default to this when unsure so the reviewer catches it). In an interactive session, just ask the user.
   - Detailed code flow / data structures go to `## Implementation`, not here. 방안 says only *what was decided*.
 
-**Triage structure-label exception:** only these five bold labels are exempt from the "no English-direct labels" rule (they are slot identifiers, not prose): `**이슈 수행 목적**`, `**이슈 수행 이유**`, `**이슈 수행 방안**`, `**현재 동작 / 배경**`, `**영향**`. Any other label (`**Fact**:`, `**Risk**:`, `**무엇을**:`) follows the natural-Korean rules everywhere.
+**AS-IS / TO-BE rule:** prefer an explicit AS-IS/TO-BE pair whenever the issue is about changing current behavior, policy, default, data flow, API behavior, or operational procedure. Use a two-column mini-table when it reads cleaner than bullets. Do not force it for issues that only record investigation scope or internal housekeeping with no before/after contrast.
+
+**Triage structure-label exception:** only these bold labels are exempt from the "no English-direct labels" rule (they are slot identifiers, not prose): `**이슈 수행 목적**`, `**이슈 수행 이유**`, `**이슈 수행 방안**`, `**AS-IS (현재 동작 / 배경)**`, `**TO-BE (목표 상태 / 기대 동작)**`, `**영향**`. Any other label (`**Fact**:`, `**Risk**:`, `**무엇을**:`) follows the natural-Korean rules everywhere.
 
 **Triage anti-patterns:** merging 목적 into 이유 in one sentence; an abstract 이유 with no number/threshold/condition; a pure-TBD 방안 when decisions exist (under-writing) OR an AI-invented plan in 방안 (over-guessing); reflexively dot-listing all three fields (see 닷 리스트 강박 below); pulling AI analysis up into the triage block (it lives under `## AI-Generated Context`).
 
@@ -157,7 +160,8 @@ The litmus test: **Triage = conclusions, Description = mechanism, Summary = scop
 
 **이슈 수행 이유**:
 
-- **현재 동작 / 배경**: 현재 코드는 레코드 총 길이가 `DB_PAGESIZE/8` 을 넘는 경우에만 512 바이트 초과 가변 컬럼을 OOS 로 보내므로, 511 바이트 가변 컬럼만 있는 레코드는 임계치에 못 미친 채 overflow 경로로 빠진다 (개발 편의용 임시 임계치).
+- **AS-IS (현재 동작 / 배경)**: 현재 코드는 레코드 총 길이가 `DB_PAGESIZE/8` 을 넘는 경우에만 512 바이트 초과 가변 컬럼을 OOS 로 보내므로, 511 바이트 가변 컬럼만 있는 레코드는 임계치에 못 미친 채 overflow 경로로 빠진다 (개발 편의용 임시 임계치).
+- **TO-BE (목표 상태 / 기대 동작)**: 레코드가 `DB_PAGESIZE/4` 이하가 될 때까지 큰 가변 컬럼을 순차적으로 OOS 로 이관한다.
 - **영향**: 설계 의도 훼손 — 511 바이트 가변 컬럼 페이로드가 OOS 대상에서 누락된 채 heap 내부 overflow 로 빠져 OOS 도입 효과가 무력화된다.
 
 **이슈 수행 방안**:
@@ -168,7 +172,7 @@ The litmus test: **Triage = conclusions, Description = mechanism, Summary = scop
 - lz4 압축 레벨 세부값: `TBD - 합의 미확인`.
 ```
 
-핵심: 이유가 임계치를 매크로 이름으로 인용하고 영향을 한 카테고리 + 구체 시나리오로 좁혔으며, 방안이 합의된 결정만 적되 범위 밖은 별도 티켓으로 분리하고 미확인은 보수적 마커로 표기했다. 이 방안은 평면 목록이라 bullet 이 맞다 — 후보 비교였다면 아래 toolkit 의 ranked 표를 썼을 것이다.
+핵심: 이유가 AS-IS/TO-BE 를 명시해 현재 정책과 목표 상태를 한눈에 대비시키고, 영향을 한 카테고리 + 구체 시나리오로 좁혔으며, 방안이 합의된 결정만 적되 범위 밖은 별도 티켓으로 분리하고 미확인은 보수적 마커로 표기했다. 이 방안은 평면 목록이라 bullet 이 맞다 — 후보 비교였다면 아래 toolkit 의 ranked 표를 썼을 것이다.
 
 ## Readability Toolkit — 닷 리스트 대신 (모델: CBRD-26890, CBRD-26788)
 
@@ -267,7 +271,7 @@ JIRA issues are read by devs, QA, and CS who do not share the author's local set
 4. **Draft the Issue Triage block first** — forces a clear thesis and the 10-second triage path.
 5. **Add the `## AI-Generated Context` divider** + caveat note; all AI-written detail goes below it.
 6. **Write the body** from the type template, applying **Layer Ownership** so nothing repeats.
-7. **Run the two mandatory checks**: (a) Layer-Ownership de-dup grep — no fact in 2+ layers; (b) `rg -nP '\bjust\s+\w'` returns zero.
+7. **Run the mandatory checks**: (a) Layer-Ownership de-dup grep — no fact in 2+ layers; (b) AS-IS/TO-BE appears when the issue has a clear before/after contrast; (c) `rg -nP '\bjust\s+\w'` returns zero.
 8. **Save** to `CBRD-XXXXX-slug.md`.
 9. **Show the user** the path, the chosen type, and the Issue Triage block so they can sanity-check the framing.
 
@@ -283,7 +287,7 @@ Every draft goes through `/grill-with-docs` before being filed — no single-pas
 Hand off with: ticket number + issue type + output path (same file, revised in place) + source material. Review angle:
 
 - Technical accuracy; Repro is executable; CUBRID conventions (Korean body, English `##`, no emoji/non-BMP).
-- **Issue Triage** present, all three fields filled, not collapsed into one sentence. 이유 cites code-named thresholds AND names impact (abstract one-liners = reject). 방안 states decided spec concretely; pure-TBD when decisions exist = reject; AI-invented plan = reject.
+- **Issue Triage** present, all three fields filled, not collapsed into one sentence. 이유 cites code-named thresholds, uses explicit AS-IS/TO-BE when a before/after contrast exists, AND names impact (abstract one-liners = reject). 방안 states decided spec concretely; pure-TBD when decisions exist = reject; AI-invented plan = reject.
 - **Layer Ownership**: no fact repeated across Triage / Summary / Description (the prime reject — this is the verbosity bug).
 - **Format matches content**: triage fields not reflexively dot-listed; comparisons -> table, call chains -> ASCII diagram with `★`, single thesis -> prose.
 - **New-hire readability**: every internal acronym glossed once on first use; every threshold has a one-clause rationale. Untreated insider shorthand = reject. The readability target itself must NEVER appear in the body (audience/grade-level note = reject).

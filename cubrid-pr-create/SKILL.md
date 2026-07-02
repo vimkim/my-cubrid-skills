@@ -1,6 +1,6 @@
 ---
 name: cubrid-pr-create
-description: Open a GitHub pull request for the CUBRID project with a [CBRD-XXXXX] title, Korean PR body, linked detailed doc, and pre-publish material checks. Use when the user wants to create, draft, push, or publish a CUBRID PR, including requests like "create pr", "make pr", "PR 만들어", "PR 올려", or "풀리퀘".
+description: Open a GitHub pull request for the CUBRID project with a [CBRD-XXXXX] title, Korean PR body, linked detailed doc, explicit AS-IS/TO-BE contrast when the change supports it, and pre-publish material checks. Use when the user wants to create, draft, push, or publish a CUBRID PR, including requests like "create pr", "make pr", "PR 만들어", "PR 올려", or "풀리퀘".
 ---
 
 # CUBRID PR Creator
@@ -14,6 +14,7 @@ Create GitHub pull requests for the CUBRID project following team conventions.
 - Put the JIRA issue URL at the very top, before `## Purpose`.
 - Keep the whole PR body to one screen, roughly 25-35 lines.
 - Put deep technical detail in the separate markdown doc, not in the PR body.
+- When the change has a clear before/after contrast, state `AS-IS` and `TO-BE` explicitly inside `## Purpose` in both the PR body and detailed doc. Do not add new top-level sections for them.
 - Never include local absolute paths, `file://` URLs, or machine-specific workspace paths in PR material. Use repo-relative paths or public GitHub/JIRA URLs.
 - Never include project shortcut commands beginning with the `just` task runner in PR material. Replace them with the actual public verification command, or describe the verification outcome in words.
 - Run the bundled material checker before showing the body draft, before committing the doc repo, and before creating the PR.
@@ -40,8 +41,8 @@ Pass optional arguments to customize:
 
 Produce two separate artifacts:
 
-1. The PR body: a short, plain-Korean one-screen summary. It answers what changed, why it matters, and where reviewers should look.
-2. The detailed explanation doc: a separate markdown file in the `my-cubrid-docs` repo. It holds the full technical write-up, and the PR body links to it.
+1. The PR body: a short, plain-Korean one-screen summary. It answers what changed, why it matters, where reviewers should look, and, when possible, the AS-IS/TO-BE contrast.
+2. The detailed explanation doc: a separate markdown file in the `my-cubrid-docs` repo. It holds the full technical write-up, including the detailed AS-IS/TO-BE explanation, and the PR body links to it.
 
 Do not put deep detail in the PR body. If a paragraph is too technical for a Korean 11th-grade student with no CUBRID-internal knowledge, move it to the doc.
 
@@ -55,6 +56,7 @@ https://jira.cubrid.org/browse/CBRD-XXXXX
 ## Purpose
 
 - 이 PR이 해결하려는 문제와 필요한 이유를 1-3줄로 설명합니다.
+- 가능하면 `AS-IS:` 로 현재 동작/한계를 한 줄, `TO-BE:` 로 바뀐 동작/목표 상태를 한 줄로 대비합니다.
 
 ## Implementation
 
@@ -73,6 +75,14 @@ Rules:
 - Do not drop any of the three required sections. If a section is small, keep it short.
 - Put the detailed doc URL exactly once, normally as the last bullet in `## Remarks`.
 - The body must stand alone: a reviewer who does not open JIRA or the doc still understands the change at a high level.
+
+### AS-IS / TO-BE Rule
+
+- Use explicit `AS-IS:` and `TO-BE:` bullets in `## Purpose` when the PR changes current behavior, policy, default values, data flow, API behavior, recovery behavior, or operational procedure.
+- Keep PR-body AS-IS/TO-BE bullets one sentence each. Put root cause, code path, and edge cases in the detailed doc.
+- In the detailed doc, put AS-IS/TO-BE under `## Purpose` as bullets or a compact table, then explain implementation under `## Implementation`.
+- Do not invent a TO-BE. If the intended behavior is not in the diff, JIRA, design doc, or user-provided context, ask before publishing or write `TO-BE: TBD - 합의 미확인` in the detailed doc and keep the PR body more conservative.
+- Do not force AS-IS/TO-BE for pure cleanup, comment-only changes, dependency bumps, or internal maintenance where no reader-facing before/after contrast exists.
 
 ## Writing for an 11th-Grade Korean Reader
 
@@ -96,7 +106,7 @@ Every PR's deep technical write-up lives in the `my-cubrid-docs` repo, not in th
 
 Use the same top-level section contract in the doc:
 
-- `## Purpose` - background, problem, and intended outcome
+- `## Purpose` - background, problem, intended outcome, and AS-IS/TO-BE contrast when applicable
 - `## Implementation` - full technical change list with repo-relative file paths and function names
 - `## Remarks` - limits, risks, compatibility notes, reviewer focus, follow-up, and verification notes
 
@@ -154,7 +164,7 @@ If there are uncommitted changes, warn the user and ask whether to proceed or co
 
 1. Pick a short kebab-case `<slug>` from the change, such as `reenable-oos-oid-replacement`.
 2. Create `doc_dir="$docs_repo/cbrd-XXXXX"` and `doc_file="$doc_dir/CBRD-XXXXX-<slug>.md"`.
-3. Write the full technical explanation with `## Purpose`, `## Implementation`, and `## Remarks`.
+3. Write the full technical explanation with `## Purpose`, `## Implementation`, and `## Remarks`. If a before/after contrast exists, make AS-IS/TO-BE explicit under `## Purpose`.
 4. Use repo-relative paths like `src/storage/heap_file.c`, never local absolute paths.
 5. Grill the doc using the mandatory loop below. The doc is the substantive artifact, so the grill loop applies there.
 
@@ -163,7 +173,8 @@ If there are uncommitted changes, warn the user and ask whether to proceed or co
 1. Write the PR body to `body_file="$(mktemp)"`.
 2. Use only the required section order: `## Purpose`, `## Implementation`, `## Remarks`.
 3. Keep it within 25-35 lines and at the 11th-grade-reader bar.
-4. Put the detailed doc URL exactly once as the final bullet in `## Remarks`.
+4. If the change has a clear before/after contrast, include short `AS-IS:` and `TO-BE:` bullets in `## Purpose`.
+5. Put the detailed doc URL exactly once as the final bullet in `## Remarks`.
 
 ### Step 6: Run the Material Checker
 
@@ -243,7 +254,7 @@ Hand off with:
 1. Topic and purpose: PR title, JIRA ticket, and target reviewers.
 2. Output path: the `doc_file`; the loop revises it in place.
 3. Source material: the diff, JIRA output, related issues, and related PRs.
-4. Review angle: completeness and correctness of `## Purpose`, `## Implementation`, and `## Remarks`; CUBRID doc conventions; every CUBRID-internal term glossed on first use.
+4. Review angle: completeness and correctness of `## Purpose`, `## Implementation`, and `## Remarks`; explicit AS-IS/TO-BE contrast when the change supports it; CUBRID doc conventions; every CUBRID-internal term glossed on first use.
 5. Round cap: default 5.
 
 After approval, run the material checker, draft the PR body, confirm with the user, publish the docs repo, and create the PR.

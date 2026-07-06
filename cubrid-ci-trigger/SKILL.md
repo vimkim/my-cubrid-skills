@@ -85,4 +85,4 @@ Notes:
 - Check names vary (`ci/circleci: test_sql`, `test_sql_long`) — match case-insensitive substrings, and report the full matched name.
 - If the suites are still not visible ~20 minutes after the comment, the trigger likely wasn't picked up; re-post once and say so.
 
-Hand off depending on what the user wants next: `gh pr checks <pr-url> --watch` to wait inline, `/cubrid-loop-pr` for autonomous fix-until-green iteration, or `/analyze-ci-failures` once results come back red.
+Hand off depending on what the user wants next: `gh pr checks <pr-url> --watch` to wait inline, `/cubrid-loop-pr` for autonomous fix-until-green iteration, or `/cubrid-ci-failure-analyze` once results come back red.

@@ -1,5 +1,5 @@
 ---
-name: analyze-ci-failures
+name: cubrid-ci-failure-analyze
 description: Analyze CircleCI/CI shell test failures for CUBRID PRs. Reads failed TC list, fetches CI results, reads test scripts and answer files, categorizes failures by root cause, and generates a structured report. Use when CI tests fail and the user wants to understand why.
 ---
 
@@ -16,9 +16,9 @@ Analyze failed shell test cases from CircleCI (or other CI) for CUBRID PRs. Prod
 
 ## Arguments
 
-- `/analyze-ci-failures` — Interactive: look for `failed_tc.txt` in cwd
-- `/analyze-ci-failures <circleci-url>` — Fetch failures from CircleCI
-- `/analyze-ci-failures <file>` — Read failure list from specified file
+- `/cubrid-ci-failure-analyze` — Interactive: look for `failed_tc.txt` in cwd
+- `/cubrid-ci-failure-analyze <circleci-url>` — Fetch failures from CircleCI
+- `/cubrid-ci-failure-analyze <file>` — Read failure list from specified file
 
 ## Inputs
 

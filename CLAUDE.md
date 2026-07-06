@@ -8,7 +8,7 @@ Skills are installed globally to `~/.claude/skills/` via `npx skills`.
 Each top-level directory with a `SKILL.md` is a skill:
 
 - `jira/` — CUBRID JIRA issue lookup
-- `analyze-ci-failures/` — CircleCI shell test failure analysis
+- `cubrid-ci-failure-analyze/` — CircleCI shell test failure analysis
 - `cubrid-pr-review/` — C/C++ PR code review with LSP/clangd
 - `cubrid-pr-create/` — GitHub PR creation with CBRD title format
 - `cubrid-jira-issue-write/` — JIRA issue report writer

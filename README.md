@@ -7,7 +7,7 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | Skill | Description |
 |-------|-------------|
 | `jira` | Look up CUBRID JIRA issue context (CBRD-XXXXX) |
-| `analyze-ci-failures` | Analyze CircleCI shell test failures with root cause categorization |
+| `cubrid-ci-failure-analyze` | Analyze CircleCI shell test failures with root cause categorization |
 | `cubrid-pr-review` | Review the CUBRID PR at the current worktree HEAD using Claude Code `/code-review` or Codex `/review`, plus CUBRID-specific validation |
 | `cubrid-pr-create` | Create GitHub PRs with `[CBRD-XXXXX]` title format and Korean body |
 | `cubrid-jira-issue-write` | Write structured JIRA issue reports in Korean |
@@ -53,7 +53,7 @@ Once installed, invoke skills as slash commands in Claude Code:
 /jira CBRD-25123
 /cubrid-pr-review https://github.com/CUBRID/cubrid/pull/6950
 /cubrid-pr-create CBRD-26583
-/analyze-ci-failures
+/cubrid-ci-failure-analyze
 /cubrid-manual
 /create-testcases CBRD-26609
 ```
@@ -69,7 +69,7 @@ Some skills require external tools:
 | `uv` | `jira`, `cubrid-oos-context` | [docs.astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 | `cubrid-jira-search` | `jira`, `cubrid-pr-review` | `uv tool install git+https://github.com/vimkim/cubrid-jira` |
 | `cubrid-oos-search` | `cubrid-oos-context` | `uv tool install cubrid-oos-search` |
-| `gh` | `cubrid-pr-review`, `cubrid-pr-create`, `analyze-ci-failures` | [cli.github.com](https://cli.github.com/) |
+| `gh` | `cubrid-pr-review`, `cubrid-pr-create`, `cubrid-ci-failure-analyze` | [cli.github.com](https://cli.github.com/) |
 | `clangd` | `cubrid-pr-review` (LSP analysis) | System package manager |
 
 ## License

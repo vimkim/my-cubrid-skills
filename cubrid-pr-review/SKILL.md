@@ -1,7 +1,7 @@
 ---
 name: cubrid-pr-review
 description: "Review a CUBRID pull request from a CUBRID Git worktree whose current HEAD exactly matches the supplied PR number or URL, using the host CLI's native review engine and a local report. Uses Claude Code's built-in /code-review workflow or Codex CLI's built-in /review workflow, then applies CUBRID-specific checks. Use when the user requests review of the CUBRID PR currently checked out in the working directory."
-allowed-tools: Bash(gh *), Bash(git *), Bash(jq *), Bash(codex review *), Bash(scripts/*), Read, Write, Glob, Grep, Skill, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics_directory, mcp__plugin_oh-my-claudecode_t__lsp_hover, mcp__plugin_oh-my-claudecode_t__lsp_goto_definition, mcp__plugin_oh-my-claudecode_t__lsp_find_references, mcp__plugin_oh-my-claudecode_t__lsp_document_symbols
+allowed-tools: Bash(gh *), Bash(git *), Bash(jq *), Bash(codex review *), Bash(test -d /home/vimkim/gh/my-cubrid-docs), Bash(mkdir -p /home/vimkim/gh/my-cubrid-docs/*), Bash(scripts/*), Read, Write, Glob, Grep, Skill, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics_directory, mcp__plugin_oh-my-claudecode_t__lsp_hover, mcp__plugin_oh-my-claudecode_t__lsp_goto_definition, mcp__plugin_oh-my-claudecode_t__lsp_find_references, mcp__plugin_oh-my-claudecode_t__lsp_document_symbols
 ---
 
 # CUBRID PR Reviewer
@@ -23,7 +23,21 @@ Review CUBRID database engine pull requests and produce a concise Korean review 
 
 ## Output Format
 
-Write the report to `PR-<NUMBER>-report-<AGENT>.md` in the repo root (or current directory), where `<AGENT>` is the current host CLI: `claude` for Claude Code or `codex` for Codex CLI. For example, the same PR reviewed by both agents produces `PR-6950-report-claude.md` and `PR-6950-report-codex.md`; never use the shared legacy name `PR-6950-report.md`. The report is **local-only** — never post it to GitHub.
+Write the report under the local CUBRID docs tree, never in the CUBRID repo root or current directory:
+
+```text
+/home/vimkim/gh/my-cubrid-docs/<ticket-id>/PR-<NUMBER>-report-<AGENT>.md
+```
+
+`<ticket-id>` is the lowercase CBRD ticket number, for example `cbrd-26583`. `<AGENT>` is the current host CLI: `claude` for Claude Code or `codex` for Codex CLI. For example, the same PR reviewed by both agents produces `/home/vimkim/gh/my-cubrid-docs/cbrd-26583/PR-6950-report-claude.md` and `/home/vimkim/gh/my-cubrid-docs/cbrd-26583/PR-6950-report-codex.md`; never use the shared legacy name `PR-6950-report.md`. The report is **local-only** — never post it to GitHub.
+
+### Report Path Rules
+
+- Use `/home/vimkim/gh/my-cubrid-docs` as the report root. If that directory is unavailable, stop and ask the user for the docs path; do not fall back to the CUBRID repo root or cwd.
+- Extract the first `CBRD-XXXXX` ticket id from the PR title, then the PR body if the title has none. Normalize the directory name to lowercase (`cbrd-xxxxx`).
+- If no CBRD ticket id is present, stop before writing the report and ask the user for the ticket id.
+- Create the ticket directory if it does not already exist.
+- Compute `REPORT_PATH` once after `<AGENT>` is set, then use that exact path for the initial report, the `/grill-with-docs` output path, and the final printed saved path.
 
 ### Language Rules
 
@@ -139,7 +153,7 @@ Run these in parallel:
    gh api "repos/<OWNER>/<REPO>/pulls/<NUMBER>/comments" --jq '.[] | {id, user: .user.login, path, line: .original_line, in_reply_to_id, body}'
    gh api "repos/<OWNER>/<REPO>/issues/<NUMBER>/comments" --jq '.[] | {id, user: .user.login, body}'
    ```
-3. **JIRA context** (if PR title contains `CBRD-XXXXX`): invoke `/jira CBRD-XXXXX` to fetch ticket context.
+3. **JIRA context** (if the ticket id extracted by the Report Path Rules exists): invoke `/jira CBRD-XXXXX` to fetch ticket context.
 4. **Read `reference.md`** (sibling file in this skill's directory) for CUBRID-specific review knowledge: error-code six-place rule, memory/error-handling conventions, lock/page-buffer/WAL/MVCC protocols, build-mode guards, key data structures, false-positive guidance. If `reference.md` is missing on this checkout, warn the user once and proceed using only the review categories listed in Step 3 below — do not invent CUBRID-specific rules.
 5. **Read any CLAUDE.md / AGENTS.md** in directories containing changed files. Use Glob to walk ancestor directories of each changed file looking for these context files.
 
@@ -148,6 +162,16 @@ Run these in parallel:
 Use the current host CLI's built-in reviewer as the **primary review pass**. Determine the host from runtime-provided identity or capabilities; do not infer it from whether `claude` or `codex` binaries happen to be installed, because both may coexist.
 
 Set `<AGENT>` for the report path from that same host identity: `claude` under Claude Code and `codex` under Codex CLI. Keep this value unchanged for the remainder of the workflow.
+
+After `<AGENT>` is set, resolve the report path before invoking the native reviewer:
+
+1. Confirm `/home/vimkim/gh/my-cubrid-docs` exists.
+2. Extract `CBRD-XXXXX` from the Step 1 PR title, falling back to the PR body only if the title has none.
+3. Normalize the ticket directory to lowercase, for example `cbrd-26583`.
+4. Create `/home/vimkim/gh/my-cubrid-docs/<ticket-id>` if it does not exist.
+5. Set `REPORT_PATH=/home/vimkim/gh/my-cubrid-docs/<ticket-id>/PR-<NUMBER>-report-<AGENT>.md`.
+
+Claude Code must therefore write `...-report-claude.md`; Codex CLI must write `...-report-codex.md`. Both hosts use the same docs-tree ticket directory and never save the report in the CUBRID repo root or current working directory.
 
 Immediately before invoking the native reviewer, rerun `scripts/check-prereqs.sh "$PR_NUMBER_OR_URL"`. Abort if it fails or returns a different `head_sha` from Step 1. Immediately after the native reviewer finishes, run the gate once more. If it fails or the PR head changed, discard all candidate findings and stop without writing a report. This prevents reviewing or reporting against a PR that moved after setup.
 
@@ -210,7 +234,7 @@ Every surviving finding needs a code snippet or diagnostic as evidence.
 1. **Draft the TL;DR + Summary first.** Write the verdict label and conclusion before the body — this forces a clear stance and reveals whether the rest of the report supports it.
 2. **Write Findings tightly.** One sentence per item. Group as Blocking / Non-blocking / Questions, omitting any subsection that has no items. If no category has any items, replace the section body with a single `없음` line and omit all three subsections.
 3. **Add JIRA Context and Existing Comments only if useful.** Omit empty sections.
-4. **Save** to `PR-<NUMBER>-report-<AGENT>.md` in the repo root (or cwd), using the host-derived `claude` or `codex` value from Step 3.
+4. **Save** to `REPORT_PATH`, using the host-derived `claude` or `codex` value from Step 3 and the docs-tree ticket directory from the Report Path Rules.
 5. **Print** three things so the user can sanity-check the call at a glance: (1) the saved file path, (2) the verdict label extracted from the TL;DR (`Blocking` / `Non-blocking` / `작성자 확인 필요`), (3) the TL;DR sentence(s) without the label prefix.
 
 ## Example Output
@@ -255,10 +279,10 @@ This step is required, not optional. It applies to every review. No agent-side j
 
 **How to hand off:**
 
-After saving the initial review to `PR-<NUMBER>-report-<AGENT>.md`, invoke `/grill-with-docs` with:
+After saving the initial review to `REPORT_PATH`, invoke `/grill-with-docs` with:
 
 - **Topic & purpose**: PR review report for `<OWNER>/<REPO>#<NUMBER>`, audience is the PR author and CUBRID maintainers
-- **Output path**: the same report file (the loop revises in place)
+- **Output path**: `REPORT_PATH` (the loop revises the docs-tree report in place)
 - **Source material**: the PR diff, JIRA ticket context, this skill's `reference.md`, any `CLAUDE.md` / `AGENTS.md` in directories of changed files
 - **Review angle**: every Finding has file:line evidence (no "might be wrong" hedging), no pre-existing / CI-caught / out-of-scope items leaked through, TL;DR verdict label matches the Findings, length budget respected (80-line target, 200 hard cap), no emoji or non-BMP unicode, every CUBRID-internal term on first use has a one-clause inline gloss (a junior engineer who has not opened this file should follow the report on one read), every blocking finding spells out the consequence (defect -> cause -> impact), not just the symptom
 - **Round cap**: default 5

@@ -25,7 +25,7 @@ When creating test cases for **OOS (Out of Space)** scenarios:
 
 ## Step 1: Understand what to test
 
-- If a CBRD ticket is mentioned, use `/jira` to fetch context first.
+- If a CBRD ticket is mentioned, use `/cubrid-jira` to fetch context first.
 - Read the relevant source code to understand the feature/fix being tested.
 - Identify the key behaviors, edge cases, and error conditions to cover.
 

@@ -6,7 +6,7 @@ A collection of Claude Code skills for CUBRID database engine development. These
 
 | Skill | Description |
 |-------|-------------|
-| `jira` | Look up CUBRID JIRA issue context (CBRD-XXXXX) |
+| `cubrid-jira` | Look up CUBRID JIRA issue context (CBRD-XXXXX) |
 | `cubrid-ci-failure-analyze` | Analyze CircleCI shell test failures with root cause categorization |
 | `cubrid-pr-review` | Review the CUBRID PR at the current worktree HEAD using Claude Code `/code-review` or Codex `/review`, plus CUBRID-specific validation |
 | `cubrid-pr-create` | Create GitHub PRs with `[CBRD-XXXXX]` title format and Korean body |
@@ -40,7 +40,7 @@ just install
 ```bash
 just list                # List installed skills
 just check               # Check for available updates
-just remove jira         # Remove a specific skill
+just remove cubrid-jira  # Remove a specific skill
 ```
 
 Since `npx skills` uses symlinks by default, renamed or updated skills sync automatically when you `git pull` the source repo.
@@ -50,7 +50,7 @@ Since `npx skills` uses symlinks by default, renamed or updated skills sync auto
 Once installed, invoke skills as slash commands in Claude Code:
 
 ```
-/jira CBRD-25123
+/cubrid-jira CBRD-25123
 /cubrid-pr-review https://github.com/CUBRID/cubrid/pull/6950
 /cubrid-pr-create CBRD-26583
 /cubrid-ci-failure-analyze
@@ -66,8 +66,8 @@ Some skills require external tools:
 
 | Tool | Required by | Install |
 |------|------------|---------|
-| `uv` | `jira`, `cubrid-oos-context` | [docs.astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
-| `cubrid-jira-search` | `jira`, `cubrid-pr-review` | `uv tool install git+https://github.com/vimkim/cubrid-jira` |
+| `uv` | `cubrid-oos-context` | [docs.astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
+| `cubrid-jira` | `cubrid-jira`, `cubrid-pr-review` | `uv tool install git+https://github.com/vimkim/cubrid-jira` |
 | `cubrid-oos-search` | `cubrid-oos-context` | `uv tool install cubrid-oos-search` |
 | `gh` | `cubrid-pr-review`, `cubrid-pr-create`, `cubrid-ci-failure-analyze` | [cli.github.com](https://cli.github.com/) |
 | `clangd` | `cubrid-pr-review` (LSP analysis) | System package manager |

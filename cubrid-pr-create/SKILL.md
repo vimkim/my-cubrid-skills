@@ -158,7 +158,7 @@ If there are uncommitted changes, warn the user and ask whether to proceed or co
 2. Show commits: `git log --oneline <upstream>/<base>..HEAD`.
 3. Show diff stat: `git diff <upstream>/<base>...HEAD --stat`.
 4. Read the full diff to understand all changes.
-5. If a JIRA ticket was identified, fetch context with `/jira CBRD-XXXXX` for richer description.
+5. If a JIRA ticket was identified, fetch context with `/cubrid-jira CBRD-XXXXX` for richer description.
 
 ### Step 4: Write the Detailed Explanation Doc
 

@@ -267,7 +267,7 @@ JIRA issues are read by devs, QA, and CS who do not share the author's local set
 
 1. **Check output directory** exists (else stop — see Hard Constraints).
 2. **Determine issue type** (section structure depends on it; ask if unclear).
-3. **Gather context**: read source, prior analysis, `/jira CBRD-XXXXX`, repro logs.
+3. **Gather context**: read source, prior analysis, `/cubrid-jira CBRD-XXXXX`, repro logs.
 4. **Draft the Issue Triage block first** — forces a clear thesis and the 10-second triage path.
 5. **Add the `## AI-Generated Context` divider** + caveat note; all AI-written detail goes below it.
 6. **Write the body** from the type template, applying **Layer Ownership** so nothing repeats.

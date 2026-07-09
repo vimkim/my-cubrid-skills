@@ -41,7 +41,7 @@ it — the templates assume you know the bucket semantics.
 Collect the project frame (start date + weekday, working week, holidays, target/
 milestone, buffer) and the work items (exact id, summary, bucket, status, day(s),
 excluded?). Pull as much as you can from the current conversation and the repo
-(git log, JIRA via the `jira` skill, PRs via `gh`) before asking the user.
+(git log, JIRA via the `cubrid-jira` skill, PRs via `gh`) before asking the user.
 
 The schedule logic — **what's the critical path, velocity, what gates "done"** —
 swings the dates more than anything. If it's not already established in the

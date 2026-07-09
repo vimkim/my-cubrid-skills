@@ -153,7 +153,7 @@ Run these in parallel:
    gh api "repos/<OWNER>/<REPO>/pulls/<NUMBER>/comments" --jq '.[] | {id, user: .user.login, path, line: .original_line, in_reply_to_id, body}'
    gh api "repos/<OWNER>/<REPO>/issues/<NUMBER>/comments" --jq '.[] | {id, user: .user.login, body}'
    ```
-3. **JIRA context** (if the ticket id extracted by the Report Path Rules exists): invoke `/jira CBRD-XXXXX` to fetch ticket context.
+3. **JIRA context** (if the ticket id extracted by the Report Path Rules exists): invoke `/cubrid-jira CBRD-XXXXX` to fetch ticket context.
 4. **Read `reference.md`** (sibling file in this skill's directory) for CUBRID-specific review knowledge: error-code six-place rule, memory/error-handling conventions, lock/page-buffer/WAL/MVCC protocols, build-mode guards, key data structures, false-positive guidance. If `reference.md` is missing on this checkout, warn the user once and proceed using only the review categories listed in Step 3 below — do not invent CUBRID-specific rules.
 5. **Read any CLAUDE.md / AGENTS.md** in directories containing changed files. Use Glob to walk ancestor directories of each changed file looking for these context files.
 

@@ -35,7 +35,7 @@ Each round runs an opus writer plus a critic-class reviewer over a possibly-larg
 
 Exactly one of:
 
-- JIRA issue: `CBRD-XXXXX` - fetched via `/jira CBRD-XXXXX`.
+- JIRA issue: `CBRD-XXXXX` - fetched via `/cubrid-jira CBRD-XXXXX`.
 - PR URL: existing GitHub PR to extend or fix - fetched via `gh pr view` and `gh pr diff`.
 - Spec file path: a markdown spec describing what to build.
 - Inline spec: multi-line description passed as the argument.
@@ -87,7 +87,7 @@ If this fails, refuse to start with the helper's message. Do not proceed past th
 
 Per `input_kind`:
 
-- `jira`: invoke `/jira CBRD-XXXXX`.
+- `jira`: invoke `/cubrid-jira CBRD-XXXXX`.
 - `pr`: `gh pr view <url> --json title,body,headRefName,baseRefName` and `gh pr diff <url>`. PR-mode preconditions: require the user to already be on the PR's `headRefName` (validate via `gh pr view --json headRefName --jq .headRefName` vs `git branch --show-current`); refuse with a clear error if not. The PR diff and body are treated as already-applied work and as the spec for extending or fixing the PR. If the PR is closed/merged and `gh pr diff` returns empty, refuse with: "PR diff is empty (closed or merged). Pass a JIRA, spec path, or inline spec instead." If the PR title contains a CBRD ticket, also fetch JIRA context.
 - `spec-path`: Read the file.
 - `inline-spec`: store the argument verbatim.

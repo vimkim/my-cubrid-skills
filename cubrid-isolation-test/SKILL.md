@@ -48,7 +48,7 @@ This creates a fresh `ctldb` database, starts the server, and rebuilds tools if 
 
 ## Step 2: Understand the Feature
 
-- If a CBRD ticket is mentioned, use `/jira` to fetch context
+- If a CBRD ticket is mentioned, use `/cubrid-jira` to fetch context
 - If working on OOS, use `/cubrid-oos-context` to load OOS knowledge
 - Read the relevant source code to understand what concurrency scenarios to test
 - Identify the key MVCC/locking behaviors to verify

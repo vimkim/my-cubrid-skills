@@ -1,0 +1,4 @@
+interface:
+  display_name: "CUBRID Manual Search"
+  short_description: "Search the local CUBRID RST manual"
+  default_prompt: "Use $cubrid-manual-search to answer my CUBRID question from the local manual with source citations."

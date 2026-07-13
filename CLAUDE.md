@@ -12,7 +12,7 @@ Each top-level directory with a `SKILL.md` is a skill:
 - `cubrid-pr-review/` — C/C++ PR code review with LSP/clangd
 - `cubrid-pr-create/` — GitHub PR creation with CBRD title format
 - `cubrid-jira-issue-write/` — JIRA issue report writer
-- `cubrid-manual/` — CUBRID manual search
+- `cubrid-manual-search/` — evidence-backed English/Korean CUBRID manual search
 - `cubrid-oos-context/` — OOS project context loader
 - `create-testcases/` — CUBRID test case generator
 - `schedule-visualizer/` — single-file HTML schedule generator (calendar grid + Gantt) with templates in `assets/` and a `verify_html.sh` check

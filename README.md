@@ -30,8 +30,8 @@ npx skills add vimkim/my-cubrid-skills -y -g
 Or clone locally and use the justfile:
 
 ```bash
-git clone https://github.com/vimkim/my-cubrid-skills.git ~/temp/my-cubrid-skills
-cd ~/temp/my-cubrid-skills
+git clone https://github.com/vimkim/my-cubrid-skills.git ~/gh/my-cubrid-skills
+cd ~/gh/my-cubrid-skills
 just install
 ```
 

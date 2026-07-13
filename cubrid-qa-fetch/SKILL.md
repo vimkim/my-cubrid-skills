@@ -8,7 +8,7 @@ description: Fetch and analyze authenticated pages from CUBRID's internal QA por
 Use the local qahome fetcher tool first:
 
 ```text
-/home/vimkim/temp/cubrid-qahome-fetcher
+/home/vimkim/gh/cubrid-qahome-fetcher
 ```
 
 The tool handles authenticated login, qahome host allowlisting, build-tree traversal, raw page saving, detail-page fetching, and report generation. Do not reimplement the login flow with ad hoc `curl` unless this tool is missing or broken and the user still wants a best-effort manual fetch.
@@ -32,7 +32,7 @@ export CUBRID_QA_PASS='...'
 Check the environment without printing secret values:
 
 ```bash
-cd /home/vimkim/temp/cubrid-qahome-fetcher
+cd /home/vimkim/gh/cubrid-qahome-fetcher
 just check-env
 ```
 
@@ -40,7 +40,7 @@ just check-env
 
 - Only send qahome credentials to exactly `qahome.cubrid.org`.
 - Do not echo `CUBRID_QA_PASS`, write it to files, include it in command output, or put it in output filenames.
-- Use the fetcher commands from `/home/vimkim/temp/cubrid-qahome-fetcher`; they reject non-qahome hosts and non-`/qaresult/` URLs.
+- Use the fetcher commands from `/home/vimkim/gh/cubrid-qahome-fetcher`; they reject non-qahome hosts and non-`/qaresult/` URLs.
 - Treat unauthenticated WebFetch/curl output as suspicious. Login pages are usually around 3 KB and contain `name="loginform"`.
 - Do not silently analyze a neighboring build. Match the requested build text or commit suffix, or report that the target build was not found.
 
@@ -49,14 +49,14 @@ just check-env
 Use this for a concrete qahome URL such as `viewShellTestResult.nhn`, `showFailResult.nhn`, `showFuntionRes.nhn`, `showstat.nhn`, or `showfile.nhn`.
 
 ```bash
-cd /home/vimkim/temp/cubrid-qahome-fetcher
+cd /home/vimkim/gh/cubrid-qahome-fetcher
 uv run cubrid-qahome fetch-url --json '<qahome-url>'
 ```
 
 Relative `/qaresult/...` paths and endpoint-relative paths are also accepted:
 
 ```bash
-cd /home/vimkim/temp/cubrid-qahome-fetcher
+cd /home/vimkim/gh/cubrid-qahome-fetcher
 uv run cubrid-qahome fetch-url --json 'viewShellTestResult.nhn?shellTestId=...&resultType=NOK'
 ```
 
@@ -81,21 +81,21 @@ https://qahome.cubrid.org/qaresult/index.nhn
 Find a build by text or commit suffix:
 
 ```bash
-cd /home/vimkim/temp/cubrid-qahome-fetcher
+cd /home/vimkim/gh/cubrid-qahome-fetcher
 uv run cubrid-qahome find-build --query '<commit-or-build-substring>' --json
 ```
 
 The resolver checks `Recent builds(72h)` first, then scans branch groups under `cubrid`. Force a group when the user names one or when auto-detection is ambiguous:
 
 ```bash
-cd /home/vimkim/temp/cubrid-qahome-fetcher
+cd /home/vimkim/gh/cubrid-qahome-fetcher
 uv run cubrid-qahome find-build --query '<commit-or-build-substring>' --group 'RB-11.5.0-Manual' --json
 ```
 
 The `just` wrappers are equivalent:
 
 ```bash
-cd /home/vimkim/temp/cubrid-qahome-fetcher
+cd /home/vimkim/gh/cubrid-qahome-fetcher
 just find '<commit-or-build-substring>'
 just find '<commit-or-build-substring>' 'RB-11.5.0-Manual'
 ```
@@ -107,21 +107,21 @@ If the target build is not found, say so. Do not use bare `showstat.nhn`, `showM
 Use this for normal QA result analysis. It resolves the build, fetches `showstat.nhn`, derives and fetches the misspelled functional summary endpoint `showFuntionRes.nhn?tree_id=...&buildId=...`, verifies the expected build text, fetches NOK detail pages by default, and writes deterministic reports.
 
 ```bash
-cd /home/vimkim/temp/cubrid-qahome-fetcher
+cd /home/vimkim/gh/cubrid-qahome-fetcher
 uv run cubrid-qahome fetch-build --query '<commit-or-build-substring>' --json
 ```
 
 Force a branch/group when needed:
 
 ```bash
-cd /home/vimkim/temp/cubrid-qahome-fetcher
+cd /home/vimkim/gh/cubrid-qahome-fetcher
 uv run cubrid-qahome fetch-build --query '<commit-or-build-substring>' --group 'RB-11.5.0-Manual' --json
 ```
 
 Use `--summary-only` when the user only needs `showstat`, `showFuntionRes`, and summary counts without detail pages:
 
 ```bash
-cd /home/vimkim/temp/cubrid-qahome-fetcher
+cd /home/vimkim/gh/cubrid-qahome-fetcher
 uv run cubrid-qahome fetch-build --query '<commit-or-build-substring>' --summary-only --json
 ```
 
@@ -130,7 +130,7 @@ Use `--all-result-types` only when the user asks for non-NOK shell detail pages 
 The `just` wrappers are equivalent:
 
 ```bash
-cd /home/vimkim/temp/cubrid-qahome-fetcher
+cd /home/vimkim/gh/cubrid-qahome-fetcher
 just fetch '<commit-or-build-substring>'
 just fetch-summary '<commit-or-build-substring>'
 just fetch '<commit-or-build-substring>' 'RB-11.5.0-Manual'
@@ -151,14 +151,14 @@ Report the run directory and the key report path, usually `runs/<run-id>/failure
 Regenerate summaries and failure reports from an existing run directory:
 
 ```bash
-cd /home/vimkim/temp/cubrid-qahome-fetcher
+cd /home/vimkim/gh/cubrid-qahome-fetcher
 uv run cubrid-qahome summarize 'runs/<run-id>'
 ```
 
 Convenience views:
 
 ```bash
-cd /home/vimkim/temp/cubrid-qahome-fetcher
+cd /home/vimkim/gh/cubrid-qahome-fetcher
 just report 'runs/<run-id>'
 just latest-report
 ```
@@ -187,14 +187,14 @@ Use `summary.json`, `failure-report.json`, and raw pages for precise analysis. T
 
 ## Manual Fallback
 
-Only use manual `curl` login and page parsing if `/home/vimkim/temp/cubrid-qahome-fetcher` is unavailable or broken and the user agrees to a best-effort fallback. Preserve the same guardrails: environment-only credentials, qahome host allowlist, temporary cookie jar, login-form detection, explicit build matching, and no password output.
+Only use manual `curl` login and page parsing if `/home/vimkim/gh/cubrid-qahome-fetcher` is unavailable or broken and the user agrees to a best-effort fallback. Preserve the same guardrails: environment-only credentials, qahome host allowlist, temporary cookie jar, login-form detection, explicit build matching, and no password output.
 
 ## Reporting
 
 Always tell the user:
 
 - Which URL, build query, or tree path was fetched
-- The run directory under `/home/vimkim/temp/cubrid-qahome-fetcher/runs/`
+- The run directory under `/home/vimkim/gh/cubrid-qahome-fetcher/runs/`
 - The key raw/report paths and page size/status when relevant
 - Any build-id mismatch, missing target-build finding, parser warning, or credential/environment problem
 

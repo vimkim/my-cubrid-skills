@@ -66,9 +66,7 @@ Some skills require external tools:
 
 | Tool | Required by | Install |
 |------|------------|---------|
-| `uv` | `cubrid-oos-context` | [docs.astral.sh/uv](https://docs.astral.sh/uv/getting-started/installation/) |
 | `cubrid-jira` | `cubrid-jira`, `cubrid-pr-review` | `uv tool install git+https://github.com/vimkim/cubrid-jira` |
-| `cubrid-oos-search` | `cubrid-oos-context` | `uv tool install cubrid-oos-search` |
 | `gh` | `cubrid-pr-review`, `cubrid-pr-create`, `cubrid-ci-failure-analyze` | [cli.github.com](https://cli.github.com/) |
 | `clangd` | `cubrid-pr-review` (LSP analysis) | System package manager |
 

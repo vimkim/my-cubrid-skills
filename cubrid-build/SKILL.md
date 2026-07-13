@@ -1,86 +1,102 @@
 ---
 name: cubrid-build
-description: CUBRID build and test workflow using justfile. Use when building, compiling, or testing CUBRID source code in any CUBRID worktree or source directory.
+description: Prepare, configure, build, and test CUBRID worktrees with the preset-aware justfile workflow. Use for new or existing CUBRID worktrees and after engine code changes. Triggers on phrases like 'build CUBRID', 'prepare this worktree', 'compile this change', 'run CUBRID tests', or 'use release_gcc'.
 ---
 
 # CUBRID Build & Test
 
-Build and test CUBRID using the justfile workflow.
+Use the shared justfile workflow for every CUBRID build. New agent-created worktrees are not ready until the stowed environment files, a valid CMake preset, configuration, and an initial build are present.
 
-## When to Use
+## 1. Locate the worktree
 
-- User says "build", "compile", "test", "run tests", "빌드", "테스트"
-- After code edits, to verify compilation or run tests
-- When you need to check if changes compile or pass tests
-- Any time you're working in a CUBRID source directory (contains `src/storage/`, `src/parser/`, etc.)
-
-## Prerequisites
-
-- Working directory must be a CUBRID source tree (or worktree)
-- `justfile` must exist in the project root
-- Environment variables `$CUBRID_BUILD_DIR` and `$PRESET_MODE` must be set (typically via direnv)
-
-## Commands
-
-### Build
+Run commands from the Git root returned by:
 
 ```bash
-just build
+git rev-parse --show-toplevel
 ```
 
-Build and install. **Use this to verify code edits compile.** Do not use `cmake --build` directly — the justfile handles preset modes, env vars (`$CUBRID_BUILD_DIR`, `$PRESET_MODE`), and the full pipeline.
+Confirm it is a CUBRID source tree by checking for `CMakeLists.txt` and `src/`.
 
-### Test
+## 2. Choose the preset
+
+Use the preset requested by the user. Otherwise use:
+
+- `debug_gcc` for normal development, debugging, fixes, and tests.
+- `release_gcc` only for an explicitly requested performance measurement or benchmark.
+- Another preset only when the user or task explicitly requires it.
+
+The preset must appear in `cmake --list-presets=configure`. Never invent a preset name.
+
+## 3. Prepare and bootstrap a worktree
+
+Before building, check that all preparation files exist at the worktree root:
+
+- `justfile`
+- `.envrc`
+- `CMakeUserPresets.json`
+
+If any are missing, or if this is a newly-created worktree, run the non-interactive bootstrap script. It performs the shared `just prepare`, validates and writes `.env`, runs configuration, and finishes with `just build`:
 
 ```bash
-just test
+cubrid-worktree-bootstrap.sh \
+  --preset debug_gcc \
+  --worktree "$(git rev-parse --show-toplevel)"
 ```
 
-Run **all** tests: ctest (unit tests + sql-level integration tests) + sql regression tests.
+Replace `debug_gcc` with the explicitly selected preset when necessary. This command is non-interactive; do not use `cmake-preset-mode-select.sh` or `fzf` in an autonomous agent workflow.
 
-### Build + Test
+The canonical script is `$HOME/my-cubrid/bin/cubrid-worktree-bootstrap.sh` and is available on `PATH`. Verify it with `command -v cubrid-worktree-bootstrap.sh` rather than copying it into a worktree or skill directory.
+
+## 4. Verify the loaded environment
+
+For an already-prepared worktree, inspect `.env` before building:
 
 ```bash
-just build-test
-# or the alias:
-just nt
+sed -n 's/^[[:space:]]*PRESET_MODE[[:space:]]*=[[:space:]]*//p' .env
+direnv exec . sh -c 'printf "PRESET_MODE=%s\nCUBRID_BUILD_DIR=%s\nCUBRID=%s\n" "$PRESET_MODE" "$CUBRID_BUILD_DIR" "$CUBRID"'
 ```
 
-Build then run all tests. **This is the standard edit-compile-test cycle.**
+If the preset is missing, invalid, or differs from the required mode, rerun the bootstrap script with the correct `--preset`. Use `direnv exec .` when the current non-interactive shell has not reloaded `.env`.
 
-### ctest Only
+## 5. Build after every code change
+
+Always compile and install after modifying CUBRID code:
 
 ```bash
-just ctest
+direnv exec . just build
 ```
 
-Run ctest only (unit tests + sql-level integration tests). Faster than `just test` when you don't need sql regression tests.
+This is the required verification step even for a small edit. The build is normally fast because the preset uses ccache. Do not invoke `cmake --build` directly.
 
-### Configure
+If CMake files changed or a selected preset has not yet been configured:
 
 ```bash
-just configure
+direnv exec . just configure
+direnv exec . just build
 ```
 
-Run the cmake configure step. Needed after CMakeLists.txt changes or fresh checkouts.
+## 6. Run tests appropriate to the change
 
-### Full Reconfigure + Build
+Run all configured tests and SQL regression tests:
 
 ```bash
-just configure-build-prepare-oos
+direnv exec . just test
 ```
 
-Configure, build, and prepare OOS server config. Use after switching presets or major cmake changes.
+Build and then test:
 
-## Typical Workflow
+```bash
+direnv exec . just build-test
+```
 
-1. Edit code
-2. `just build` — verify it compiles
-3. `just test` — verify all tests pass
-4. Or combine: `just build-test` (alias `just nt`)
+Run ctest only:
 
-## Important
+```bash
+direnv exec . just ctest
+```
 
-- **Always use `just` commands**, never raw `cmake --build` or `ctest` directly.
-- Run build commands with `run_in_background` when they may take a while.
-- If build fails, read the error output carefully before attempting fixes.
+Use narrower specialized skills for isolation or CTP shell tests when those workflows apply.
+
+## 7. Handle failures
+
+Read the first relevant configure, compiler, linker, or test error before changing code. Do not hide errors, bypass the justfile, or switch away from the requested preset merely to obtain a passing build.

@@ -108,26 +108,30 @@ Use this for normal QA result analysis. It resolves the build, fetches `showstat
 
 ```bash
 cd /home/vimkim/gh/cubrid-qahome-fetcher
-uv run cubrid-qahome fetch-build --query '<commit-or-build-substring>' --json
+uv run cubrid-qahome fetch-build --query '<commit-or-build-substring>'
 ```
 
 Force a branch/group when needed:
 
 ```bash
 cd /home/vimkim/gh/cubrid-qahome-fetcher
-uv run cubrid-qahome fetch-build --query '<commit-or-build-substring>' --group 'RB-11.5.0-Manual' --json
+uv run cubrid-qahome fetch-build --query '<commit-or-build-substring>' \
+  --group 'RB-11.5.0-Manual'
 ```
 
 Use `--summary-only` when the user only needs `showstat`, `showFuntionRes`, and summary counts without detail pages:
 
 ```bash
 cd /home/vimkim/gh/cubrid-qahome-fetcher
-uv run cubrid-qahome fetch-build --query '<commit-or-build-substring>' --summary-only --json
+uv run cubrid-qahome fetch-build --query '<commit-or-build-substring>' \
+  --summary-only
 ```
 
 Use `--all-result-types` only when the user asks for non-NOK shell detail pages too. The default is `--nok-only`.
 
-The `just` wrappers are equivalent:
+For `fetch-build`, omit `--json` during normal analysis. Non-JSON fetches write the same run artifacts but print only the run directory; `--json` can dump a large in-memory summary and failure report to stdout. Use `--json` for bounded outputs such as `find-build` and `fetch-url`, or only when the caller explicitly needs the full machine-readable command result.
+
+The `just` wrappers are equivalent in fetched artifacts and intentionally more efficient on stdout because they omit `--json`:
 
 ```bash
 cd /home/vimkim/gh/cubrid-qahome-fetcher
@@ -145,6 +149,8 @@ Each run directory contains:
 - `raw/`: saved showstat, showFuntionRes, and detail pages
 
 Report the run directory and the key report path, usually `runs/<run-id>/failure-report.md`. Summarize the relevant findings for the user instead of dumping the whole report.
+
+After a build fetch, use `failure-report.md` as the first human-readable view. Inspect `manifest.json`, `summary.json`, and `failure-report.json` with targeted `jq` projections instead of printing an entire large JSON document.
 
 ## Existing Run Parsing
 

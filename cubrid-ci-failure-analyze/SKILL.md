@@ -1,6 +1,6 @@
 ---
 name: cubrid-ci-failure-analyze
-description: Analyze CircleCI/CI shell test failures for CUBRID PRs. Reads failed TC list, fetches CI results, reads test scripts and answer files, categorizes failures by root cause, and generates a structured report. Use when CI tests fail and the user wants to understand why.
+description: Discover the current-head CircleCI result for a CUBRID GitHub PR, retrieve failed test-case lists and failure messages (especially test_shell), or analyze those failures against test scripts, answer files, and source changes. Use when the user gives a CUBRID PR URL and asks for recent CI results, asks for failed TCs, shares a CircleCI URL or failed_tc.txt, or wants root-cause analysis of CI failures.
 ---
 
 # CUBRID CI Test Failure Analyzer
@@ -10,6 +10,7 @@ Analyze failed shell test cases from CircleCI (or other CI) for CUBRID PRs. Prod
 ## When to Use
 
 - User says "analyze ci failures", "CI 실패 분석", "왜 TC 실패했어", "failed tc 분석"
+- User gives a GitHub PR URL and asks for the recent/current CI result or `test_shell` failed-TC list
 - User shares a CircleCI URL with test failures
 - User has a `failed_tc.txt` or similar list of failed test cases
 - User wants to understand why shell tests failed on a PR
@@ -17,14 +18,15 @@ Analyze failed shell test cases from CircleCI (or other CI) for CUBRID PRs. Prod
 ## Arguments
 
 - `/cubrid-ci-failure-analyze` — Interactive: look for `failed_tc.txt` in cwd
-- `/cubrid-ci-failure-analyze <circleci-url>` — Fetch failures from CircleCI
+- `/cubrid-ci-failure-analyze <github-pr-url>` — Resolve the PR's current head to its CircleCI jobs and fetch failures
+- `/cubrid-ci-failure-analyze <circleci-url>` — Fetch failures from a known CircleCI job
 - `/cubrid-ci-failure-analyze <file>` — Read failure list from specified file
 
 ## Inputs
 
 The skill needs:
 
-1. **Failed TC list**: A file listing failed test case paths (e.g., `failed_tc.txt`), or a CircleCI URL to fetch from
+1. **CI identity**: A GitHub PR URL, a CircleCI job URL/build number, or a failed-TC file
 2. **Test case directory**: A directory containing the actual test scripts and answer files (e.g., `~/cubrid-testcases-private-ex`)
 3. **Feature context**: The branch/PR being tested (to understand what changes might cause failures)
 
@@ -49,6 +51,7 @@ For example, Codex analyzing commit `f5794fb...` writes `ci_failure_report_f5794
 ### Step 1: Gather Inputs
 
 1. Locate the failed TC list:
+   - For a GitHub PR URL, run the bundled current-head fetcher described in **PR to CircleCI Discovery** below
    - Check arguments for a file path or CircleCI URL
    - Check cwd for `failed_tc.txt`
    - Ask user if not found
@@ -63,7 +66,46 @@ For example, Codex analyzing commit `f5794fb...` writes `ci_failure_report_f5794
 
 ### Step 2: Fetch CI Failure Details
 
-If a CircleCI URL is provided, use an agent to fetch the actual test failure messages (diffs, error outputs). This provides the actual vs expected output, which is critical for root cause analysis.
+Fetch the complete CircleCI tests response, not only names. Preserve `tests.json` and `failed-tests.json`; each failed test's `message` may contain the actual/expected diff, console output, fatal error, or timeout needed for root-cause analysis. Keep `failed-tc.txt` as the compact inventory.
+
+## PR to CircleCI Discovery
+
+For a GitHub PR URL, use the bundled helper first:
+
+```bash
+run_dir=$(mktemp -d -t cubrid-ci-fetch.XXXXXX)
+bash <skill-path>/scripts/fetch-pr-circleci.sh \
+  'https://github.com/CUBRID/cubrid/pull/6864' test_shell "$run_dir"
+```
+
+The helper performs this exact chain:
+
+```text
+PR URL
+  -> GitHub PR current head SHA (`headRefOid`)
+  -> that commit's status context `ci/circleci: test_shell`
+  -> CircleCI job number from `target_url`
+  -> CircleCI v1.1 job metadata
+  -> verify job `vcs_revision` == PR head SHA and `workflows.job_name` == test_shell
+  -> CircleCI `/tests` response
+  -> `failed-tc.txt` + full failure JSON
+```
+
+Artifacts are `summary.json`, `job.json`, `tests.json`, `failed-tests.json`, and `failed-tc.txt` in the new output directory. Read `summary.json` first, then the compact list, then targeted failure messages from `failed-tests.json`.
+
+Treat **current** as "attached to the PR's current head SHA," not "the numerically highest CircleCI job" and not "the newest report found in local docs." Long-lived tracking PRs have many obsolete jobs. Never fall back to an older SHA when the current status is absent or pending; report that no completed current-head result exists.
+
+For manual inspection, the equivalent discovery commands are:
+
+```bash
+head_sha=$(gh pr view <pr-number> --repo CUBRID/cubrid --json headRefOid --jq .headRefOid)
+gh api "repos/CUBRID/cubrid/commits/$head_sha/status" \
+  --jq '.statuses[] | select(.context == "ci/circleci: test_shell")'
+curl -fsSL "https://circleci.com/api/v1.1/project/github/CUBRID/cubrid/<job-number>"
+curl -fsSL "https://circleci.com/api/v1.1/project/github/CUBRID/cubrid/<job-number>/tests"
+```
+
+Use `gh pr checks` only as a convenient human-readable overview. Use the current-head commit status plus CircleCI job metadata for machine validation because GitHub Actions checks and legacy CircleCI status contexts are different API surfaces.
 
 ### Step 3: Read All Failed Test Cases (Parallel)
 
@@ -158,7 +200,7 @@ Write a structured markdown report with:
 ## Tips
 
 - **When in doubt about source code behavior, use LSP (clangd)** to analyze CUBRID C/C++ code. Use `lsp_hover` to check types, `lsp_goto_definition` to trace function implementations, `lsp_find_references` to understand call sites, and `lsp_diagnostics` to catch issues. This is especially useful when tracing how a changed function affects downstream callers.
-- **When fetching CircleCI results, use API v1.1** (not v2) since v2 requires authentication. Example: `https://circleci.com/api/v1.1/project/github/CUBRID/cubrid/<build_num>/tests` works without credentials.
+- **When fetching CircleCI results, use API v1.1** for the job and tests endpoints. Example: `https://circleci.com/api/v1.1/project/github/CUBRID/cubrid/<build_num>/tests` currently works without credentials. If it returns an authentication error, report that boundary instead of scraping the CircleCI UI.
 - Always read the actual test script AND answer file — the script tells you what operations are tested, the answer tells you what output is expected
 - Look for data types that exceed storage thresholds (e.g., `varchar(20000)`, large JSON, CLOB/BLOB)
 - Check for `diagdb`, `show heap header`, `cubrid spacedb` in test scripts — these are sensitive to storage format changes
@@ -166,9 +208,9 @@ Write a structured markdown report with:
 - TCs with no diff details from CI may need local reproduction to diagnose
 - Group by root cause, not by symptom — multiple TCs often share a single underlying issue
 
-## Mandatory: Iterate with Grill-with-Docs
+## Mandatory for Analysis Reports: Iterate with Grill-with-Docs
 
-Every CI failure report must go through `/grill-with-docs` before being shared. Do not deliver a single-pass triage. Single-pass triage drifts toward weak root-cause hypotheses, mis-categorized TCs, and unsupported "Related?" calls. CI reports often drive merge or release decisions where mis-attribution is expensive.
+Every CI failure **analysis report** must go through `/grill-with-docs` before being shared. A discovery-only request that returns the current job identity, status, counts, or failed-TC list does not create an analysis report and does not require the grill loop. Do not deliver a single-pass triage. Single-pass triage drifts toward weak root-cause hypotheses, mis-categorized TCs, and unsupported "Related?" calls. CI reports often drive merge or release decisions where mis-attribution is expensive.
 
 This step is required, not optional. It applies to every report. No agent-side judgment — including size, scope, perceived triviality, or perceived risk — is a valid skip criterion. The only legitimate skip is when the user, in the message that triggered this skill, explicitly says "skip grill" or "don't grill this" (or unambiguous equivalent: "no grill", "skip the grill loop", "just push it"). If in doubt, do the grill loop.
 

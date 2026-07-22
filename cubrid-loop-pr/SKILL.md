@@ -300,7 +300,7 @@ Loop until terminal. Each iteration:
    gh api "repos/<OWNER>/<REPO>/commits/<head_sha>/check-runs?per_page=100" \
      --jq '.check_runs[] | select(.conclusion=="failure" or .conclusion=="timed_out" or .conclusion=="cancelled") | {name, html_url, details_url}'
    ```
-   For CircleCI checks, `details_url` points to the CircleCI build page. Fetch the failure details with whatever the project conventionally uses (the existing `cubrid-ci-failure-analyze` skill is the right tool here for deeper triage; this loop only needs a short tail).
+   For CircleCI checks, `details_url` points to the CircleCI build page. Fetch the failure details with whatever the project conventionally uses (the existing `cubrid-ci-analyze` skill is the right tool here for deeper triage; this loop only needs a short tail).
 2. Build `last_failure_summary` (cap each side at ~80 lines):
    ```
    test_sql: <"passed" | last 80 lines of failing log>
@@ -367,4 +367,4 @@ Elapsed:     6h12m
 - If the user wants to abandon mid-run, they can interrupt the session; the loop has no background process to clean up beyond an in-flight `gh` call.
 - If CircleCI is queueing builds behind other PRs, polling will see `queued` for a long time. That is not a failure — keep polling until either conclusion arrives or the deadline hits.
 - If the project flips chatops syntax (e.g., `/run sql_medium` vs `/run sql medium`), only update Step 5. The rest of the loop is unaffected.
-- For deep triage of a particularly stubborn failure, suggest the user pause this loop and run `/cubrid-ci-failure-analyze` against the failing build to seed a sharper intent string before re-invoking `/cubrid-loop-pr`.
+- For deep triage of a particularly stubborn failure, suggest the user pause this loop and run `/cubrid-ci-analyze` against the PR to seed a sharper intent string before re-invoking `/cubrid-loop-pr`.

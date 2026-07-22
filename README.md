@@ -7,7 +7,7 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | Skill | Description |
 |-------|-------------|
 | `cubrid-jira` | Look up CUBRID JIRA issue context (CBRD-XXXXX) |
-| `cubrid-ci-failure-analyze` | Analyze CircleCI shell test failures with root cause categorization |
+| `cubrid-ci-analyze` | Collect exact-commit CircleCI snapshots with `cubrid-ci` and write failure-analysis reports |
 | `cubrid-pr-review` | Review the CUBRID PR at the current worktree HEAD using Claude Code `/code-review` or Codex `/review`, plus CUBRID-specific validation |
 | `cubrid-pr-create` | Create GitHub PRs with `[CBRD-XXXXX]` title format and Korean body |
 | `cubrid-jira-issue-write` | Write structured JIRA issue reports in Korean |
@@ -53,7 +53,7 @@ Once installed, invoke skills as slash commands in Claude Code:
 /cubrid-jira CBRD-25123
 /cubrid-pr-review https://github.com/CUBRID/cubrid/pull/6950
 /cubrid-pr-create CBRD-26583
-/cubrid-ci-failure-analyze
+/cubrid-ci-analyze https://github.com/CUBRID/cubrid/pull/6864
 /cubrid-manual-search What is the default value of max_clients?
 /create-testcases CBRD-26609
 ```
@@ -67,7 +67,8 @@ Some skills require external tools:
 | Tool | Required by | Install |
 |------|------------|---------|
 | `cubrid-jira` | `cubrid-jira`, `cubrid-pr-review` | `uv tool install git+https://github.com/vimkim/cubrid-jira` |
-| `gh` | `cubrid-pr-review`, `cubrid-pr-create`, `cubrid-ci-failure-analyze` | [cli.github.com](https://cli.github.com/) |
+| `gh` | `cubrid-pr-review`, `cubrid-pr-create` | [cli.github.com](https://cli.github.com/) |
+| `cubrid-ci` | `cubrid-ci-analyze` | `cargo install --path /home/vimkim/gh/cubrid-circleci-analyzer --locked` |
 | `clangd` | `cubrid-pr-review` (LSP analysis) | System package manager |
 
 ## License

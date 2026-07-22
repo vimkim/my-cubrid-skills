@@ -1,0 +1,4 @@
+interface:
+  display_name: "CUBRID CI Analyze"
+  short_description: "Analyze CUBRID CI evidence and write reports"
+  default_prompt: "Use $cubrid-ci-analyze to analyze this CUBRID pull request and write an evidence-backed CI report."

@@ -12,7 +12,7 @@ Each top-level directory with a `SKILL.md` is a skill:
 
 - `cubrid-jira/` — CUBRID JIRA issue lookup
 - `cubrid-build/` — prepare, build, and test local CUBRID worktrees
-- `cubrid-ci-failure-analyze/` — CircleCI shell test failure analysis
+- `cubrid-ci-analyze/` — exact-commit CircleCI snapshot and failure analysis with `cubrid-ci`
 - `cubrid-ci-trigger/` — trigger CUBRID CI suites on GitHub PRs
 - `cubrid-grill-and-implement/` — iterative implementation with adversarial subagent review and build gates
 - `cubrid-isolation-test/` — create and run CUBRID concurrency and MVCC isolation tests

@@ -1,6 +1,6 @@
 ---
 name: cubrid-jira-issue-write
-description: Write a CUBRID JIRA issue report in Korean with English section headers (##). Top of issue is an Issue Triage block — 목적 (필수) + 이유 (필수, 현재 동작·한계와 그 영향 두 축을 모두 포함, 가능하면 AS-IS/TO-BE 대비 명시) + 방안 (합의된 스펙은 구체적으로, 미결정은 TBD) — written in whatever format reads best (short prose, mini-tables, ASCII call-flow diagrams, callouts — NOT forced dot-lists), followed by an explicitly separated AI-Generated Context block. Favors diagrams and comparison tables for call flows and option trade-offs. Writes structured markdown to /home/vimkim/gh/my-cubrid-jira/issues/. Use when the user wants to write up a JIRA issue, document a bug finding, or create a feature/task report for CUBRID.
+description: Write a CUBRID JIRA issue report in Korean with English section headers (##). Top of issue is an Issue Triage block — 목적 (필수) + 이유 (필수, 현재 동작·한계와 그 영향 두 축을 모두 포함, 가능하면 AS-IS/TO-BE 대비 명시) + 방안 (합의된 스펙은 구체적으로, 미결정은 TBD) — written in whatever format reads best (short prose, mini-tables, ASCII call-flow diagrams, callouts — NOT forced dot-lists), followed by an explicitly separated AI-Generated Context block. Favors diagrams and comparison tables for call flows and option trade-offs. Writes versioned markdown with source-commit and AI-agent suffixes to /home/vimkim/gh/my-cubrid-jira/issues/. Use when the user wants to write up a JIRA issue, document a bug finding, or create a feature/task report for CUBRID.
 ---
 
 # CUBRID JIRA Issue Writer
@@ -21,10 +21,21 @@ These two goals fight verbosity from both ends: the triage block stays tiny, the
 
 ## Hard Constraints (non-negotiable)
 
-- **Save location**: `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XXXXX-short-slug.md`. If the directory does not exist, **stop and tell the user** to clone/create the repo. Do NOT create it yourself. No ticket number yet -> ask, or use a descriptive slug.
+- **Save location**: `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XXXXX-short-slug_<SHORT_SHA>_<AGENT>.md`. If the directory does not exist, **stop and tell the user** to clone/create the repo. Do NOT create it yourself. If no ticket number is known, ask whether one should be supplied; only after the user confirms this is a ticket-free draft, use `descriptive-slug_<SHORT_SHA>_<AGENT>.md`.
 - **No emoji and no non-BMP (4-byte UTF-8) characters.** The CUBRID JIRA API rejects 4-byte characters, and emoji (🚀 ✅ ❌ 😀 …) read as AI-slop regardless of plane. Everything in the BMP is allowed — Korean/CJK, and ordinary typographic symbols when they aid readability: `★` (flow-diagram limit marker), box-drawing (`└ ├ │`), `→`, `✓`. ASCII forms (`->`, `[x]`/`[ ]`, `-`/`*`) are equally fine — use whichever reads cleaner, not because the API forces it.
 - **Headers (`##`) in English. Subheaders (`###`) and all body text in Korean** (평어/한다체, never 합니다/입니다). Code, function names, file paths, identifiers stay as-is.
 - **Never state the issue's own audience or readability target in the body.** No "신입도 읽을 수 있게 작성", no "독자 대상: ...", no reading-grade note, no "고등학생도 이해할 수 있도록". Readability is writer-side guidance; the reader benefits from it silently. Any sentence describing the doc's own clarity instead of the bug/feature gets deleted.
+
+## Artifact Identity
+
+Resolve the filename before writing the draft:
+
+1. Set `SOURCE_COMMIT` to the specific CUBRID commit or PR head analyzed by the issue when one is supplied. Otherwise use `git rev-parse HEAD` in the current CUBRID worktree. Never use the `my-cubrid-jira` repository commit. If no relevant CUBRID commit or worktree can be identified, ask the user.
+2. Validate `SOURCE_COMMIT` and take its first seven hexadecimal characters as `SHORT_SHA`.
+3. Set `AGENT` from the active AI host's runtime identity. Use `codex` for Codex and `claude` for Claude Code. For another host, use its stable lowercase agent name. Do not infer the host from installed binaries because multiple AI CLIs may coexist; if runtime identity is unclear, ask the user.
+4. Compute the output path once and reuse that exact file through the grill loop and final handoff. The basename must end with `_<SHORT_SHA>_<AGENT>.md`.
+
+For example, Codex documenting `f5794fb...` writes `CBRD-26972-oos-show-heap-capacity_f5794fb_codex.md`; Claude Code writes `CBRD-26972-oos-show-heap-capacity_f5794fb_claude.md`.
 
 ## Issue Types
 
@@ -268,12 +279,13 @@ JIRA issues are read by devs, QA, and CS who do not share the author's local set
 1. **Check output directory** exists (else stop — see Hard Constraints).
 2. **Determine issue type** (section structure depends on it; ask if unclear).
 3. **Gather context**: read source, prior analysis, `/cubrid-jira CBRD-XXXXX`, repro logs.
-4. **Draft the Issue Triage block first** — forces a clear thesis and the 10-second triage path.
-5. **Add the `## AI-Generated Context` divider** + caveat note; all AI-written detail goes below it.
-6. **Write the body** from the type template, applying **Layer Ownership** so nothing repeats.
-7. **Run the mandatory checks**: (a) Layer-Ownership de-dup grep — no fact in 2+ layers; (b) AS-IS/TO-BE appears when the issue has a clear before/after contrast; (c) `rg -nP '\bjust\s+\w'` returns zero.
-8. **Save** to `CBRD-XXXXX-slug.md`.
-9. **Show the user** the path, the chosen type, and the Issue Triage block so they can sanity-check the framing.
+4. **Resolve artifact identity**: set `SOURCE_COMMIT`, `SHORT_SHA`, `AGENT`, and the final output path using **Artifact Identity**.
+5. **Draft the Issue Triage block first** — forces a clear thesis and the 10-second triage path.
+6. **Add the `## AI-Generated Context` divider** + caveat note; all AI-written detail goes below it.
+7. **Write the body** from the type template, applying **Layer Ownership** so nothing repeats.
+8. **Run the mandatory checks**: (a) Layer-Ownership de-dup grep — no fact in 2+ layers; (b) AS-IS/TO-BE appears when the issue has a clear before/after contrast; (c) `rg -nP '\bjust\s+\w'` returns zero.
+9. **Save** to the resolved path ending in `_<SHORT_SHA>_<AGENT>.md`.
+10. **Show the user** the path, source commit, agent name, chosen type, and Issue Triage block so they can sanity-check the framing.
 
 ## Arguments
 

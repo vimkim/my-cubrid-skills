@@ -28,6 +28,22 @@ The skill needs:
 2. **Test case directory**: A directory containing the actual test scripts and answer files (e.g., `~/cubrid-testcases-private-ex`)
 3. **Feature context**: The branch/PR being tested (to understand what changes might cause failures)
 
+## Report Identity and Location
+
+Resolve the report identity before writing any draft:
+
+1. Set `AGENT` from the active AI host's runtime identity. Use `codex` for Codex and `claude` for Claude Code. For another host, use its stable lowercase agent name. Do not infer the host from installed binaries because multiple AI CLIs may coexist; if runtime identity is unclear, ask the user.
+2. Set `SOURCE_COMMIT` to the commit actually tested by CI. Prefer the CircleCI/build revision, then the PR head SHA. Only when neither is available, use `git rev-parse HEAD` in the CUBRID source worktree. If the explicit CI/PR commit differs from local `HEAD`, keep the explicit subject commit; never label the report with an unrelated local commit.
+3. Validate `SOURCE_COMMIT` and take its first seven hexadecimal characters as `SHORT_SHA`.
+4. Extract the first `CBRD-XXXXX` from the PR title, PR body, branch, or user input and normalize the directory to lowercase. If no ticket can be determined, ask the user before writing.
+5. Require `/home/vimkim/gh/my-cubrid-docs` to exist, create its `cbrd-xxxxx/` ticket directory if needed, and set:
+
+   ```text
+   REPORT_PATH=/home/vimkim/gh/my-cubrid-docs/cbrd-xxxxx/ci_failure_report_<SHORT_SHA>_<AGENT>.md
+   ```
+
+For example, Codex analyzing commit `f5794fb...` writes `ci_failure_report_f5794fb_codex.md`; Claude Code writes `ci_failure_report_f5794fb_claude.md`. Compute `REPORT_PATH` once and reuse it for the initial draft, grill loop, and final handoff. Never fall back to the CUBRID source root or current working directory.
+
 ## Execution Steps
 
 ### Step 1: Gather Inputs
@@ -43,6 +59,7 @@ The skill needs:
 3. Identify the feature branch context:
    - `git branch --show-current`
    - `git log --oneline HEAD --not develop | head -20` to understand feature changes
+4. Resolve `AGENT`, `SOURCE_COMMIT`, `SHORT_SHA`, the CBRD ticket, and `REPORT_PATH` using **Report Identity and Location**.
 
 ### Step 2: Fetch CI Failure Details
 
@@ -119,8 +136,8 @@ Write a structured markdown report with:
 
 ### Step 7: Save and Present
 
-1. Save report to `failed_tc_report.md` in the project root (or user-specified location)
-2. Print a concise summary with counts: X related, Y unrelated, Z total
+1. Save the report to `REPORT_PATH`.
+2. Print `REPORT_PATH`, the analyzed seven-character commit, the agent name, and a concise summary with counts: X related, Y unrelated, Z total.
 
 ## Output Conventions
 
@@ -157,7 +174,7 @@ This step is required, not optional. It applies to every report. No agent-side j
 
 **How to hand off:**
 
-After saving the initial report to `failed_tc_report.md`, invoke `/grill-with-docs` with:
+After saving the initial report to `REPORT_PATH`, invoke `/grill-with-docs` with:
 
 - **Topic & purpose**: CI failure analysis for `<branch>` / `<PR link>`, audience is the PR author, QA, and CUBRID maintainers
 - **Output path**: the same report file (the loop revises in place)

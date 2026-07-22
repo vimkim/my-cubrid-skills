@@ -66,7 +66,7 @@ https://jira.cubrid.org/browse/CBRD-XXXXX
 ## Remarks
 
 - 리뷰어가 먼저 봐야 할 곳, 제한 사항, 후속 작업을 적습니다.
-- 자세한 설명: https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-XXXXX/CBRD-XXXXX-<slug>.md
+- 자세한 설명: https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-XXXXX/CBRD-XXXXX-<slug>_<SHORT_SHA>_<AGENT>.md
 ```
 
 Rules:
@@ -99,10 +99,17 @@ The PR body must be understandable by a Korean high-school 11th grader: fluent i
 Every PR's deep technical write-up lives in the `my-cubrid-docs` repo, not in the PR body.
 
 - Resolve the local docs repo as `${CUBRID_PR_DOCS_REPO:-$HOME/gh/my-cubrid-docs}`.
-- Its `origin` remote should point to `github.com/vimkim/my-cubrid-docs`.
+- Require it to be a Git worktree whose `origin` remote points to `github.com/vimkim/my-cubrid-docs` (HTTPS or SSH form). Stop if this validation fails.
+- Resolve both the CUBRID source root and docs root to canonical absolute paths. Reject a docs root equal to the CUBRID source root or current working directory; never write the detailed doc into the source worktree.
 - Directory: `cbrd-XXXXX/` using lowercase `cbrd-`.
-- Filename: `CBRD-XXXXX-<slug>.md` using uppercase `CBRD-` in the filename.
-- Published URL: `https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-XXXXX/CBRD-XXXXX-<slug>.md`.
+- Filename: `CBRD-XXXXX-<slug>_<SHORT_SHA>_<AGENT>.md` using uppercase `CBRD-` in the filename.
+- Published URL: `https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-XXXXX/CBRD-XXXXX-<slug>_<SHORT_SHA>_<AGENT>.md`.
+
+Resolve both identity suffixes before choosing `doc_file`:
+
+1. Set `SOURCE_COMMIT` with `git rev-parse --verify 'HEAD^{commit}'` in the current CUBRID worktree, validate the returned hexadecimal commit, and set `SHORT_SHA` to its first seven characters. This is the commit the PR will publish; never use the docs repository's commit.
+2. Set `AGENT` from the active AI host's runtime identity. Use `codex` for Codex and `claude` for Claude Code. For another host, use its stable lowercase agent name. Do not infer the host from installed binaries because multiple AI CLIs may coexist; ask the user if runtime identity is unclear.
+3. Keep `SOURCE_COMMIT`, `SHORT_SHA`, and `AGENT` unchanged throughout the workflow. Immediately before committing the doc and again before creating the PR, require `git rev-parse HEAD` in the CUBRID worktree to equal `SOURCE_COMMIT`. If it changed, stop and regenerate the filename, URL, and PR material for the new commit.
 
 Use the same top-level section contract in the doc:
 
@@ -150,7 +157,8 @@ If there are uncommitted changes, warn the user and ask whether to proceed or co
    - Otherwise ask the user.
 3. Target repo: default to `CUBRID/CUBRID` unless the user specifies another repo.
 4. Source: determine the user's fork remote and use `<github-user>:<branch>` for the PR head.
-5. Docs repo: set `docs_repo="${CUBRID_PR_DOCS_REPO:-$HOME/gh/my-cubrid-docs}"` and confirm it exists.
+5. Docs repo: set `docs_repo="${CUBRID_PR_DOCS_REPO:-$HOME/gh/my-cubrid-docs}"`, require the expected `origin`, and reject the CUBRID source root/current working directory as described above.
+6. Set `SOURCE_COMMIT`, `SHORT_SHA`, and `AGENT` using the **Detailed Explanation Doc** identity rules. If the runtime does not identify the active AI host, ask rather than guessing.
 
 ### Step 3: Analyze Changes
 
@@ -163,7 +171,7 @@ If there are uncommitted changes, warn the user and ask whether to proceed or co
 ### Step 4: Write the Detailed Explanation Doc
 
 1. Pick a short kebab-case `<slug>` from the change, such as `reenable-oos-oid-replacement`.
-2. Create `doc_dir="$docs_repo/cbrd-XXXXX"` and `doc_file="$doc_dir/CBRD-XXXXX-<slug>.md"`.
+2. Create `doc_dir="$docs_repo/cbrd-XXXXX"` and `doc_file="$doc_dir/CBRD-XXXXX-<slug>_<SHORT_SHA>_<AGENT>.md"`.
 3. Write the full technical explanation with `## Purpose`, `## Implementation`, and `## Remarks`. If a before/after contrast exists, make AS-IS/TO-BE explicit under `## Purpose`.
 4. Use repo-relative paths like `src/storage/heap_file.c`, never local absolute paths.
 5. Grill the doc using the mandatory loop below. The doc is the substantive artifact, so the grill loop applies there.
@@ -194,8 +202,11 @@ Show the draft title, base branch, head branch, doc URL, and PR body. Ask for co
 
 After the checker passes and the user confirms:
 
+1. Verify that the CUBRID worktree `HEAD` still equals `SOURCE_COMMIT`; stop and regenerate the artifact identity if it changed.
+2. Commit and push only the intended detailed document:
+
 ```bash
-git -C "$docs_repo" add "cbrd-XXXXX/"
+git -C "$docs_repo" add -- "cbrd-XXXXX/CBRD-XXXXX-<slug>_<SHORT_SHA>_<AGENT>.md"
 git -C "$docs_repo" commit -m "docs(CBRD-XXXXX): add PR explanation for <slug>"
 git -C "$docs_repo" push origin main
 ```
@@ -212,7 +223,8 @@ After pushing, use the published GitHub URL in the PR body's `## Remarks` sectio
    ```bash
    bash "$checker" --body "$body_file" "$doc_file"
    ```
-3. Create the PR:
+3. Verify once more that the CUBRID worktree `HEAD` equals `SOURCE_COMMIT`. Stop if it changed.
+4. Create the PR:
    ```bash
    gh pr create --repo CUBRID/CUBRID \
      --draft \
@@ -222,12 +234,12 @@ After pushing, use the published GitHub URL in the PR body's `## Remarks` sectio
      --title "[CBRD-XXXXX] Title" \
      --body-file "$body_file"
    ```
-4. Print the resulting PR URL.
+5. Print the resulting PR URL.
 
 ## Example Output
 
 ```text
-Doc pushed: https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-26583/CBRD-26583-reenable-oos-oid-replacement.md
+Doc pushed: https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-26583/CBRD-26583-reenable-oos-oid-replacement_f5794fb_codex.md
 PR created: https://github.com/CUBRID/cubrid/pull/6950
 
 Title: [CBRD-26583] Re-enable OOS OID replacement in heap records

@@ -26,10 +26,12 @@ Review CUBRID database engine pull requests and produce a concise Korean review 
 Write the report under the local CUBRID docs tree, never in the CUBRID repo root or current directory:
 
 ```text
-/home/vimkim/gh/my-cubrid-docs/<ticket-id>/PR-<NUMBER>-report-<AGENT>.md
+/home/vimkim/gh/my-cubrid-docs/<ticket-id>/PR-<NUMBER>-report_<SHORT_SHA>_<AGENT>.md
 ```
 
-`<ticket-id>` is the lowercase CBRD ticket number, for example `cbrd-26583`. `<AGENT>` is the current host CLI: `claude` for Claude Code or `codex` for Codex CLI. For example, the same PR reviewed by both agents produces `/home/vimkim/gh/my-cubrid-docs/cbrd-26583/PR-6950-report-claude.md` and `/home/vimkim/gh/my-cubrid-docs/cbrd-26583/PR-6950-report-codex.md`; never use the shared legacy name `PR-6950-report.md`. The report is **local-only** — never post it to GitHub.
+`<ticket-id>` is the lowercase CBRD ticket number, for example `cbrd-26583`. `<SHORT_SHA>` is the first seven hexadecimal characters of the PR `head_sha` returned by the prerequisite gate. `<AGENT>` comes from the active AI host's runtime identity: `claude` for Claude Code, `codex` for Codex, or another host's stable lowercase agent name. Do not infer it from installed binaries because multiple AI CLIs may coexist; ask the user if runtime identity is unclear.
+
+For example, at PR head `f5794fb...`, Codex writes `/home/vimkim/gh/my-cubrid-docs/cbrd-26583/PR-6950-report_f5794fb_codex.md` and Claude Code writes `/home/vimkim/gh/my-cubrid-docs/cbrd-26583/PR-6950-report_f5794fb_claude.md`. Never use a shared legacy name without both identity suffixes. The report is **local-only** — never post it to GitHub.
 
 ### Report Path Rules
 
@@ -37,7 +39,8 @@ Write the report under the local CUBRID docs tree, never in the CUBRID repo root
 - Extract the first `CBRD-XXXXX` ticket id from the PR title, then the PR body if the title has none. Normalize the directory name to lowercase (`cbrd-xxxxx`).
 - If no CBRD ticket id is present, stop before writing the report and ask the user for the ticket id.
 - Create the ticket directory if it does not already exist.
-- Compute `REPORT_PATH` once after `<AGENT>` is set, then use that exact path for the initial report, the `/grill-with-docs` output path, and the final printed saved path.
+- Derive `SHORT_SHA` from the validated PR `head_sha`, never from an unrelated docs-repo commit or stale local branch.
+- Compute `REPORT_PATH` once after `SHORT_SHA` and `<AGENT>` are set, then use that exact path for the initial report, the `/grill-with-docs` output path, and the final printed saved path.
 
 ### Language Rules
 
@@ -50,7 +53,7 @@ Write the report under the local CUBRID docs tree, never in the CUBRID repo root
 ### Character Restrictions
 
 - **NO emoji** (no checkmarks, crosses, rockets, warnings, etc.) (These examples appear here only as illustrations of what NOT to put in the report.)
-- **NO non-BMP Unicode** or special symbols (no `->`, `<-`, check/cross marks, stars, bullets like `●`/`■`)
+- **NO non-BMP Unicode** or decorative symbols (no Unicode arrows, check/cross marks, stars, or bullets like `●`/`■`)
 - Use ASCII alternatives: `->` instead of arrows, `[x]`/`[ ]` for checkboxes, `*`/`-` for bullets
 - **Reason**: matches house style across `cubrid-pr-create` and `cubrid-jira-issue-write`, and avoids encoding issues if the report is later pasted into a ticket comment.
 
@@ -161,7 +164,7 @@ Run these in parallel:
 
 Use the current host CLI's built-in reviewer as the **primary review pass**. Determine the host from runtime-provided identity or capabilities; do not infer it from whether `claude` or `codex` binaries happen to be installed, because both may coexist.
 
-Set `<AGENT>` for the report path from that same host identity: `claude` under Claude Code and `codex` under Codex CLI. Keep this value unchanged for the remainder of the workflow.
+Set `<AGENT>` for the report path from that same active host identity: `claude` under Claude Code, `codex` under Codex, or another host's stable lowercase agent name. Do not detect it by checking which binaries are installed. If the host identity is unclear, ask the user. Keep this value unchanged for the remainder of the workflow.
 
 After `<AGENT>` is set, resolve the report path before invoking the native reviewer:
 
@@ -169,9 +172,10 @@ After `<AGENT>` is set, resolve the report path before invoking the native revie
 2. Extract `CBRD-XXXXX` from the Step 1 PR title, falling back to the PR body only if the title has none.
 3. Normalize the ticket directory to lowercase, for example `cbrd-26583`.
 4. Create `/home/vimkim/gh/my-cubrid-docs/<ticket-id>` if it does not exist.
-5. Set `REPORT_PATH=/home/vimkim/gh/my-cubrid-docs/<ticket-id>/PR-<NUMBER>-report-<AGENT>.md`.
+5. Validate the Step 1 `head_sha` and set `SHORT_SHA` to its first seven hexadecimal characters.
+6. Set `REPORT_PATH=/home/vimkim/gh/my-cubrid-docs/<ticket-id>/PR-<NUMBER>-report_<SHORT_SHA>_<AGENT>.md`.
 
-Claude Code must therefore write `...-report-claude.md`; Codex CLI must write `...-report-codex.md`. Both hosts use the same docs-tree ticket directory and never save the report in the CUBRID repo root or current working directory.
+Claude Code must therefore end filenames with `_<SHORT_SHA>_claude.md`; Codex must end them with `_<SHORT_SHA>_codex.md`. Both hosts use the same docs-tree ticket directory and never save the report in the CUBRID repo root or current working directory.
 
 Immediately before invoking the native reviewer, rerun `scripts/check-prereqs.sh "$PR_NUMBER_OR_URL"`. Abort if it fails or returns a different `head_sha` from Step 1. Immediately after the native reviewer finishes, run the gate once more. If it fails or the PR head changed, discard all candidate findings and stop without writing a report. This prevents reviewing or reporting against a PR that moved after setup.
 
@@ -234,7 +238,7 @@ Every surviving finding needs a code snippet or diagnostic as evidence.
 1. **Draft the TL;DR + Summary first.** Write the verdict label and conclusion before the body — this forces a clear stance and reveals whether the rest of the report supports it.
 2. **Write Findings tightly.** One sentence per item. Group as Blocking / Non-blocking / Questions, omitting any subsection that has no items. If no category has any items, replace the section body with a single `없음` line and omit all three subsections.
 3. **Add JIRA Context and Existing Comments only if useful.** Omit empty sections.
-4. **Save** to `REPORT_PATH`, using the host-derived `claude` or `codex` value from Step 3 and the docs-tree ticket directory from the Report Path Rules.
+4. **Save** to `REPORT_PATH`, using the PR-head `SHORT_SHA`, the runtime-derived agent name from Step 3, and the docs-tree ticket directory from the Report Path Rules.
 5. **Print** three things so the user can sanity-check the call at a glance: (1) the saved file path, (2) the verdict label extracted from the TL;DR (`Blocking` / `Non-blocking` / `작성자 확인 필요`), (3) the TL;DR sentence(s) without the label prefix.
 
 ## Example Output

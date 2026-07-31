@@ -50,7 +50,7 @@ Spell these out at invocation and carry them through the loop:
 - `round` — starts at 1.
 - `last_failure_summary` — empty on round 1; on round >= 2, the tails of the failed CI job logs from the previous round.
 - `head_sha` — refreshed after every push; checks are scoped to this SHA.
-- `trigger_epoch` — when the latest `/run sql medium` comment was posted; used to ignore stale check runs.
+- `trigger_epoch` — when the active current-head `/run` comment was posted; used to ignore stale check runs.
 - `LOOP_BASELINE_DIRTY_FILE` — path to a NUL-separated snapshot of `git status --porcelain -z` taken at Step 1 substep 7. Step 4 substep 2 subtracts this set from the per-round dirty list to stage only the loop's own additions.
 
 ## Execution Steps
@@ -228,12 +228,15 @@ The grill skill leaves the tree dirty. Commit only what the grill skill changed.
 
 ### Step 5: Trigger CI
 
-1. Post the chatops comment exactly:
+1. Check for a `/run` comment posted for `head_sha` using the current-head boundary procedure from `cubrid-ci-trigger` Step 3. If one exists, treat it as active and continue to Step 6 without posting. Missing checks do not invalidate the comment.
+2. If no current-head trigger exists, post the chatops comment exactly:
    ```bash
    gh pr comment <pr-url> --body "/run sql medium"
    ```
-2. Capture `trigger_epoch=$(date +%s)`.
-3. Print: `Round <round>: posted /run sql medium for <head_sha>; CI starting.`
+3. Capture `trigger_epoch=$(date +%s)` when posting, or use the existing comment's timestamp when continuing an active trigger.
+4. Print whether the round posted a new trigger or continued the existing current-head trigger.
+
+Never post a second `/run` comment for the same head unless the user explicitly confirms the re-trigger in the current conversation. A replacement pipeline can cancel queued work and rerun already-finished suites.
 
 ### Step 6: Poll CI Every 10 Minutes
 
@@ -247,7 +250,7 @@ Loop until terminal. Each iteration:
      '.[] | select(.name | test("test_sql|test_medium"; "i")) | {name, state, bucket, link}'
    ```
    The raw `gh api .../check-runs` endpoint is intentionally NOT used here: it returns ONLY GitHub Actions check-runs and silently omits CircleCI checks, so `test_sql` / `test_medium` would never appear and the loop would poll forever.
-4. From the check list pick the two whose `name` matches (case-insensitive substring) `test_sql` and `test_medium`. If either is still missing after `now - trigger_epoch > 1200` (20 minutes), print: `WARN round <round>: <missing job name> not visible 20m after trigger; will keep polling but may need a manual /run sql medium re-post if it never appears.` Keep polling.
+4. From the check list pick the two whose `name` matches (case-insensitive substring) `test_sql` and `test_medium`. If either is still missing after `now - trigger_epoch > 1200` (20 minutes), print: `WARN round <round>: <missing job name> not visible 20m after trigger; it may be queued or pickup may be delayed. Keeping the existing trigger active.` Keep polling. Never infer "not triggered" from a missing status and never re-post; at the deadline, ask the user as in Step 8.
 5. Compute elapsed-since-start in minutes and time-to-deadline in `<H>h<M>m`. Print exactly one line:
    ```
    [round <round>] elapsed <Tm> | test_sql: <bucket> | test_medium: <bucket> | deadline in <H>h<M>m
@@ -325,7 +328,7 @@ If push notifications are wired up via `/oh-my-claudecode:configure-notification
 
 - Do NOT run a code review inside this loop. `/cubrid-grill-and-implement` already runs its own writer + reviewer + build gate.
 - Do NOT shorten the poll interval below 10 minutes. CircleCI runs are slow, GitHub API has rate limits, and faster polling adds no signal.
-- Do NOT post `/run sql medium` more than once per round. Spurious comments waste CI compute and confuse maintainers.
+- Do NOT post a second `/run` for the same head without explicit user confirmation in the current conversation. A new pipeline can cancel queued jobs and rerun completed suites; a missing status may mean queued or delayed.
 - Do NOT use `git add -A` or `git add .`. Stage only the files the grill skill changed.
 - Do NOT re-baseline mid-loop. `start_epoch` and `deadline_epoch` are captured once.
 - Do NOT silently extend past 24 hours. Always ask explicitly at Step 8.

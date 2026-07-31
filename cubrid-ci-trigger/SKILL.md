@@ -1,6 +1,6 @@
 ---
 name: cubrid-ci-trigger
-description: "Trigger CUBRID CI tests on a GitHub PR by posting a `/run` chatops comment — `/run sql medium` launches the SQL and medium suites, `/run all` launches sql, medium, and shell. Use for one-shot CI triggering when working on a CUBRID PR: after pushing new commits, when checks never started, or before requesting review. For hands-off fix-until-green iteration use cubrid-loop-pr instead. Triggers on phrases like 'trigger ci', 'run ci on this pr', 'kick off ci tests', 'run sql medium', 'run all tests on the pr', 'rerun ci', 'post the /run comment', 'start ci for the pr'."
+description: "Trigger CUBRID CI tests on a GitHub PR by posting a verified `/run` chatops comment — `/run sql medium` launches the SQL and medium suites, `/run all` launches sql, medium, and shell. Use for one-shot CI triggering on a new PR head with no active trigger, or before requesting review. For hands-off fix-until-green iteration use cubrid-loop-pr instead. Triggers on phrases like 'trigger ci', 'run ci on this pr', 'kick off ci tests', 'run sql medium', 'run all tests on the pr', 'rerun ci', 'post the /run comment', 'start ci for the pr'."
 argument-hint: "[pr-url-or-number] [sql medium | all]"
 ---
 
@@ -15,7 +15,7 @@ Post a `/run ...` comment on a CUBRID GitHub PR. The CI bot parses the comment b
 | `/run sql medium` | `ci/circleci: test_sql`, `ci/circleci: test_medium` |
 | `/run all` | sql, medium, and shell suites |
 
-These two bodies are the **verified, known-good forms** — both are in production use on CUBRID PRs. The grammar appears to be `/run` plus space-separated suite tokens, so combos like `/run shell` may work, but they are unverified: prefer mapping the user's request to one of the two known-good forms, and if you do post an unverified combo, watch pickup closely (Step 5) and fall back to a known-good form if the suites never start.
+These are the only verified, known-good forms. Post no other suite combination. In particular, `/run shell` was observed to instantly cancel a queued shell job on 2026-07-31 (PR #7588, job 142503), discarding its queue position.
 
 When the user doesn't name suites, default to `/run sql medium`: shell is by far the slowest suite, so reserve `/run all` for when the user asks for it or the change touches shell-tested behavior.
 
@@ -46,14 +46,19 @@ git status --porcelain      # uncommitted changes
 
 ## Step 3: Don't double-trigger
 
-A duplicate `/run` comment wastes CI compute and confuses maintainers. Before posting, check whether the requested suites are already pending for this head:
+A duplicate `/run` comment can auto-cancel queued jobs from the previous pipeline, reset a 10+ hour shell queue position, and rerun suites that already finished. Before posting, inspect both existing comments and checks:
 
 ```bash
+gh pr view <pr-url> --json headRefOid,createdAt,comments --jq \
+  '{headRefOid, createdAt, runs: [.comments[] | select(.body | test("^/run ")) | {body, createdAt}]}'
+
 gh pr checks <pr-url> --json name,state,bucket --jq \
   '.[] | select(.name | test("test_sql|test_medium|test_shell"; "i")) | {name, bucket}'
 ```
 
-If a comment already contains the same `/run` line (check with `gh pr view <pr-url> --json comments --jq '.comments[] | select(.body | test("^/run ")) | {author: .author.login, body, createdAt}'`) **and** the matching suites show `bucket: pending`, report "already triggered, suites pending" and stop. Only re-post when the user explicitly asks to re-trigger.
+Determine whether each comment predates the current head push. Use the latest PR timeline `synchronize` event for `headRefOid` as the boundary; if there is no such event, use the PR's `createdAt`. If any `/run` comment exists at or after that boundary, treat the current-head trigger as **ACTIVE regardless of check visibility or state** and stop. A missing shell status means "possibly queued," never "not triggered." If the boundary cannot be established, fail closed and treat the trigger as active.
+
+Conclude "not triggered" only when every existing `/run` comment predates the current head boundary, meaning a newer push invalidated those triggers. Never post a second `/run` for the same head for any reason, including "nothing visible yet," unless the user explicitly confirms the re-trigger in the current conversation.
 
 ## Step 4: Post the comment
 
@@ -71,7 +76,14 @@ Print what was posted, the PR, and the head SHA being tested:
 Posted "/run sql medium" on PR #<number> (head <short-sha>).
 ```
 
-After a minute or two the suites should appear as pending:
+Pickup expectations are suite-aware:
+
+| Suite | Expected visibility and duration |
+|---|---|
+| `test_sql` / `test_medium` | Status usually appears within minutes; each job finishes in ≤1 hour. |
+| `test_shell` | **No GitHub status exists while queued.** Queueing routinely takes 10+ hours; the job itself takes ≈1 hour after it starts. Absence of status is not evidence that the trigger was lost. |
+
+Check sql/medium pickup after a few minutes:
 
 ```bash
 gh pr checks <pr-url> --json name,state,bucket --jq \
@@ -83,6 +95,7 @@ Notes:
 - `gh pr checks` is the right tool: CUBRID's suites are CircleCI **commit statuses**, which raw `gh api .../check-runs` silently omits.
 - `gh pr checks` exits non-zero (code 8) while checks are pending — that is expected, the JSON output is still valid; don't chain it with `&&` or run it under `set -e`.
 - Check names vary (`ci/circleci: test_sql`, `test_sql_long`) — match case-insensitive substrings, and report the full matched name.
-- If the suites are still not visible ~20 minutes after the comment, the trigger likely wasn't picked up; re-post once and say so.
+- For shell, either wait or inspect the CircleCI pipeline list for the queued workflow. Never verify shell pickup by posting another comment.
+- Never re-post without the user's explicit confirmation in the current conversation. A new pipeline can auto-cancel queued work, reset its queue position, and waste compute by rerunning completed suites.
 
 Hand off depending on what the user wants next: `gh pr checks <pr-url> --watch` to wait inline, `/cubrid-loop-pr` for autonomous fix-until-green iteration, or `/cubrid-ci-analyze` once results come back red.

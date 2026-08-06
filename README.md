@@ -8,6 +8,7 @@ A collection of Claude Code skills for CUBRID database engine development. These
 |-------|-------------|
 | `cubrid-jira` | Look up CUBRID JIRA issue context (CBRD-XXXXX) |
 | `cubrid-ci-analyze` | Collect exact-commit CircleCI snapshots with `cubrid-ci` and write failure-analysis reports |
+| `cubrid-code-analysis-report` | Create a source-traceable Korean CUBRID subsystem book with PostgreSQL/MySQL comparison, runtime experiments, reproducible quizzes, and adaptive grilling |
 | `cubrid-pr-review` | Review the CUBRID PR at the current worktree HEAD using Claude Code `/code-review` or Codex `/review`, plus CUBRID-specific validation |
 | `cubrid-pr-create` | Create GitHub PRs with `[CBRD-XXXXX]` title format and Korean body |
 | `cubrid-jira-issue-write` | Write structured JIRA issue reports in Korean |
@@ -54,6 +55,7 @@ Once installed, invoke skills as slash commands in Claude Code:
 /cubrid-pr-review https://github.com/CUBRID/cubrid/pull/6950
 /cubrid-pr-create CBRD-26583
 /cubrid-ci-analyze https://github.com/CUBRID/cubrid/pull/6864
+/cubrid-code-analysis-report page buffer
 /cubrid-manual-search What is the default value of max_clients?
 /create-testcases CBRD-26609
 ```

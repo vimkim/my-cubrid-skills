@@ -1,6 +1,6 @@
 ---
 name: cubrid-pr-create
-description: Open a GitHub pull request for the CUBRID project with a [CBRD-XXXXX] title, Korean PR body, linked detailed doc, explicit AS-IS/TO-BE contrast when the change supports it, and pre-publish material checks. Use when the user wants to create, draft, push, or publish a CUBRID PR, including requests like "create pr", "make pr", "PR 만들어", "PR 올려", or "풀리퀘".
+description: Publish a draft GitHub pull request for the CUBRID project with a [CBRD-XXXXX] title, Korean PR body, linked detailed doc, explicit AS-IS/TO-BE contrast when the change supports it, and pre-publish material checks. For the safe default path, commit and push the detailed doc, push the source branch to github.com/vimkim/cubrid, and create the draft PR against CUBRID/CUBRID without asking for publication confirmation. Use when the user wants to create, draft, push, or publish a CUBRID PR, including requests like "create pr", "make pr", "PR 만들어", "PR 올려", or "풀리퀘".
 ---
 
 # CUBRID PR Creator
@@ -18,6 +18,19 @@ Create GitHub pull requests for the CUBRID project following team conventions.
 - Never include local absolute paths, `file://` URLs, or machine-specific workspace paths in PR material. Use repo-relative paths or public GitHub/JIRA URLs.
 - Never include project shortcut commands beginning with the `just` task runner in PR material. Replace them with the actual public verification command, or describe the verification outcome in words.
 - Run the bundled material checker before showing the body draft, before committing the doc repo, and before creating the PR.
+
+## Automatic Draft Publication Contract
+
+A request that triggers this skill authorizes the safe default publication path end to end. Show the title, branches, doc URL, and body before publication for visibility, then continue without asking for confirmation.
+
+Automatic publication is allowed only when all of these are true:
+
+- The source push remote resolves to the user's fork at `github.com/vimkim/cubrid` in HTTPS or SSH form.
+- The target repository is exactly `CUBRID/CUBRID`.
+- The new PR is created with `--draft`.
+- The detailed doc is committed and pushed only to the validated `github.com/vimkim/my-cubrid-docs` repository.
+
+If any boundary differs, ask before publishing. Never silently broaden this authorization to another fork, target repository, or ready-for-review PR.
 
 ## Arguments
 
@@ -125,7 +138,7 @@ Doc convention matches the PR body: English headers, Korean prose, code identifi
 
 Use the bundled checker at `scripts/check-pr-material.sh`, relative to this skill directory. Resolve it once as `checker="<this-skill-directory>/scripts/check-pr-material.sh"` before running commands from the CUBRID worktree. It validates the PR body section contract and rejects forbidden machine-local material.
 
-Run it on the generated PR body file and the detailed doc before the user confirms, before committing the docs repo, and again immediately before `gh pr create`:
+Run it on the generated PR body file and the detailed doc before showing the publication preview, before committing the docs repo, and again immediately before `gh pr create`:
 
 ```bash
 body_file="$(mktemp)"
@@ -145,7 +158,7 @@ Run these in parallel:
 2. `git branch -vv` - current branch and tracking info
 3. `git remote -v` - available remotes
 
-If there are uncommitted changes, warn the user and ask whether to proceed or commit first.
+If there are uncommitted changes, warn the user and determine whether the committed `HEAD` still represents the intended PR. Continue without a publication confirmation when the dirty paths are unrelated and can be excluded. If it is unclear whether the uncommitted changes belong in the PR, ask before choosing their disposition; never commit them implicitly.
 
 ### Step 2: Determine PR Parameters
 
@@ -156,7 +169,7 @@ If there are uncommitted changes, warn the user and ask whether to proceed or co
    - For `cubvec/*` branches, use `cubvec/cubvec`.
    - Otherwise ask the user.
 3. Target repo: default to `CUBRID/CUBRID` unless the user specifies another repo.
-4. Source: determine the user's fork remote and use `<github-user>:<branch>` for the PR head.
+4. Source: determine the user's fork remote, require its push URL to resolve to `github.com/vimkim/cubrid`, and use `vimkim:<branch>` for the PR head. If it points elsewhere, leave the automatic-publication boundary and ask.
 5. Docs repo: set `docs_repo="${CUBRID_PR_DOCS_REPO:-$HOME/gh/my-cubrid-docs}"`, require the expected `origin`, and reject the CUBRID source root/current working directory as described above.
 6. Set `SOURCE_COMMIT`, `SHORT_SHA`, and `AGENT` using the **Detailed Explanation Doc** identity rules. If the runtime does not identify the active AI host, ask rather than guessing.
 
@@ -194,13 +207,13 @@ bash "$checker" --body "$body_file" "$doc_file"
 
 Fix every failure, then re-run. This check is required before showing the body to the user, before committing the docs repo, and before creating the PR.
 
-### Step 7: Confirm With the User
+### Step 7: Show the Publication Preview
 
-Show the draft title, base branch, head branch, doc URL, and PR body. Ask for confirmation before publishing.
+Show the draft title, base branch, head branch, doc URL, and PR body for visibility. Continue directly to publication without asking for confirmation when the Automatic Draft Publication Contract is satisfied.
 
 ### Step 8: Commit and Push the Docs Repo
 
-After the checker passes and the user confirms:
+After the checker passes and the safe publication boundary is verified:
 
 1. Verify that the CUBRID worktree `HEAD` still equals `SOURCE_COMMIT`; stop and regenerate the artifact identity if it changed.
 2. Commit and push only the intended detailed document:
@@ -269,4 +282,4 @@ Hand off with:
 4. Review angle: completeness and correctness of `## Purpose`, `## Implementation`, and `## Remarks`; explicit AS-IS/TO-BE contrast when the change supports it; CUBRID doc conventions; every CUBRID-internal term glossed on first use.
 5. Round cap: default 5.
 
-After approval, run the material checker, draft the PR body, confirm with the user, publish the docs repo, and create the PR.
+After grill approval, run the material checker, draft and show the PR body, publish the docs repo, push the branch to `github.com/vimkim/cubrid`, and create the draft PR against `CUBRID/CUBRID` without asking for user confirmation.

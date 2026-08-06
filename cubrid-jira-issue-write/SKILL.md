@@ -1,6 +1,6 @@
 ---
 name: cubrid-jira-issue-write
-description: Write a CUBRID JIRA issue report in Korean with English section headers (##). Top of issue is an Issue Triage block — 목적 (필수) + 이유 (필수, 현재 동작·한계와 그 영향 두 축을 모두 포함, 가능하면 AS-IS/TO-BE 대비 명시) + 방안 (합의된 스펙은 구체적으로, 미결정은 TBD) — written in whatever format reads best (short prose, mini-tables, ASCII call-flow diagrams, callouts — NOT forced dot-lists), followed by an explicitly separated AI-Generated Context block. Favors diagrams and comparison tables for call flows and option trade-offs. Writes versioned markdown with source-commit and AI-agent suffixes to /home/vimkim/gh/my-cubrid-jira/issues/. Use when the user wants to write up a JIRA issue, document a bug finding, or create a feature/task report for CUBRID.
+description: Write and publish a CUBRID JIRA issue report in Korean with English section headers (##). Top of issue is an Issue Triage block — 목적 (필수) + 이유 (필수, 현재 동작·한계와 그 영향 두 축을 모두 포함, 가능하면 AS-IS/TO-BE 대비 명시) + 방안 (합의된 스펙은 구체적으로, 미결정은 TBD) — written in whatever format reads best (short prose, mini-tables, ASCII call-flow diagrams, callouts — NOT forced dot-lists), followed by an explicitly separated AI-Generated Context block. Favors diagrams and comparison tables for call flows and option trade-offs. Writes versioned markdown with source-commit and AI-agent suffixes to /home/vimkim/gh/my-cubrid-jira/issues/, commits and pushes that file, then uploads it to the matching existing issue through the cubrid-jira skill without a second confirmation. Use when the user wants to write up and file a JIRA issue, document a bug finding, or create a feature/task report for CUBRID.
 ---
 
 # CUBRID JIRA Issue Writer
@@ -25,6 +25,21 @@ These two goals fight verbosity from both ends: the triage block stays tiny, the
 - **No emoji and no non-BMP (4-byte UTF-8) characters.** The CUBRID JIRA API rejects 4-byte characters, and emoji (🚀 ✅ ❌ 😀 …) read as AI-slop regardless of plane. Everything in the BMP is allowed — Korean/CJK, and ordinary typographic symbols when they aid readability: `★` (flow-diagram limit marker), box-drawing (`└ ├ │`), `→`, `✓`. ASCII forms (`->`, `[x]`/`[ ]`, `-`/`*`) are equally fine — use whichever reads cleaner, not because the API forces it.
 - **Headers (`##`) in English. Subheaders (`###`) and all body text in Korean** (평어/한다체, never 합니다/입니다). Code, function names, file paths, identifiers stay as-is.
 - **Never state the issue's own audience or readability target in the body.** No "신입도 읽을 수 있게 작성", no "독자 대상: ...", no reading-grade note, no "고등학생도 이해할 수 있도록". Readability is writer-side guidance; the reader benefits from it silently. Any sentence describing the doc's own clarity instead of the bug/feature gets deleted.
+
+## Automatic Completion Contract
+
+A request that triggers this skill authorizes the complete workflow for an existing `CBRD-XXXXX` issue: write and grill the report, commit only that report in `my-cubrid-jira`, push it to `origin/main`, and publish it as the matching live JIRA description through the `cubrid-jira` skill. Show previews for visibility, but do not pause for another confirmation.
+
+Keep this authorization inside these exact boundaries:
+
+- Require the local repository at `/home/vimkim/gh/my-cubrid-jira` to be on `main` with `origin` pointing to `github.com/vimkim/my-cubrid-jira` in HTTPS or SSH form.
+- Preserve unrelated worktree and index changes. Stage and commit only the resolved issue file.
+- Require the issue key derived from the filename to equal the JIRA target key.
+- Push the Markdown commit successfully before the live JIRA update. If the push fails, stop before uploading.
+- Use the `cubrid-jira` skill's publish-description workflow, including its dry-run, live update with `--yes`, and live read-back verification.
+- If the live update fails after the push, keep the pushed commit, report the exact JIRA error and the partial-completion state, and do not claim success.
+
+A ticket-free draft has no upload target. Save, grill, commit, and push it like any other report, then report that only the JIRA upload was skipped. Creating a new JIRA issue is a separate workflow requiring the project, issue type, summary, and other required fields.
 
 ## Artifact Identity
 
@@ -285,7 +300,22 @@ JIRA issues are read by devs, QA, and CS who do not share the author's local set
 7. **Write the body** from the type template, applying **Layer Ownership** so nothing repeats.
 8. **Run the mandatory checks**: (a) Layer-Ownership de-dup grep — no fact in 2+ layers; (b) AS-IS/TO-BE appears when the issue has a clear before/after contrast; (c) `rg -nP '\bjust\s+\w'` returns zero.
 9. **Save** to the resolved path ending in `_<SHORT_SHA>_<AGENT>.md`.
-10. **Show the user** the path, source commit, agent name, chosen type, and Issue Triage block so they can sanity-check the framing.
+10. **Grill the saved file** with the mandatory loop below and revise it in place until the reviewer approves or the round cap is reached.
+11. **Show the publication preview**: path, source commit, agent name, chosen type, and Issue Triage block. This is informational; continue without asking for confirmation.
+12. **Validate the notes repository** against the Automatic Completion Contract. Re-run all mandatory checks after the grill.
+13. **Commit only the issue file and push it**:
+
+    ```bash
+    issue_rel="issues/$(basename "$issue_file")"
+    git -C /home/vimkim/gh/my-cubrid-jira add -- "$issue_rel"
+    git -C /home/vimkim/gh/my-cubrid-jira commit \
+      -m "docs(CBRD-XXXXX): add <short-slug> issue report" -- "$issue_rel"
+    git -C /home/vimkim/gh/my-cubrid-jira push origin main
+    ```
+
+    If the intended file is already committed, skip the empty commit and still verify that `origin/main` contains it. Verify that the created commit contains only `issue_rel`; leave unrelated staged or untracked files untouched.
+14. **Publish through `cubrid-jira`**: for a keyed report, hand off the matching ticket key and absolute `issue_file` to the `cubrid-jira` skill's publish-description workflow with delegated authorization for the live `--yes` update. Skip this step only for an explicitly ticket-free draft.
+15. **Finish with verification**: report the Markdown commit and pushed branch; for a keyed report, also report the live JIRA URL and read-back result. Do not call a keyed workflow complete until both push and upload verification succeed. For a ticket-free draft, call out that no JIRA target existed.
 
 ## Arguments
 
@@ -306,3 +336,5 @@ Hand off with: ticket number + issue type + output path (same file, revised in p
 - **Natural Korean**: pass the "New-hire Readability" and "Natural Korean" sections to the reviewer verbatim.
 
 Round cap: default 5.
+
+Reviewer approval is the quality gate, not a user publication gate. After approval, continue directly with the commit, push, and `cubrid-jira` upload steps without asking the user to confirm again.

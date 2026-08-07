@@ -30,6 +30,7 @@ Before acting, read these files completely:
 5. `references/quiz-and-grill.md` for reproducible quiz artifacts and the mastery state machine.
 6. `references/agent-roles.md` before delegating any research or audit work.
 7. `references/artifact-schemas.md` for exact JSON contracts enforced by `reportctl.py`.
+8. `references/cubrid-runtime-playbook.md` for field-tested CUBRID observation patterns and their traps.
 
 Use `scripts/reportctl.py` as the single deterministic interface for report initialization, command capture, and verification. Use `assets/report.css` unchanged unless a topic has a demonstrated presentation need that the stylesheet cannot express.
 
@@ -101,6 +102,8 @@ Whether parallel or sequential:
 Use `rg` or `rg --files` for discovery. Read complete functions and reachable call paths around matches. A symbol-name match alone never proves behavior. Record negative-search scope for claims that something does not exist.
 
 ### Step 5: Plan and Run Experiments
+
+Apply `references/cubrid-runtime-playbook.md` when designing observations: attach a statistics watcher before any counter-based oracle (`stats_on` defaults off), verify each oracle counter's increment sites in source before trusting its name, prefer the self-contained csql histogram runner, and force synchronous checkpoints with `backupdb` rather than waiting on the asynchronous `;checkpoint`.
 
 Create at least one reproducible CUBRID runtime experiment for every central behavior class that can be observed safely. Each experiment uses:
 

@@ -1,6 +1,6 @@
 ---
 name: cubrid-pr-review
-description: "Review a CUBRID pull request from a CUBRID Git worktree whose current HEAD exactly matches the supplied PR number or URL, using the host CLI's native review engine and a local report. Uses Claude Code's built-in /code-review workflow or Codex CLI's built-in /review workflow, then applies CUBRID-specific checks. Use when the user requests review of the CUBRID PR currently checked out in the working directory."
+description: "Review a CUBRID pull request from a CUBRID Git worktree whose current HEAD exactly matches the supplied PR number or URL, using the host CLI's native review engine, a published report, and a three-line PR summary comment. Uses Claude Code's built-in /code-review workflow or Codex CLI's built-in /review workflow, then applies CUBRID-specific checks. Use when the user requests review of the CUBRID PR currently checked out in the working directory."
 allowed-tools: Bash(gh *), Bash(git *), Bash(jq *), Bash(codex review *), Bash(test -d /home/vimkim/gh/my-cubrid-docs), Bash(mkdir -p /home/vimkim/gh/my-cubrid-docs/*), Bash(scripts/*), Read, Write, Glob, Grep, Skill, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics, mcp__plugin_oh-my-claudecode_t__lsp_diagnostics_directory, mcp__plugin_oh-my-claudecode_t__lsp_hover, mcp__plugin_oh-my-claudecode_t__lsp_goto_definition, mcp__plugin_oh-my-claudecode_t__lsp_find_references, mcp__plugin_oh-my-claudecode_t__lsp_document_symbols
 ---
 
@@ -31,7 +31,7 @@ Write the report under the local CUBRID docs tree, never in the CUBRID repo root
 
 `<ticket-id>` is the lowercase CBRD ticket number, for example `cbrd-26583`. `<SHORT_SHA>` is the first seven hexadecimal characters of the PR `head_sha` returned by the prerequisite gate. `<AGENT>` comes from the active AI host's runtime identity: `claude` for Claude Code, `codex` for Codex, or another host's stable lowercase agent name. Do not infer it from installed binaries because multiple AI CLIs may coexist; ask the user if runtime identity is unclear.
 
-For example, at PR head `f5794fb...`, Codex writes `/home/vimkim/gh/my-cubrid-docs/cbrd-26583/PR-6950-report_f5794fb_codex.md` and Claude Code writes `/home/vimkim/gh/my-cubrid-docs/cbrd-26583/PR-6950-report_f5794fb_claude.md`. Never use a shared legacy name without both identity suffixes. The report is **local-only** — never post it to GitHub.
+For example, at PR head `f5794fb...`, Codex writes `/home/vimkim/gh/my-cubrid-docs/cbrd-26583/PR-6950-report_f5794fb_codex.md` and Claude Code writes `/home/vimkim/gh/my-cubrid-docs/cbrd-26583/PR-6950-report_f5794fb_claude.md`. Never use a shared legacy name without both identity suffixes. After the report is final, publish it to `vimkim/my-cubrid-docs` and post only the three-line summary defined in Step 7 to the reviewed PR.
 
 ### Report Path Rules
 
@@ -183,7 +183,7 @@ Immediately before invoking the native reviewer, rerun `scripts/check-prereqs.sh
 
 Invoke the built-in `/code-review` workflow exactly once for the PR URL. Supply the PR diff, relevant `CLAUDE.md` files, PR metadata, and the CUBRID `reference.md` rules as review context.
 
-Override the built-in workflow's publishing step: **analysis only, never call `gh pr comment`, submit a review, or mutate GitHub**. Capture its high-confidence findings locally as candidate findings. This local-only constraint is higher priority than `/code-review`'s default behavior. If the runtime cannot invoke `/code-review` without publishing, stop before invocation and clearly report that the installed command is incompatible with this skill's local-only contract.
+Override the built-in workflow's publishing step: **analysis only**. Capture its high-confidence findings locally as candidate findings. The native reviewer must not call `gh pr comment`, submit a review, or mutate GitHub; Step 7 is the single publication path. If the runtime cannot invoke `/code-review` without publishing, stop before invocation and clearly report that the installed command is incompatible with this skill's publication contract.
 
 If `/code-review` is unavailable, report that `code-review@claude-plugins-official` must be enabled. Do not silently substitute a generic agent review.
 
@@ -239,7 +239,6 @@ Every surviving finding needs a code snippet or diagnostic as evidence.
 2. **Write Findings tightly.** One sentence per item. Group as Blocking / Non-blocking / Questions, omitting any subsection that has no items. If no category has any items, replace the section body with a single `없음` line and omit all three subsections.
 3. **Add JIRA Context and Existing Comments only if useful.** Omit empty sections.
 4. **Save** to `REPORT_PATH`, using the PR-head `SHORT_SHA`, the runtime-derived agent name from Step 3, and the docs-tree ticket directory from the Report Path Rules.
-5. **Print** three things so the user can sanity-check the call at a glance: (1) the saved file path, (2) the verdict label extracted from the TL;DR (`Blocking` / `Non-blocking` / `작성자 확인 필요`), (3) the TL;DR sentence(s) without the label prefix.
 
 ## Example Output
 
@@ -275,7 +274,7 @@ CBRD-26583 의 목표는 OOS OID 치환 재활성화. 본 PR은 그 범위 안.
 
 (JIRA Context only; Existing Comments was omitted because no unresolved top-level comments existed. `Non-blocking` and `Questions for the author` subsections are also omitted because they had no items.)
 
-## Mandatory: Iterate with Grill-with-Docs
+### Step 6: Iterate with Grill-with-Docs
 
 Every review report must go through `/grill-with-docs` before being posted or shared. Do not deliver a single-pass review. Single-pass reviews drift toward weak evidence ("might be wrong" hedges), pre-existing-issue leakage, mis-scoped findings, and verdict labels that don't match the Findings.
 
@@ -290,3 +289,27 @@ After saving the initial review to `REPORT_PATH`, invoke `/grill-with-docs` with
 - **Source material**: the PR diff, JIRA ticket context, this skill's `reference.md`, any `CLAUDE.md` / `AGENTS.md` in directories of changed files
 - **Review angle**: every Finding has file:line evidence (no "might be wrong" hedging), no pre-existing / CI-caught / out-of-scope items leaked through, TL;DR verdict label matches the Findings, length budget respected (80-line target, 200 hard cap), no emoji or non-BMP unicode, every CUBRID-internal term on first use has a one-clause inline gloss (a junior engineer who has not opened this file should follow the report on one read), every blocking finding spells out the consequence (defect -> cause -> impact), not just the symptom
 - **Round cap**: default 5
+
+### Step 7: Publish the Report and Comment
+
+Immediately before publication, run `scripts/check-prereqs.sh "$PR_NUMBER_OR_URL"` again. Stop if it fails or its `head_sha` differs from Step 1; do not publish a report for a moved PR.
+
+Run the bundled publisher from this skill's directory:
+
+```bash
+scripts/publish-review.sh "$PR_NUMBER_OR_URL" "$REPORT_PATH"
+```
+
+The script is the single publication path. It validates the `github.com/vimkim/my-cubrid-docs` repository and its `main` branch, counts the final report's top-level Finding bullets, commits only `REPORT_PATH`, pushes it, and posts an issue comment on the reviewed PR. If publication or commenting fails, surface the error and stop; do not compose or post a fallback comment manually.
+
+The PR comment must contain exactly these three lines, with no blank line before, between, or after them:
+
+```text
+Report: <REPORT_URL>
+Review points: <BLOCKING_COUNT> blocking, <NON_BLOCKING_COUNT> non-blocking
+Decision: <ACCEPT_OR_REJECT>
+```
+
+Set `REPORT_URL` to `https://github.com/vimkim/my-cubrid-docs/blob/main/<REPORT_PATH_RELATIVE_TO_DOCS_ROOT>`. Set the decision to `REJECT` when `BLOCKING_COUNT` is greater than zero; otherwise set it to `ACCEPT`. Questions for the author do not change this decision.
+
+After the script succeeds, print the local report path, published report URL, blocking and non-blocking counts, decision, and returned PR comment URL for the user.

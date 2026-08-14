@@ -1,6 +1,6 @@
 ---
 name: cubrid-oos-context
-description: Load the authoritative CUBRID OOS (Out-of-row Overflow Storage) project context before answering, reviewing, debugging, testing, or implementing OOS work. Use whenever OOS is mentioned; on feat/oos or a derived branch; for OOS CBRD tickets; when touching OOS-related heap, vacuum, replication, recovery, file-manager, object-representation, or utility code; or when identifiers such as OR_MVCC_FLAG_HAS_OOS, OR_VAR_BIT_OOS, FILE_OOS, OR_OOS_INLINE_SIZE, oos_insert, oos_read, oos_delete, or heap_record_replace_oos_oids appear.
+description: Load the authoritative CUBRID Out-of-row Overflow Storage project context when the task specifically concerns OOS behavior, design, implementation, defects, or tests—for example, an OOS-specific CBRD ticket, source file, identifier, or design decision.
 ---
 
 # CUBRID OOS Context

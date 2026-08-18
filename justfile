@@ -19,7 +19,7 @@ list:
 
 # Update installed global skills
 update-installed:
-    npx skills update -g -y
+    npx skills update -g -y --agent claude-code --agent codex
 
 # Remove a specific skill
 remove skill:

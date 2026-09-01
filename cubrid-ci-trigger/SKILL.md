@@ -1,6 +1,6 @@
 ---
 name: cubrid-ci-trigger
-description: "Trigger CUBRID CI tests on a GitHub PR by posting a verified `/run` chatops comment — `/run sql medium` launches the SQL and medium suites, `/run all` launches sql, medium, and shell. Use for one-shot CI triggering on a new PR head with no active trigger, or before requesting review. For hands-off fix-until-green iteration use cubrid-loop-pr instead. Triggers on phrases like 'trigger ci', 'run ci on this pr', 'kick off ci tests', 'run sql medium', 'run all tests on the pr', 'rerun ci', 'post the /run comment', 'start ci for the pr'."
+description: "Trigger CUBRID CI tests on a GitHub PR by posting a verified `/run` chatops comment — `/run sql medium` launches the SQL and medium suites, `/run all` launches sql, medium, and shell. Use for one-shot CI triggering on a new PR head with no active trigger, or before requesting review. Triggers on phrases like 'trigger ci', 'run ci on this pr', 'kick off ci tests', 'run sql medium', 'run all tests on the pr', 'rerun ci', 'post the /run comment', 'start ci for the pr'."
 argument-hint: "[pr-url-or-number] [sql medium | all]"
 ---
 
@@ -98,4 +98,4 @@ Notes:
 - For shell, either wait or inspect the CircleCI pipeline list for the queued workflow. Never verify shell pickup by posting another comment.
 - Never re-post without the user's explicit confirmation in the current conversation. A new pipeline can auto-cancel queued work, reset its queue position, and waste compute by rerunning completed suites.
 
-Hand off depending on what the user wants next: `gh pr checks <pr-url> --watch` to wait inline, `/cubrid-loop-pr` for autonomous fix-until-green iteration, or `/cubrid-ci-analyze` once results come back red.
+Hand off depending on what the user wants next: `gh pr checks <pr-url> --watch` to wait inline, or `/cubrid-ci-analyze` once results come back red.

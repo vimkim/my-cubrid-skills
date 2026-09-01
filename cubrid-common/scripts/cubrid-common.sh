@@ -194,7 +194,7 @@ cubrid_pr_review_metadata() {
     cubrid_common_fail "Current worktree HEAD does not match CUBRID/cubrid PR #$pr_number."
     echo "Current HEAD: $local_head" >&2
     echo "PR HEAD:      $pr_head" >&2
-    echo "Check out the PR head in this worktree, then rerun cubrid-pr-review." >&2
+    echo "Check out the PR head in this worktree, then rerun the calling workflow." >&2
     return 1
   fi
 

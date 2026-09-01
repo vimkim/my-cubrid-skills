@@ -65,6 +65,8 @@ flowchart LR
 
 Keep node identifiers simple and put human-readable labels in brackets or quotes. Prefer a small legible diagram over one dense graph. Do not paste Mermaid-generated SVG into the Markdown; let the configured client renderer generate it.
 
+Every block must parse: the viewer renders all diagrams in one `mermaid.run()` behind a single error handler, so one unparseable diagram blanks every diagram on the page. In particular, never use `;` inside sequence-diagram message text — Mermaid treats a semicolon as a statement terminator, so `A->>B: recheck identity; grant / wait / reject` parses "recheck identity" as the message and then fails on the remainder. Use commas instead.
+
 ## 4. Write MathJax-compatible TeX
 
 Prefer dollar delimiters because Marked preserves them directly:
@@ -107,10 +109,20 @@ Resolve `skill_dir` to the directory containing this loaded `SKILL.md`, set `out
 python "$skill_dir/scripts/check_copyparty_markdown.py" "$output_file"
 ```
 
-Fix every reported error and rerun until it exits zero. Then inspect the final diff and verify that:
+Fix every reported error and rerun until it exits zero.
+
+Then, for every created or changed file that contains Mermaid blocks, run the Mermaid parse check:
+
+```bash
+node "$skill_dir/scripts/check_mermaid_blocks.mjs" "$output_file"
+```
+
+Fix every reported parse failure and rerun until it exits zero. This check loads the same vendored `_copyparty_web/vendor/mermaid/mermaid.min.js` bundle with the same `initialize` options the viewer uses, so its verdict on whether a block parses is authoritative. The Python checker does not parse Mermaid source and cannot replace it.
+
+Then inspect the final diff and verify that:
 
 - external SVG links resolve relative to the Markdown file;
-- Mermaid fences contain valid, nonempty source;
+- Mermaid fences contain valid, nonempty source and the parse check exits zero;
 - MathJax delimiters match Step 4 exactly;
 - inline SVG contains no active content;
 - no unrelated files were changed.

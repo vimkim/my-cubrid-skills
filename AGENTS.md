@@ -14,7 +14,7 @@ Each top-level directory with a `SKILL.md` is a skill:
 - `cubrid-build/` — prepare, build, and test local CUBRID worktrees
 - `cubrid-ci-analyze/` — exact-commit CircleCI snapshot and failure analysis with `cubrid-ci`
 - `cubrid-ci-trigger/` — trigger CUBRID CI suites on GitHub PRs
-- `cubrid-code-analysis-report/` — evidence-backed Korean subsystem books with source comparison, CUBRID experiments, quizzes, and Live Grill mastery
+- `cubrid-code-survey/` — concise PostgreSQL/MySQL source surveys with focused reversible CUBRID runtime probes
 - `cubrid-grill-and-implement/` — iterative implementation with adversarial subagent review and build gates
 - `cubrid-isolation-test/` — create and run CUBRID concurrency and MVCC isolation tests
 - `cubrid-pr-review/` — C/C++ PR code review with LSP/clangd

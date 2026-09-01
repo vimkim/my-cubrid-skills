@@ -1,0 +1,4 @@
+interface:
+  display_name: "CUBRID Code Survey"
+  short_description: "Compare CUBRID with PostgreSQL/MySQL using focused probes"
+  default_prompt: "Use $cubrid-code-survey to trace one CUBRID mechanism, compare it with PostgreSQL and MySQL, and answer one runtime question with a focused CUBRID probe."

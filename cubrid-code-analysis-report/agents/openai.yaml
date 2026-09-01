@@ -1,4 +1,0 @@
-interface:
-  display_name: "CUBRID Code Analysis Report"
-  short_description: "Deep CUBRID analysis with experiments and quizzes"
-  default_prompt: "Use $cubrid-code-analysis-report to analyze the CUBRID page buffer subsystem."

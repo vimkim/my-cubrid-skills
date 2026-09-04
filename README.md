@@ -15,6 +15,7 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | `cubrid-oos-context` | Load OOS (Out-of-row Overflow Storage) project context |
 | `create-testcases` | Create CUBRID test cases (unit/SQL/shell) for features or bug fixes |
 | `schedule-visualizer` | Generate single-file HTML project schedules (daily Excel-like calendar grid + Gantt timeline) from issues, dates, and milestones |
+| `track-work` | Register, update, and inspect long-running work in the `work-tracker` ledger so status and context survive agent sessions |
 | `cubrid-common` | Shared helper scripts used internally by other CUBRID skills |
 
 ## Installation
@@ -56,6 +57,7 @@ Once installed, invoke skills as slash commands in Claude Code:
 /cubrid-code-survey How does page-buffer victim selection differ from PostgreSQL and MySQL?
 /cubrid-manual-search What is the default value of max_clients?
 /create-testcases CBRD-26609
+/track-work register this CI wait and keep its status current
 ```
 
 Skills also trigger automatically based on context.
@@ -69,6 +71,7 @@ Some skills require external tools:
 | `cubrid-jira` | `cubrid-jira` | `uv tool install git+https://github.com/vimkim/cubrid-jira` |
 | `gh` | `cubrid-pr-create` | [cli.github.com](https://cli.github.com/) |
 | `cubrid-ci` | `cubrid-ci-analyze` | `cargo install --path /home/vimkim/gh/cubrid-circleci-analyzer --locked` |
+| `work-tracker` | `track-work` | `just install` in `/home/vimkim/gh/work-tracker` |
 
 ## License
 

@@ -39,7 +39,7 @@ work-tracker show <ID> --json
 work-tracker history <ID> --json
 ```
 
-Otherwise, check the Daily View before creating an item to avoid duplicates:
+Otherwise, check the Daily View before creating an item. It lists every Actionable Work Item plus anything finished today, so an objective completed earlier today is recognised as already done:
 
 ```bash
 work-tracker today --json
@@ -102,7 +102,7 @@ work-tracker history <ID> --json
 
 Before continuing, identify the current Status, latest meaningful note, unresolved dependency, and next action. If the stored objective conflicts with the user's current request, ask which one governs before mutating the item.
 
-Use `work-tracker today --json` when no ID is available. The Daily View includes items updated today and all actionable items.
+Use `work-tracker today --json` when no ID is available. Section 6 says when `list` is the better view.
 
 ## 5. Finish explicitly
 
@@ -116,9 +116,21 @@ Use `cancelled` with the reason when the objective is intentionally abandoned. U
 
 ## 6. Inspect or host views
 
+Pick the view by the question being answered:
+
+| Question | Command |
+|---|---|
+| Is this objective already registered, or was it finished today? | `work-tracker today --json` |
+| What is still open or unfinished? | `work-tracker list --json` |
+| Which items have one exact status? | `work-tracker list --status <status> --json` |
+| What was done before, or which ID belongs to a finished item? | `work-tracker list --all --json`, or `show <ID>` when the ID is known |
+
+`list` shows only Actionable Work Items by default: pending, active, waiting, blocked. `--all` adds done and cancelled. Both `list` and `today` put the most urgent rows first: blocked, active, waiting, pending, then finished work.
+
 Use human-readable output when reporting interactively:
 
 ```bash
+work-tracker list
 work-tracker today
 work-tracker show <ID>
 work-tracker history <ID>

@@ -7,21 +7,11 @@ disable-model-invocation: true
 
 Create CUBRID test cases for a given feature or bug fix.
 
-Given a description of the feature/fix to test (and optionally a JIRA ticket like CBRD-XXXXX), create all three types of test cases:
-
-1. **Unit tests** (Google Test, C++)
-2. **SQL tests** (csql-based)
-3. **Shell tests** (bash-based)
+Select test types that exercise the feature's observable behavior: unit, SQL/medium, shell, or isolation. Do not create all types for every change. Read the module's existing tests and applicable AGENTS.md before choosing a framework.
 
 $ARGUMENTS
 
----
-
-## OOS Test Case Guidelines
-
-When creating test cases for **OOS (Out of Space)** scenarios:
-- **Use BIT VARYING (VARBIT)** data type instead of string types (VARCHAR, CHAR, etc.) for data that needs predictable on-disk size.
-- **Reason**: CUBRID compresses strings, making actual disk usage unpredictable unless the server is stopped and compression is disabled. VARBIT data is not compressed, so its size is predictable — critical for OOS tests that need to fill storage to specific thresholds.
+For OOS (Out-of-row Overflow Storage), consult `cubrid-oos-context`. Choose data and thresholds from the current implementation and configuration; do not confuse OOS with disk exhaustion or assume a payload size alone proves out-of-row placement.
 
 ## Step 1: Understand what to test
 
@@ -31,57 +21,27 @@ When creating test cases for **OOS (Out of Space)** scenarios:
 
 ## Step 2: Create Unit Tests
 
-**Reference**: `unit_tests/oos/` in the current project directory for patterns.
-
-**Location**: Create in `unit_tests/<feature_name>/` under the project root.
-
-**Conventions**:
-- File naming: `test_<feature>.cpp`
-- Use Google Test framework (`GTest::gtest`)
-- Shared infrastructure goes in `test_<feature>_common.hpp`
-- Each test file has its own `main()`:
-  ```cpp
-  int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    ::testing::AddGlobalTestEnvironment(new ServerEnv());
-    ::testing::GTEST_FLAG(break_on_failure) = true;
-    return RUN_ALL_TESTS();
-  }
-  ```
-- Link against `${EP_LIBS} cubridsa GTest::gtest` with `SA_MODE`
-- Use RAII patterns (unique_ptr with custom deleters) for page/record cleanup
-- Use bridge functions to access static internals when needed
-- Use `ASSERT_*` macros with descriptive messages
-- Create a `CMakeLists.txt` that globs `test_*.cpp` and creates one executable per file
-
-**Files to create**:
-- `unit_tests/<feature>/CMakeLists.txt`
-- `unit_tests/<feature>/test_<feature>.cpp`
-- Optionally: `test_<feature>_common.hpp` for shared utilities
+Create tests under the appropriate `unit_tests/<module>/` and follow its actual CMake/test conventions. The top-level suite uses Catch2, while the OOS module has Google Test infrastructure; neither pattern applies universally. Reuse module fixtures and registration rather than adding a new main/link pattern blindly. Consult `unit_tests/AGENTS.md` and `cubrid-build` for compilation and execution.
 
 ## Step 3: Create SQL Tests
 
-**Reference**: `~/gh/tc/cubrid-testcases/sql/` for patterns.
-
-**Location**: Create under `~/gh/tc/cubrid-testcases/sql/_36_guava/` (or appropriate category).
+Resolve `CUBRID_TESTCASES_DIR` from the loaded environment, validate its Git root, and inspect the appropriate SQL/medium category and nearby tests. Ask for an unresolved root rather than assuming a HOME path.
 
 **Conventions**:
 - Directory structure: `<test_dir>/cases/<name>.sql` and `<test_dir>/answers/<name>.answer`
 - Test naming: use JIRA ticket ID if available (e.g., `cbrd_26609.sql`), otherwise descriptive name
 - SQL file contains: setup DDL, test DML/queries, cleanup (DROP statements)
 - Use `autocommit on;` at the top if needed
-- Answer file contains expected output with `===` separators between statements
-- If the answer file cannot be determined ahead of time, create the `.sql` file and add a comment explaining the user should run it and capture the output as the `.answer` file
+- Follow neighboring answer-file formatting and runner comparison rules.
+- Derive expectations from intended behavior. Run with `cubrid-sql-run`, inspect and independently validate output, then capture a new answer if appropriate. Never overwrite an existing regression answer simply because the current run differs.
 
 **Files to create**:
-- `~/gh/tc/cubrid-testcases/sql/<category>/<test_name>/cases/<name>.sql`
-- `~/gh/tc/cubrid-testcases/sql/<category>/<test_name>/answers/<name>.answer` (if deterministic)
+- `$CUBRID_TESTCASES_DIR/sql/<category>/<test_name>/cases/<name>.sql`
+- `$CUBRID_TESTCASES_DIR/sql/<category>/<test_name>/answers/<name>.answer` (if deterministic)
 
 ## Step 4: Create Shell Tests
 
-**Reference**: `~/cubrid-testcases-private-ex/shell/` for patterns.
-
-**Location**: Create under `~/cubrid-testcases-private-ex/shell/` in the appropriate category.
+Resolve `CUBRID_TESTCASES_PRIVATE_EX_DIR`, validate the Git root, and inspect neighboring shell tests in the relevant category. Run with `cubrid-shell-run`.
 
 **Conventions**:
 - Directory structure: `<category>/<test_name>/cases/<test_name>.sh`
@@ -108,11 +68,11 @@ When creating test cases for **OOS (Out of Space)** scenarios:
 - Use `write_ok` / `write_nok` to record pass/fail
 - Use `test_exec_sql` and `test_exec_command` helpers
 - Result format: `<test_name>-N : OK` or `<test_name>-N : NOK`
-- Create `.result` file with expected pass/fail lines
+- Follow the neighboring test's expected-output convention; create `.result` only when that harness uses it.
 
 **Files to create**:
-- `~/cubrid-testcases-private-ex/shell/<category>/<test_name>/cases/<test_name>.sh`
-- `~/cubrid-testcases-private-ex/shell/<category>/<test_name>/cases/<test_name>.result`
+- `$CUBRID_TESTCASES_PRIVATE_EX_DIR/shell/<category>/<test_name>/cases/<test_name>.sh`
+- `$CUBRID_TESTCASES_PRIVATE_EX_DIR/shell/<category>/<test_name>/cases/<test_name>.result`
 
 ## Step 5: Summary
 
@@ -122,6 +82,6 @@ After creating all test files, present a summary table:
 |------|------|-------------|
 | Unit | `unit_tests/...` | ... |
 | SQL  | `~/gh/tc/...` | ... |
-| Shell | `~/cubrid-testcases-private-ex/...` | ... |
+| Shell | `$CUBRID_TESTCASES_PRIVATE_EX_DIR/...` | ... |
 
 Ask the user if they want to adjust any of the test cases.

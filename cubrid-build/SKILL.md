@@ -77,7 +77,7 @@ direnv exec . just build
 
 ## 6. Run tests appropriate to the change
 
-Run all configured tests and SQL regression tests:
+Run the configured ctest tests (this recipe does not run CTP SQL/medium regression suites):
 
 ```bash
 direnv exec . just test
@@ -95,7 +95,14 @@ Run ctest only:
 direnv exec . just ctest
 ```
 
-Use narrower specialized skills for isolation or CTP shell tests when those workflows apply.
+For CTP replay, initialize JDBC and configure/build before running the selected test:
+
+```bash
+git submodule update --init cubrid-jdbc
+direnv exec . just configure-build
+```
+
+Shared worktree preparation initializes CCI and does not replace JDBC initialization. Use `cubrid-shell-run` for shell, `cubrid-isolation-test` for isolation, and `cubrid-sql-run` for single-file CTP replay. These personal just recipes are local tooling; use standard build/test terminology in organization-facing documentation.
 
 ## 7. Handle failures
 

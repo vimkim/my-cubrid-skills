@@ -5,7 +5,7 @@ description: Collect the currently available exact-commit CircleCI snapshot for 
 
 # CUBRID CI Analyzer
 
-Use the Rust `cubrid-ci` collector as the only mechanism for discovering and downloading CircleCI evidence. Analyze the resulting local bundle and write a failure-focused report. Never reimplement collection with `gh`, `curl`, CircleCI APIs, or a bundled fetch script.
+Prefer the Rust `cubrid-ci` collector for discovering and downloading CircleCI evidence. Analyze the resulting local bundle and write a failure-focused report. When the collector is missing, unsupported or incomplete, use the read-only API fallback contract in [CI evidence collection](../cubrid-ci-fix/references/ci-evidence.md). Keep API evidence separate from collector-schema bundles, preserve equivalent identity checks, and record the reason for fallback. This skill remains a snapshot analysis; use `cubrid-ci-fix` for approved repair and monitoring.
 
 ## Non-Negotiable Contracts
 
@@ -36,7 +36,7 @@ Use the Rust `cubrid-ci` collector as the only mechanism for discovering and dow
    cubrid-ci --version
    ```
 
-   If it is missing, stop and tell the user to install it from `/home/vimkim/gh/cubrid-circleci-analyzer` according to that repository's `README.md`. Do not silently substitute manual API calls.
+   If it is missing, consult `/home/vimkim/gh/cubrid-circleci-analyzer/README.md` and use the documented API fallback when access permits. Report the fallback and its coverage limits. Steps 2–4 describe the collector path; for fallback, use the referenced identity/collection contract, then continue analysis from equivalent raw evidence.
 
 3. Set and validate the fixed roots:
 
@@ -173,7 +173,7 @@ Read evidence in this order:
 5. Read `logs/index.json`, `artifacts.json`, and `sources/index.json` before opening targeted files under `logs/`, `artifacts/`, and `sources/`. Inspect file sizes and open only evidence relevant to a failure signature.
 6. Relevant existing context in `/home/vimkim/gh/my-cubrid-docs` and `/home/vimkim/gh/my-cubrid-jira` before drawing CUBRID-specific conclusions.
 
-Use downloaded testcase sources when present. If a source download failed, record the diagnostic from `sources/index.json`. Use a local testcase checkout only when its revision can be proven to equal `summary.json.testcase_revision`; otherwise treat it as contextual, not exact evidence.
+Use downloaded testcase sources when present. If a source download failed, record the diagnostic from `sources/index.json`. Verify repository/revision/path per test against source records and CI checkout evidence. `summary.json.testcase_revision` is the first matching message SHA, not proof of a shared suite revision. Resolve SQL/medium in `CUBRID_TESTCASES_DIR` and shell in `CUBRID_TESTCASES_PRIVATE_EX_DIR`; compare local bytes and dirty state with the proven revision before treating them as exact evidence. See the linked identity contract for ambiguous/missing paths.
 
 If an exact local CUBRID checkout for the tested commit is already available, inspect the relevant changed code and call paths. Do not substitute a different local `HEAD`. If exact source is unavailable, state that limitation and keep conclusions bounded by the collected evidence.
 
@@ -196,11 +196,11 @@ Prefer these evidence labels in prose and tables:
 - **Inferred**: a reasoned explanation supported by stated evidence.
 - **Unknown**: evidence is insufficient; local reproduction, another artifact mode, or exact source inspection is required.
 
-Treat `failure_count`, `error_count`, and `unknown_count` separately. Do not count skipped tests as failures. If there are no failed or abnormal tests in the available requested suites, say so explicitly and do not manufacture failure analysis. If every requested suite is unavailable, write a snapshot warning report with no regression conclusion.
+A terminal failed job with no failed-test records remains a job-level failure; inspect setup/build/runner logs and record it separately. Treat `failure_count`, `error_count`, and `unknown_count` separately. Do not count skipped tests as failures. If there are no failed or abnormal tests in the available requested suites, say so explicitly and do not manufacture failure analysis. If every requested suite is unavailable, write a snapshot warning report with no regression conclusion.
 
 ## Step 6: Resolve Report Identity
 
-Read identity from the validated manifest:
+Read identity from the validated manifest (or equivalent validated provenance metadata for an API fallback bundle):
 
 - `SOURCE_COMMIT=.resolved_commit`
 - `SHORT_SHA=.short_sha`
@@ -208,12 +208,12 @@ Read identity from the validated manifest:
 - PR number and URL from `.pr_number` and `.pr_url`
 - active host identity: `codex` for Codex, `claude` for Claude Code, or another stable lowercase runtime name
 
-Require a `CBRD-XXXXX` identity before writing. If the tool used `PR-<number>` because no ticket was discoverable, ask the user which CBRD ticket directory to use.
+Use the discovered `CBRD-XXXXX` identity. If none exists, preserve the collector's `PR-<number>` identity for the report directory rather than inventing a ticket.
 
 Normalize the directory to lowercase and set the path once:
 
 ```text
-REPORT_PATH=/home/vimkim/gh/my-cubrid-docs/cbrd-xxxxx/ci_analysis_report_<SHORT_SHA>_<AGENT>.md
+REPORT_PATH=/home/vimkim/gh/my-cubrid-docs/<lowercase-ticket-or-pr-identity>/ci_analysis_report_<SHORT_SHA>_<AGENT>.md
 ```
 
 If `REPORT_PATH` already exists, verify that it names the same PR and full commit before revising it. If either identity differs, stop and ask the user; do not overwrite it or invent a suffix. Preserve unrelated user changes in the docs worktree.

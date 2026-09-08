@@ -15,7 +15,7 @@ Post a `/run ...` comment on a CUBRID GitHub PR. The CI bot parses the comment b
 | `/run sql medium` | `ci/circleci: test_sql`, `ci/circleci: test_medium` |
 | `/run all` | sql, medium, and shell suites |
 
-These are the only verified, known-good forms. Post no other suite combination. In particular, `/run shell` was observed to instantly cancel a queued shell job on 2026-07-31 (PR #7588, job 142503), discarding its queue position.
+These are the locally verified forms. Use them unless current bot documentation establishes another supported form. A `/run shell` comment coincided with a queued-job cancellation on PR #7588; that observation does not establish permanent bot behavior or causality.
 
 When the user doesn't name suites, default to `/run sql medium`: shell is by far the slowest suite, so reserve `/run all` for when the user asks for it or the change touches shell-tested behavior.
 
@@ -40,25 +40,24 @@ git rev-parse HEAD          # local
 git status --porcelain      # uncommitted changes
 ```
 
-- Local `HEAD` differs from `headRefOid` (unpushed commits) → CI would test stale code. Push, then re-read `headRefOid` before posting.
+- Local `HEAD` differs from `headRefOid` → report which revision CI would test. Trigger authorization alone does not authorize a push. For a repair, follow cubrid-ci-fix's verified-diff push approval gate, then reread the remote head. If testing the already-pushed head was intended, proceed with that identified revision.
 - Tree is dirty → never commit on the user's behalf; report that uncommitted changes won't be tested and let the user decide whether to commit first or trigger anyway.
 - Skip this check entirely when the PR lives in a repo other than the current checkout.
 
 ## Step 3: Don't double-trigger
 
-A duplicate `/run` comment can auto-cancel queued jobs from the previous pipeline, reset a 10+ hour shell queue position, and rerun suites that already finished. Before posting, inspect both existing comments and checks:
+A duplicate trigger can cancel or supersede queued work. Inspect complete comment history and both checks and commit statuses before posting. Resolve REPO and PR_NUMBER from the validated PR identity:
 
 ```bash
-gh pr view <pr-url> --json headRefOid,createdAt,comments --jq \
-  '{headRefOid, createdAt, runs: [.comments[] | select(.body | test("^/run ")) | {body, createdAt}]}'
-
-gh pr checks <pr-url> --json name,state,bucket --jq \
-  '.[] | select(.name | test("test_sql|test_medium|test_shell"; "i")) | {name, bucket}'
+gh api --paginate --slurp "repos/$REPO/issues/$PR_NUMBER/comments?per_page=100"
+gh pr checks "$PR_URL" --json name,state,bucket,link
 ```
 
-Determine whether each comment predates the current head push. Use the latest PR timeline `synchronize` event for `headRefOid` as the boundary; if there is no such event, use the PR's `createdAt`. If any `/run` comment exists at or after that boundary, treat the current-head trigger as **ACTIVE regardless of check visibility or state** and stop. A missing shell status means "possibly queued," never "not triggered." If the boundary cannot be established, fail closed and treat the trigger as active.
+Capture nonzero `gh pr checks` status without discarding its JSON; pending or failing checks are not collection failures. Inspect exact-head CircleCI pipelines/workflows as needed.
 
-Conclude "not triggered" only when every existing `/run` comment predates the current head boundary, meaning a newer push invalidated those triggers. Never post a second `/run` for the same head for any reason, including "nothing visible yet," unless the user explicitly confirms the re-trigger in the current conversation.
+Associate previous triggers using a saved head/comment receipt or trustworthy push/event evidence, plus job/pipeline revision checks. REST issue timelines do not expose a `synchronize` event: that is a webhook action. PR creation time and commit author/committer timestamps do not establish the current head's push time.
+
+If a prior trigger is associated with the current head, do not post another without explicit same-head retrigger authorization. If association cannot be established, retain an unknown state and ask for that authorization rather than inventing a boundary. Missing shell status can mean queued work. A known current-head receipt remains relevant even when no check is visible.
 
 ## Step 4: Post the comment
 
@@ -66,7 +65,7 @@ Conclude "not triggered" only when every existing `/run` comment predates the cu
 gh pr comment <pr-url> --body "/run sql medium"
 ```
 
-Keep the body to the bare `/run ...` line — that is the known-good format the bot parses. Post exactly one comment.
+Require user authorization for posting, including authorization passed from an approved repair publication plan. Immediately recheck the PR head; if it changed, reassess the trigger against the new revision. Post one bare `/run ...` line and save the returned comment URL/ID, body, time and head SHA. If the response is lost, reconcile comments before retrying.
 
 ## Step 5: Verify pickup and report
 
@@ -76,12 +75,7 @@ Print what was posted, the PR, and the head SHA being tested:
 Posted "/run sql medium" on PR #<number> (head <short-sha>).
 ```
 
-Pickup expectations are suite-aware:
-
-| Suite | Expected visibility and duration |
-|---|---|
-| `test_sql` / `test_medium` | Status usually appears within minutes; each job finishes in ≤1 hour. |
-| `test_shell` | **No GitHub status exists while queued.** Queueing routinely takes 10+ hours; the job itself takes ≈1 hour after it starts. Absence of status is not evidence that the trigger was lost. |
+Queue visibility and runtime vary. Absence of a status is not evidence that the trigger was lost; inspect the actual pipeline/job and record its state.
 
 Check sql/medium pickup after a few minutes:
 

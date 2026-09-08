@@ -20,15 +20,16 @@ $ARGUMENTS
 ## Prerequisites
 
 - `$CUBRID` environment variable must point to a CUBRID install directory
-- CTP tools at `~/cubrid-testtools/CTP/isolation/ctltool/`
-- Test case repository at `~/cubrid-testcases/isolation/`
+- Resolve CTP_HOME from the configured installation; require `$CTP_HOME/isolation/ctltool/`.
+- Resolve `CUBRID_TESTCASES_DIR` and its tracked `isolation/` subtree; validate Git revision and dirty state.
+- Inspect prepare/run/cleanup scripts before execution. Use a dedicated environment free of unrelated CUBRID work: current scripts stop services, broadly kill current-user processes and recreate databases. A different database name or port alone does not isolate those effects.
 
 ## Step 0: Build CTP Isolation Tools (if needed)
 
 Check if `qacsql` and `qactl` binaries exist. If not, build them:
 
 ```bash
-cd ~/cubrid-testtools/CTP/isolation/ctltool
+cd "$CTP_HOME/isolation/ctltool"
 make clean && make
 chmod +x timeout3.sh runone.sh prepare.sh clean.sh
 ```
@@ -40,11 +41,11 @@ These binaries link against `$CUBRID/lib/libcubridcs`, so they must be rebuilt i
 The isolation framework uses a database called `ctldb`:
 
 ```bash
-cd ~/cubrid-testtools/CTP/isolation/ctltool
+cd "$CTP_HOME/isolation/ctltool"
 sh prepare.sh qacsql ctldb log
 ```
 
-This creates a fresh `ctldb` database, starts the server, and rebuilds tools if needed. The `prepare.sh` script kills existing CUBRID processes, so warn the user if other databases are running.
+This deletes/recreates `ctldb`, starts the server, and rebuilds tools if needed. Verify ownership and disposability of that database and the dedicated execution environment before running. If unrelated processes or data can be affected, arrange isolation instead of merely warning and proceeding.
 
 ## Step 2: Understand the Feature
 
@@ -123,20 +124,9 @@ C2: quit;
 | `C1: commit` / `C1: rollback` | Transaction control |
 | `C1: quit` | Close client session |
 
-### Data Type Rules
+### Data and storage assertions
 
-- **Use BIT VARYING (VARBIT)** for large columns, NOT VARCHAR — CUBRID compresses strings, making disk size unpredictable
-- **Pattern**: `CAST(REPEAT('AA', N) AS BIT VARYING)` produces N bytes on disk
-- **Use DISK_SIZE()** to verify column size (not LENGTH which returns bits for VARBIT)
-- **Use different hex patterns** ('AA', 'BB', 'CC') to distinguish values between sessions
-- **Verify value equality** with `(col = CAST(REPEAT('XX', N) AS BIT VARYING))` which returns 1 (true) or 0 (false)
-
-### OOS-Specific Rules (when testing OOS features)
-
-- OOS trigger: record > `DB_PAGESIZE/8` (2KB on 16KB pages) AND column > 512B
-- Use 1700-byte VARBIT values to trigger OOS (well above 512B threshold, record > 2KB)
-- For multi-chunk OOS: use 20000+ byte VARBIT values (spans multiple OOS pages)
-- DISK_SIZE overhead: typically 8 bytes over the raw data size
+Choose values that exercise the intended behavior in the current build. For OOS-specific placement/size assertions, use `cubrid-oos-context` and verify actual source/configuration thresholds and resulting placement. Avoid hardcoded claims that one value size always triggers OOS, or that DISK_SIZE overhead is constant across layouts. The concurrency example above illustrates orchestration; its payload alone does not prove OOS activation.
 
 ### File Location Convention
 
@@ -161,11 +151,11 @@ cubrid-testcases/isolation/
 ### First run (no answer file yet)
 
 ```bash
-cd ~/cubrid-testtools/CTP/isolation/ctltool
+cd "$CTP_HOME/isolation/ctltool"
 sh runone.sh /path/to/<test>.ctl 120
 ```
 
-The test will report NOK (no answer file). Check the result:
+A missing answer normally produces NOK. Preserve every attempt and inspect the actual output before defining a new oracle:
 
 ```bash
 cat /path/to/result/<test>.log
@@ -181,7 +171,7 @@ Analyze the `.log` output:
 
 ### Create answer file from verified output
 
-**IMPORTANT**: Copy the exact `.log` file — do NOT manually create the answer file:
+For a new testcase only, capture the exact log after validating its behavior against the intended specification. For an existing regression answer, require a justified, authorized expectation change; do not bless a failing run by copying it:
 
 ```bash
 cp /path/to/result/<test>.log /path/to/answer/<test>.answer
@@ -195,21 +185,21 @@ The framework does an exact `diff` between `.log` and `.answer`, so even whitesp
 sh runone.sh /path/to/<test>.ctl 120
 ```
 
-Should now report `flag: OK`.
+Require the selected testcase to execute and report `flag: OK`, with the intended binary and configuration. Inspect all attempts: the installed runone.sh may retry until OK, so its last flag alone can conceal earlier failures. Preserve those failures and investigate instability.
 
 ## Step 6: Run All Tests
 
 After all tests are created and have answer files, verify them all:
 
 ```bash
-cd ~/cubrid-testtools/CTP/isolation/ctltool
+cd "$CTP_HOME/isolation/ctltool"
 for ctl in /path/to/test_dir/*.ctl; do
-  echo "=== $(basename $ctl) ==="
-  sh runone.sh "$ctl" 120 2>&1 | grep -E "flag:"
+  sh runone.sh "$ctl" 120 > "$ctl.run.log" 2>&1
+  cat "$ctl.run.log"
 done
 ```
 
-All tests must show `flag: OK`.
+All selected tests must execute and pass. Retain the complete logs and inspect earlier retries; do not reduce evidence to the last flag.
 
 ## Step 7: Summary
 
@@ -229,7 +219,7 @@ Include:
 ### Exit code 126 on first run
 Permission issue. Run:
 ```bash
-chmod +x ~/cubrid-testtools/CTP/isolation/ctltool/*.sh
+chmod +x "$CTP_HOME/isolation/ctltool"/*.sh
 ```
 
 ### "ctldb is unknown" error
@@ -242,8 +232,7 @@ Database doesn't exist. Run `prepare.sh` again.
 - Check for `MC: wait until C2 blocked` on operations that don't actually block
 
 ### DISK_SIZE returns unexpected values
-- VARCHAR is compressed — switch to BIT VARYING
-- VARBIT DISK_SIZE includes small overhead (typically 8 bytes)
+Inspect the current type representation, compression settings and record layout. Compare the intended value and actual placement; avoid assuming a fixed overhead or changing types solely to obtain an expected number.
 
 ### "find: CUBRID/log: No such file or directory"
-Harmless warning from `runone.sh` cleanup. The `~/CUBRID/log` path is hardcoded in the script but your install may be elsewhere. Does not affect test results.
+Inspect the installed runner and emitted binary/log paths. A hardcoded path can indicate that cleanup or execution used a different installation; establish the effect before accepting the test result.

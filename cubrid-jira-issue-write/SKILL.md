@@ -28,7 +28,7 @@ These two goals fight verbosity from both ends: the triage block stays tiny, the
 
 ## Automatic Completion Contract
 
-A request that triggers this skill authorizes the complete workflow for an existing `CBRD-XXXXX` issue: write and grill the report, commit only that report in `my-cubrid-jira`, push it to `origin/main`, and publish it as the matching live JIRA description through the `cubrid-jira` skill. Show previews for visibility, but do not pause for another confirmation.
+A request that triggers this skill authorizes the complete workflow for an existing `CBRD-XXXXX` issue: write and review the report, commit only that report in `my-cubrid-jira`, push it to `origin/main`, and publish it as the matching live JIRA description through the `cubrid-jira` skill. Show previews for visibility, but do not pause for another confirmation.
 
 Keep this authorization inside these exact boundaries:
 
@@ -39,7 +39,7 @@ Keep this authorization inside these exact boundaries:
 - Use the `cubrid-jira` skill's publish-description workflow, including its dry-run, live update with `--yes`, and live read-back verification.
 - If the live update fails after the push, keep the pushed commit, report the exact JIRA error and the partial-completion state, and do not claim success.
 
-A ticket-free draft has no upload target. Save, grill, commit, and push it like any other report, then report that only the JIRA upload was skipped. Creating a new JIRA issue is a separate workflow requiring the project, issue type, summary, and other required fields.
+A ticket-free draft has no upload target. Save, review, commit, and push it like any other report, then report that only the JIRA upload was skipped. Creating a new JIRA issue is a separate workflow requiring the project, issue type, summary, and other required fields.
 
 ## Artifact Identity
 
@@ -48,7 +48,7 @@ Resolve the filename before writing the draft:
 1. Set `SOURCE_COMMIT` to the specific CUBRID commit or PR head analyzed by the issue when one is supplied. Otherwise use `git rev-parse HEAD` in the current CUBRID worktree. Never use the `my-cubrid-jira` repository commit. If no relevant CUBRID commit or worktree can be identified, ask the user.
 2. Validate `SOURCE_COMMIT` and take its first seven hexadecimal characters as `SHORT_SHA`.
 3. Set `AGENT` from the active AI host's runtime identity. Use `codex` for Codex and `claude` for Claude Code. For another host, use its stable lowercase agent name. Do not infer the host from installed binaries because multiple AI CLIs may coexist; if runtime identity is unclear, ask the user.
-4. Compute the output path once and reuse that exact file through the grill loop and final handoff. The basename must end with `_<SHORT_SHA>_<AGENT>.md`.
+4. Compute the output path once and reuse that exact file through revision and final handoff. The basename must end with `_<SHORT_SHA>_<AGENT>.md`.
 
 For example, Codex documenting `f5794fb...` writes `CBRD-26972-oos-show-heap-capacity_f5794fb_codex.md`; Claude Code writes `CBRD-26972-oos-show-heap-capacity_f5794fb_claude.md`.
 
@@ -300,9 +300,9 @@ JIRA issues are read by devs, QA, and CS who do not share the author's local set
 7. **Write the body** from the type template, applying **Layer Ownership** so nothing repeats.
 8. **Run the mandatory checks**: (a) Layer-Ownership de-dup grep — no fact in 2+ layers; (b) AS-IS/TO-BE appears when the issue has a clear before/after contrast; (c) `rg -nP '\bjust\s+\w'` returns zero.
 9. **Save** to the resolved path ending in `_<SHORT_SHA>_<AGENT>.md`.
-10. **Grill the saved file** with the mandatory loop below and revise it in place until the reviewer approves or the round cap is reached.
+10. **Review the saved file** against the Document Review criteria below and correct defects in place.
 11. **Show the publication preview**: path, source commit, agent name, chosen type, and Issue Triage block. This is informational; continue without asking for confirmation.
-12. **Validate the notes repository** against the Automatic Completion Contract. Re-run all mandatory checks after the grill.
+12. **Validate the notes repository** against the Automatic Completion Contract. Re-run all mandatory checks after revision.
 13. **Commit only the issue file and push it**:
 
     ```bash
@@ -322,19 +322,17 @@ JIRA issues are read by devs, QA, and CS who do not share the author's local set
 - `/write-jira-issue CBRD-26583 OOS compact analysis` — write issue for a specific ticket
 - `/write-jira-issue` — interactive mode, ask for details
 
-## Mandatory: Iterate with Grill-with-Docs
+## Document Review
 
-Every draft goes through `/grill-with-docs` before being filed — no single-pass issues. Single-pass drafts drift toward filler, non-executable Repro, unsupported root-cause claims, and triage blocks collapsed into one sentence. This applies to every issue regardless of size or perceived triviality. The **only** valid skip is the user explicitly saying so in the triggering message ("skip grill", "no grill", "just push it"). If in doubt, grill.
-
-Hand off with: ticket number + issue type + output path (same file, revised in place) + source material. Review angle:
+Review the saved issue file in the current session against the ticket, issue type, source material, and the following criteria. Correct defects in the same file before publication:
 
 - Technical accuracy; Repro is executable; CUBRID conventions (Korean body, English `##`, no emoji/non-BMP).
 - **Issue Triage** present, all three fields filled, not collapsed into one sentence. 이유 cites code-named thresholds, uses explicit AS-IS/TO-BE when a before/after contrast exists, AND names impact (abstract one-liners = reject). 방안 states decided spec concretely; pure-TBD when decisions exist = reject; AI-invented plan = reject.
 - **Layer Ownership**: no fact repeated across Triage / Summary / Description (the prime reject — this is the verbosity bug).
 - **Format matches content**: triage fields not reflexively dot-listed; comparisons -> table, call chains -> ASCII diagram with `★`, single thesis -> prose.
 - **New-hire readability**: every internal acronym glossed once on first use; every threshold has a one-clause rationale. Untreated insider shorthand = reject. The readability target itself must NEVER appear in the body (audience/grade-level note = reject).
-- **Natural Korean**: pass the "New-hire Readability" and "Natural Korean" sections to the reviewer verbatim.
+- **Natural Korean**: apply the "New-hire Readability" and "Natural Korean" sections above.
 
-Round cap: default 5.
+Ask a concise clarification only for a decision or required input that the conversation and sources cannot resolve. Use an independent reviewer only when the user requests one; provide the saved file, source material, these criteria, and the "New-hire Readability" and "Natural Korean" sections, and request concrete findings. A design interview is a separate user-requested activity, not a publication prerequisite.
 
-Reviewer approval is the quality gate, not a user publication gate. After approval, continue directly with the commit, push, and `cubrid-jira` upload steps without asking the user to confirm again.
+Once the criteria are satisfied, continue directly with the preview, validation, commit, push, and `cubrid-jira` upload steps under the Automatic Completion Contract.

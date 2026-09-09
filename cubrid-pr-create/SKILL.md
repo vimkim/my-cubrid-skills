@@ -187,7 +187,7 @@ If there are uncommitted changes, warn the user and determine whether the commit
 2. Create `doc_dir="$docs_repo/cbrd-XXXXX"` and `doc_file="$doc_dir/CBRD-XXXXX-<slug>_<SHORT_SHA>_<AGENT>.md"`.
 3. Write the full technical explanation with `## Purpose`, `## Implementation`, and `## Remarks`. If a before/after contrast exists, make AS-IS/TO-BE explicit under `## Purpose`.
 4. Use repo-relative paths like `src/storage/heap_file.c`, never local absolute paths.
-5. Grill the doc using the mandatory loop below. The doc is the substantive artifact, so the grill loop applies there.
+5. Review and revise the saved doc using the Document Review criteria below.
 
 ### Step 5: Draft the One-Screen PR Body
 
@@ -268,18 +268,15 @@ Head:  vimkim:feat/oos-replace-oos-oid
 - Use `--body-file "$body_file"` for multi-line Korean text.
 - The one-screen rule is a hard limit. When in doubt, cut a sentence from the body and add it to the doc.
 
-## Mandatory: Iterate with Grill-with-Docs
+## Document Review
 
-The detailed explanation doc must go through `/grill-with-docs` before the docs repo is committed and pushed. Do not push a single-pass doc.
+Review the saved `doc_file` in the current session against the diff, JIRA output, related issues, and related PRs. Check:
 
-This applies to every PR. The only legitimate skip is when the user explicitly says `skip grill`, `do not grill this`, `no grill`, or an unambiguous equivalent in the message that triggered this skill.
+- `## Purpose`, `## Implementation`, and `## Remarks` are complete and technically accurate.
+- AS-IS/TO-BE is explicit when the change supports it.
+- Claims and verification notes match the source evidence; limitations are stated.
+- CUBRID doc conventions are followed and CUBRID-internal terms are glossed on first use.
 
-Hand off with:
+Correct defects in the same file. Ask a concise clarification only for a decision or required input that the conversation and sources cannot resolve. Use an independent reviewer only when the user requests one; provide the doc, source material, and these criteria, and request concrete findings. A design interview is a separate user-requested activity, not a publication prerequisite.
 
-1. Topic and purpose: PR title, JIRA ticket, and target reviewers.
-2. Output path: the `doc_file`; the loop revises it in place.
-3. Source material: the diff, JIRA output, related issues, and related PRs.
-4. Review angle: completeness and correctness of `## Purpose`, `## Implementation`, and `## Remarks`; explicit AS-IS/TO-BE contrast when the change supports it; CUBRID doc conventions; every CUBRID-internal term glossed on first use.
-5. Round cap: default 5.
-
-After grill approval, run the material checker, draft and show the PR body, publish the docs repo, push the branch to `github.com/vimkim/cubrid`, and create the draft PR against `CUBRID/CUBRID` without asking for user confirmation.
+Once the criteria are satisfied, continue with Steps 5–9 to draft the PR body, run the material checker, and publish under the existing authorization contract.

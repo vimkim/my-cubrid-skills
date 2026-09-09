@@ -45,36 +45,32 @@ Create `<collection-root>/<skill-name>/SKILL.md` with complete content — no pl
 
 Note: `SKILL.md` is installed to both Claude Code and Codex via `just install`. Use `$ARGUMENTS` for input; avoid Claude-Code-only constructs unless explicitly flagged.
 
-### Step 6: Grill the SKILL.md (mandatory)
+### Step 6: Validate the SKILL.md
 
-Before installing, run the freshly written `SKILL.md` through `/grill-with-docs`. Single-pass skill descriptions and trigger lists drift toward generic verbs, over-broad triggers, missing `Triggers on phrases like '...'` clauses, and steps that reference tools without exact CLI commands. Skills are loaded by description and trigger phrases that LLMs match against, so unclear writing here means the skill never fires.
+Review the saved file in the current session against the workflow gathered in Step 4 and the valid skill structure below:
 
-This step is required, not optional. It applies to every new skill. No agent-side judgment — including size, scope, perceived triviality, or perceived risk — is a valid skip criterion. The only legitimate skip is when the user, in the message that triggered this skill, explicitly says "skip grill" or "don't grill this" (or unambiguous equivalent: "no grill", "skip the grill loop", "just push it"). If in doubt, do the grill loop.
+- Description and concrete trigger phrases match the intended scope.
+- Steps are executable, reference exact CLI commands where needed, and handle the known edge cases.
+- Frontmatter and naming are valid; the CUBRID prefix is applied where relevant.
+- Instructions work for Claude Code and Codex, with any harness-specific behavior explicitly identified.
+- The file contains no placeholders or `<!-- ... -->` comments.
 
-Invoke `/grill-with-docs` with:
+Correct defects in place and run appropriate source-level checks for supporting scripts or assets. Ask a concise clarification only for a decision or required input that the conversation and local sources cannot resolve.
 
-- **Topic & purpose**: a new skill in the my-cubrid-skills collection, audience is Claude Code (LLM-triggered) and the user
-- **Output path**: `<collection-root>/<skill-name>/SKILL.md` (the loop revises in place)
-- **Source material**: the workflow context gathered in Step 4, real examples (`resolve-greptile-comments/SKILL.md`, `cubrid-pr-create/SKILL.md`), the valid skill structure below
-- **Review angle**: description is imperative and ends with `Triggers on phrases like '...'`; trigger phrases are concrete and not over-broad; steps are numbered, executable, and reference exact CLI commands; no placeholders, no `<!-- ... -->` comments; CUBRID prefix applied where relevant
-- **Round cap**: default 5
+Use an independent reviewer only when the user requests one; provide the saved file, workflow context, and these criteria, and request concrete findings. A design interview is a separate user-requested activity, not an installation prerequisite.
 
-After the reviewer approves, proceed to install.
+### Step 7: Confirm publication, reinstall, and verify
 
-### Step 7: Install, verify, and commit
+After validation, ask whether to reinstall the skills and commit and push the intended repository changes, as required by the collection's `AGENTS.md`. Run only the publication actions explicitly authorized by the user.
 
-```bash
-just install
-just list | grep <frontmatter-name>
-```
-
-`just list` outputs frontmatter `name:` values, so grep on the name you set in the SKILL.md front matter. If the skill appears, prompt the user to commit:
+For an authorized reinstall, run from the collection root:
 
 ```bash
-git add <skill-name>/ && git commit -m "feat(<scope>): add <skill-name> skill"
+just reinstall
+just list
 ```
 
-Match `<scope>` to the style of `git log --oneline -10` (scope is often a category, not the literal skill name).
+Verify that the frontmatter `name:` appears for both Claude Code and Codex. For an authorized commit and push, inspect the diff and staging area, include only the intended skill files, and preserve unrelated changes. Match the commit scope to the style of `git log --oneline -10`, push to the intended repository branch, and report the result.
 
 ## Valid skill structure
 

@@ -17,7 +17,7 @@ Prefer the Rust `cubrid-ci` collector for discovering and downloading CircleCI e
 - Focus substantive analysis on failures. Report passing suites only as snapshot context.
 - Treat observed evidence, inference, and unknowns as distinct. Never invent a diff, root cause, PR relationship, or successful result.
 - Write the report to `/home/vimkim/gh/my-cubrid-docs`; do not write it in a CUBRID source worktree or the skills repository.
-- Grill every report with `grill-with-docs` before sharing it.
+- Validate every report against its collected evidence before sharing it.
 - Do not trigger CI, rerun a job, modify CUBRID or testcase source, update the PR, or commit/push the report unless the user separately requests it.
 
 ## Step 1: Validate the Environment
@@ -260,27 +260,22 @@ Use English `##` section headers and concise technical English. Keep the snapsho
 
 Include direct CircleCI job links from each `summary.json`. Name the persistent evidence directory, but do not include credentials, signed artifact URLs, authorization headers, or environment values. Do not claim that an unavailable suite passed, failed, or is unrelated to the PR.
 
-## Step 8: Grill the Report
+## Step 8: Review and Validate the Report
 
-After saving the initial report, invoke `grill-with-docs` and revise the same `REPORT_PATH` in place.
-
-Provide:
-
-- **Topic and audience**: exact-commit CUBRID CI failure analysis for the PR author, QA, and maintainers.
-- **Source material**: manifest, suite summaries, every failed-test record, targeted logs/artifacts/sources, relevant local docs, and exact source context if available.
-- **Review angle**: suite identity is exact; unavailable suites are warnings; every attribution has concrete evidence; hypotheses are falsifiable; categories reflect root causes; recommendations are actionable; unknowns remain unknown.
-
-Follow `grill-with-docs` as written: explore the codebase instead of asking answerable questions, ask the user one unresolved question at a time, and revise the report as decisions crystallize. Do not share a single-pass report; finish only after reaching shared understanding. Do not create or change a glossary or ADR unless the grill independently identifies a genuine domain-language or durable architectural decision that meets its own criteria.
-
-## Step 9: Validate and Hand Off
-
-Re-read the final report against the exact bundle and verify:
+Review the saved `REPORT_PATH` in the current session against the manifest, suite summaries, every failed-test record, targeted logs/artifacts/sources, relevant local docs, and exact source context if available. Verify:
 
 1. PR URL, full commit, short SHA, suite names, job numbers, counts, and testcase revisions match JSON evidence.
 2. Every requested suite appears either as collected or as an explicit warning.
 3. Every `failure`, `error`, and unknown test result appears exactly once in the inventory and in one root-cause category.
 4. Totals reconcile across the snapshot, inventory, categories, and executive summary.
-5. Observations, inferences, and unknowns are clearly separated.
-6. The report contains no token, authorization header, signed artifact URL, or unrelated local change.
+5. Observations, inferences, and unknowns are clearly separated; every attribution has concrete evidence and hypotheses are falsifiable.
+6. Categories reflect root causes and recommendations identify concrete next actions.
+7. The report contains no token, authorization header, signed artifact URL, or unrelated local change.
+
+Correct defects in the same file and recheck affected claims and totals. When evidence is unavailable, state the limitation and bound the conclusion accordingly. Ask a concise clarification only for a decision or required input that the conversation and sources cannot resolve.
+
+Use an independent reviewer only when the user requests one; provide the report, evidence paths, and these criteria, and request concrete findings. A design interview is a separate user-requested activity, not a report-delivery prerequisite.
+
+## Step 9: Hand Off
 
 Return the report path, exact analyzed commit, failure/error/unknown counts by suite, unavailable-suite warnings, and the highest-priority next action. Leave the report uncommitted and unpushed unless the user asks for publication.

@@ -10,7 +10,6 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | `cubrid-ci-fix` | Repair PR CI with approval before fixes/pushes and local plus remote verification |
 | `cubrid-sql-run` | Run focused CTP SQL/medium cases and verify actual execution |
 | `cubrid-ci-analyze` | Collect exact-commit CircleCI snapshots with `cubrid-ci` and write failure-analysis reports |
-| `cubrid-code-survey` | Compare one CUBRID mechanism with PostgreSQL and MySQL source, then validate narrow runtime questions with focused reversible probes |
 | `cubrid-pr-create` | Create GitHub PRs with `[CBRD-XXXXX]` title format and Korean body |
 | `cubrid-jira-issue-write` | Write structured JIRA issue reports in Korean |
 | `cubrid-manual-search` | Answer CUBRID questions from the local English/Korean RST manual with file-and-line citations |
@@ -72,7 +71,6 @@ Once installed, invoke skills as slash commands in Claude Code:
 /cubrid-jira CBRD-25123
 /cubrid-pr-create CBRD-26583
 /cubrid-ci-analyze https://github.com/CUBRID/cubrid/pull/6864
-/cubrid-code-survey How does page-buffer victim selection differ from PostgreSQL and MySQL?
 /cubrid-manual-search What is the default value of max_clients?
 /create-testcases CBRD-26609
 /track-work register this CI wait and keep its status current

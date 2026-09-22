@@ -1,6 +1,6 @@
 ---
 name: cubrid-build
-description: Prepare, configure, build, and test CUBRID worktrees with the preset-aware justfile workflow. Use for new or existing CUBRID worktrees and after engine code changes. Triggers on phrases like 'build CUBRID', 'prepare this worktree', 'compile this change', 'run CUBRID tests', or 'use release_gcc'.
+description: Prepare, configure, build, install, and run configured ctest tests in a CUBRID worktree through its live preset-aware just interface. Use for new worktree setup, compilation after engine changes, ctest verification, or an explicitly requested build preset. Not for SQL, medium, shell, or isolation regression runs.
 ---
 
 # CUBRID Build & Test
@@ -27,7 +27,7 @@ Use the preset requested by the user. Otherwise use:
 
 The preset must appear in `cmake --list-presets=configure`. Never invent a preset name.
 
-## 3. Prepare and bootstrap a worktree
+## 3. Prepare a worktree
 
 Before building, check that all preparation files exist at the worktree root:
 
@@ -35,17 +35,26 @@ Before building, check that all preparation files exist at the worktree root:
 - `.envrc`
 - `CMakeUserPresets.json`
 
-If any are missing, or if this is a newly-created worktree, run the non-interactive bootstrap script. It performs the shared `just prepare`, validates and writes `.env`, runs configuration, and finishes with `just build`:
+If any are missing, or if this is a newly-created worktree, use the global preparation recipe from the worktree root:
 
 ```bash
-cubrid-worktree-bootstrap.sh \
-  --preset debug_gcc \
-  --worktree "$(git rev-parse --show-toplevel)"
+just -f "$HOME/my-cubrid/cubrid-justfiles/justfile" -d . prepare-build
 ```
 
-Replace `debug_gcc` with the explicitly selected preset when necessary. This command is non-interactive; do not use `cmake-preset-mode-select.sh` or `fzf` in an autonomous agent workflow.
+This stows the live personal just modules, prepares the environment, and selects `debug_gcc`. If another preset was explicitly requested, select it after preparation:
 
-The canonical script is `$HOME/my-cubrid/bin/cubrid-worktree-bootstrap.sh` and is available on `PATH`. Verify it with `command -v cubrid-worktree-bootstrap.sh` rather than copying it into a worktree or skill directory.
+```bash
+just preset release_gcc
+```
+
+Replace `release_gcc` with the requested preset. Then finish the initial configuration and build:
+
+```bash
+direnv exec . just configure
+direnv exec . just build
+```
+
+Inspect `just --list` and `just --show <recipe>` after preparation. The worktree's live just interface is authoritative; do not copy recipe implementations into this skill.
 
 ## 4. Verify the loaded environment
 
@@ -56,7 +65,7 @@ sed -n 's/^[[:space:]]*PRESET_MODE[[:space:]]*=[[:space:]]*//p' .env
 direnv exec . sh -c 'printf "PRESET_MODE=%s\nCUBRID_BUILD_DIR=%s\nCUBRID=%s\n" "$PRESET_MODE" "$CUBRID_BUILD_DIR" "$CUBRID"'
 ```
 
-If the preset is missing, invalid, or differs from the required mode, rerun the bootstrap script with the correct `--preset`. Use `direnv exec .` when the current non-interactive shell has not reloaded `.env`.
+If the preset is missing, invalid, or differs from the required mode, select the required preset with `just preset <mode>`, then run `direnv exec . just configure` and `direnv exec . just build`. Use `direnv exec .` when the current non-interactive shell has not reloaded `.env`.
 
 ## 5. Build after every code change
 
@@ -102,7 +111,7 @@ git submodule update --init cubrid-jdbc
 direnv exec . just configure-build
 ```
 
-Shared worktree preparation initializes CCI and does not replace JDBC initialization. Use `cubrid-shell-run` for shell, `cubrid-isolation-test` for isolation, and `cubrid-sql-run` for single-file CTP replay. These personal just recipes are local tooling; use standard build/test terminology in organization-facing documentation.
+Shared worktree preparation initializes CCI and does not replace JDBC initialization. Use `cubrid-test-shell-run` for shell, `cubrid-isolation-test` for isolation, and `cubrid-test-sql-run` for focused SQL execution. There is no specialized medium runner in this collection. These personal just recipes are local tooling; use standard build/test terminology in organization-facing documentation.
 
 ## 7. Handle failures
 

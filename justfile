@@ -23,4 +23,4 @@ update-installed:
 
 # Remove a specific skill
 remove skill:
-    npx skills remove -g --agent claude-code --agent codex --yes {{ skill }}
+    npx skills remove -g --yes {{ skill }}

@@ -1,10 +1,12 @@
 ---
-name: cubrid-shell-run
-description: "Run one CUBRID CTP shell test (or a narrow subtree) against the local build. Use when the user wants to debug, reproduce, or iterate on a specific shell test (or a small bucket of them) without running the full CI suite. For CTP shell tests only — not for unit tests (cubrid-build), SQL regression tests, or .ctl isolation tests (cubrid-isolation-test). Triggers on phrases like 'run one shell test', 'debug a shell test', 'just shell-debug', 'ctp shell single test', 'run shell test for bug_XXXX', 'run itrack_XXXXX', 'reproduce CBRD-XXXXX shell test', 'rerun a CI shell failure locally', 'reproduce a CTP shell failure locally', 'rerun shell_ci.conf for one test', or 'ctp.sh shell'."
+name: cubrid-test-shell-run
+description: "Run one focused CUBRID shell testcase or a narrow subtree against the intended local build and prove the actual case results. Use for local reproduction or iteration on selected shell regressions, including CI failures. Not for unit, SQL, medium, or isolation tests. Triggers on requests to run or debug one shell test, reproduce a shell failure locally, run an itrack/bug/CBRD shell case, or use the current CTP shell runner."
 argument-hint: "<test-dir-or-subtree>"
 ---
 
-# Run focused CTP shell tests
+# Run focused CUBRID shell tests
+
+The current runner implementation is CTP. Keep the workflow's case identity and result proof independent of that implementation.
 
 ## 1. Resolve the test and prepare
 

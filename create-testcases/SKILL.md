@@ -33,7 +33,7 @@ Resolve `CUBRID_TESTCASES_DIR` from the loaded environment, validate its Git roo
 - SQL file contains: setup DDL, test DML/queries, cleanup (DROP statements)
 - Use `autocommit on;` at the top if needed
 - Follow neighboring answer-file formatting and runner comparison rules.
-- Derive expectations from intended behavior. Run with `cubrid-sql-run`, inspect and independently validate output, then capture a new answer if appropriate. Never overwrite an existing regression answer simply because the current run differs.
+- Derive expectations from intended behavior. Run SQL cases with `cubrid-test-sql-run`, inspect and independently validate output, then capture a new answer if appropriate. There is no specialized medium runner in this collection; do not route medium cases through the SQL runner. Never overwrite an existing regression answer simply because the current run differs.
 
 **Files to create**:
 - `$CUBRID_TESTCASES_DIR/sql/<category>/<test_name>/cases/<name>.sql`
@@ -41,7 +41,7 @@ Resolve `CUBRID_TESTCASES_DIR` from the loaded environment, validate its Git roo
 
 ## Step 4: Create Shell Tests
 
-Resolve `CUBRID_TESTCASES_PRIVATE_EX_DIR`, validate the Git root, and inspect neighboring shell tests in the relevant category. Run with `cubrid-shell-run`.
+Resolve `CUBRID_TESTCASES_PRIVATE_EX_DIR`, validate the Git root, and inspect neighboring shell tests in the relevant category. Run with `cubrid-test-shell-run`.
 
 **Conventions**:
 - Directory structure: `<category>/<test_name>/cases/<test_name>.sh`

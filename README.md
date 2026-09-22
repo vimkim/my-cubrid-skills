@@ -7,7 +7,7 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | Skill | Description |
 |-------|-------------|
 | `cubrid-jira` | Look up CUBRID JIRA issue context (CBRD-XXXXX) |
-| `cubrid-sql-run` | Run focused CTP SQL/medium cases and verify actual execution |
+| `cubrid-test-sql-run` | Run focused SQL cases and verify actual execution |
 | `cubrid-ci-analyze` | Collect exact-commit CircleCI snapshots with `cubrid-ci` and write failure-analysis reports |
 | `cubrid-pr-create` | Create GitHub PRs with `[CBRD-XXXXX]` title format and Korean body |
 | `cubrid-jira-issue-write` | Write structured JIRA issue reports in Korean |
@@ -24,14 +24,15 @@ A collection of Claude Code skills for CUBRID database engine development. These
 |---|---|
 | Read-only runtime snapshot and root-cause report | `cubrid-ci-analyze` |
 | Authorized one-shot CI trigger and duplicate prevention | `cubrid-ci-trigger` |
-| Focused local shell replay | `cubrid-shell-run` |
-| Focused local SQL/medium replay | `cubrid-sql-run` |
+| Focused local shell execution | `cubrid-test-shell-run` |
+| Focused local SQL execution | `cubrid-test-sql-run` |
+| Focused local medium execution | Not yet available |
 | Multi-session isolation tests | `cubrid-isolation-test` |
 | Build/install and configured ctest suite | `cubrid-build` |
 | New behavioral testcases | `create-testcases` |
 | Shared CTP preflight, CI evidence identity, and common helpers | `cubrid-common` |
 
-Snapshot analysis and triggering are independent capabilities; shell and SQL/medium keep their different configuration and result handling. Shared preparation and CI evidence identity live under `cubrid-common`, not a user-facing coordinator. A new test framework remains separate proposed work if existing CTP execution proves insufficient.
+Snapshot analysis and triggering are independent capabilities; shell and SQL keep their different configuration and result handling. Shared preparation and CI evidence identity live under `cubrid-common`, not a user-facing coordinator. Runner names stay independent of the current runner implementation.
 
 ## Installation
 
@@ -59,7 +60,7 @@ just check               # Check for available updates
 just remove cubrid-jira  # Remove a specific skill
 ```
 
-Since `npx skills` uses symlinks by default, renamed or updated skills sync automatically when you `git pull` the source repo.
+Run `just reinstall` after source updates. For a rename, remove the legacy installed name explicitly before reinstalling, then use `just list` to verify that the new name exists and the old name is absent.
 
 ## Usage
 

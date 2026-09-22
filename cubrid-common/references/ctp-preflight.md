@@ -1,6 +1,6 @@
 # CTP preflight
 
-Shared by focused shell and SQL/medium runners. Read before executing CTP against a local CUBRID worktree.
+Shared by the focused shell and SQL runners while CTP is the authoritative runner implementation. Read before executing CTP against a local CUBRID worktree.
 
 ## Preparation and installation identity
 

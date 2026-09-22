@@ -1,281 +1,125 @@
 ---
 name: cubrid-ci-analyze
-description: Collect the currently available exact-commit CircleCI snapshot for a CUBRID GitHub pull request with the `cubrid-ci` binary, analyze failed tests across test_medium, test_sql, and test_shell, and write an evidence-backed report under my-cubrid-docs. Use when the user provides a CUBRID PR URL and asks for CI status, failed-test analysis, failure attribution, root causes, or a CI report. Triggers on phrases like "analyze this PR's CI", "analyze CI failures", "CI 실패 분석", "failed TC 분석", or "write a CI analysis report".
+description: Analyze exact-commit CUBRID GitHub Actions evidence collected by cubrid-ci and write an evidence-backed report under my-cubrid-docs. Use for failed-test analysis, failure attribution, root causes, or a CI analysis report for a CUBRID pull request. Use cubrid-ci status for a simple status query and cubrid-ci-fix when the user wants failures repaired or CI monitored.
 ---
 
 # CUBRID CI Analyzer
 
-Prefer the Rust `cubrid-ci` collector for discovering and downloading CircleCI evidence. Analyze the resulting local bundle and write a failure-focused report. When the collector is missing, unsupported or incomplete, use the read-only API fallback contract in [CI evidence collection](../cubrid-ci-fix/references/ci-evidence.md). Keep API evidence separate from collector-schema bundles, preserve equivalent identity checks, and record the reason for fallback. This skill remains a snapshot analysis; use `cubrid-ci-fix` for approved repair and monitoring.
+Take one status snapshot, collect one exact-commit snapshot, and interpret the resulting schema-v2 evidence. Collection success means the requested evidence is complete; a red CI verdict is evidence, not a collector failure.
 
-## Non-Negotiable Contracts
+## Boundaries
 
-- Analyze `test_medium`, `test_sql`, and `test_shell` when the user supplies only a PR URL. If the user explicitly requests a subset, collect only that subset.
-- Collect the snapshot that is available now. Never pass `--wait`; record an unavailable, missing, pending, build-blocked, or timed-out requested suite as a warning.
-- Pin every suite to one full commit SHA. Never allow separate suite invocations to resolve different moving PR heads.
-- Store durable evidence under `/home/vimkim/gh/cubrid-circleci-analyzer/data`.
-- Use `--artifact-mode text` and `--include-test-sources`. Ask before using `--artifact-mode all` because core dumps and other binary artifacts can be large.
-- Focus substantive analysis on failures. Report passing suites only as snapshot context.
-- Treat observed evidence, inference, and unknowns as distinct. Never invent a diff, root cause, PR relationship, or successful result.
-- Write the report to `/home/vimkim/gh/my-cubrid-docs`; do not write it in a CUBRID source worktree or the skills repository.
-- Validate every report against its collected evidence before sharing it.
-- Do not trigger CI, rerun a job, modify CUBRID or testcase source, update the PR, or commit/push the report unless the user separately requests it.
+- Analyze all three suites unless the user requests a subset: `test_medium`, `test_sql`, and `test_shell`.
+- Use the snapshot available now. Add `--wait` only when the user explicitly asks to wait.
+- Keep collection mechanics in `cubrid-ci`: accept its run selection, provenance checks, failure inventory, and durable paths.
+- Read testcase source at the recorded Git revision from the local testcase repositories. Preserve every worktree and index unchanged.
+- Separate observations, inferences, and unknowns. Every causal claim needs a PR relation, confidence, falsifier, and concrete next action.
+- Write a full analysis only when the manifest says the requested collection is complete. For any incomplete collection, write a bounded warning report and make no regression or root-cause conclusion.
+- Write under `/home/vimkim/gh/my-cubrid-docs`. Leave the report uncommitted and unpushed unless the user separately requests publication.
+- This workflow is read-only outside its evidence and report outputs. It does not trigger CI, call provider APIs directly, download source, reproduce tests, edit source, or repair failures.
 
-## Step 1: Validate the Environment
+## 1. Snapshot and collect once
 
-1. Require a CUBRID PR URL in this form:
+Require `cubrid-ci`, `jq`, `jsonschema`, `gh`, and `cubrid-pr-status`. Run `cubrid-ci doctor --json`; stop with its diagnostics if setup is not healthy. Record `cubrid-ci --version` for the report.
 
-   ```text
-   https://github.com/CUBRID/cubrid/pull/<number>
-   ```
+Run exactly one delegated status command. Pass the supplied PR number or URL; when none was supplied, run it from the user's CUBRID worktree without a PR argument.
 
-2. Require the installed collector and JSON reader, then record the collector version:
+```bash
+CI_ANALYSIS_TMP=$(mktemp -d -t cubrid-ci-analysis.XXXXXX)
+STATUS_JSON="$CI_ANALYSIS_TMP/status.json"
+RESULT_JSON="$CI_ANALYSIS_TMP/result.json"
+COLLECTOR_VERSION=$(cubrid-ci --version)
+PR_REF=${PR_REF:-}
 
-   ```bash
-   command -v cubrid-ci
-   command -v jq
-   cubrid-ci --version
-   ```
+if [[ -n "$PR_REF" ]]
+then
+  cubrid-ci status "$PR_REF" --json >"$STATUS_JSON"
+else
+  cubrid-ci status --json >"$STATUS_JSON"
+fi
+```
 
-   If it is missing, consult `/home/vimkim/gh/cubrid-circleci-analyzer/README.md` and use the documented API fallback when access permits. Report the fallback and its coverage limits. Steps 2–4 describe the collector path; for fallback, use the referenced identity/collection contract, then continue analysis from equivalent raw evidence.
+Set `PR_REF` to the supplied PR number or URL before running the block; leave it empty for current-directory discovery.
 
-3. Set and validate the fixed roots:
+Require a CUBRID PR identity and a 40-character `.pr.head_sha`. Pin that SHA and run exactly one collection command, passing the resolved PR explicitly so collection is independent of the report process's directory:
 
-   ```bash
-   ANALYZER_ROOT=/home/vimkim/gh/cubrid-circleci-analyzer
-   DATA_ROOT="$ANALYZER_ROOT/data"
-   DOCS_ROOT=/home/vimkim/gh/my-cubrid-docs
+```bash
+SUITE_ARGS=()
+# For a user-requested subset, append concrete pairs such as:
+# SUITE_ARGS+=(--suite test_sql)
 
-   test -d "$ANALYZER_ROOT"
-   git -C "$DOCS_ROOT" rev-parse --is-inside-work-tree
-   ```
+if cubrid-ci collect "$(jq -er '.pr.url' "$STATUS_JSON")" \
+    --commit "$(jq -er '.pr.head_sha' "$STATUS_JSON")" \
+    "${SUITE_ARGS[@]}" --json >"$RESULT_JSON"
+then
+  COLLECT_EXIT=0
+else
+  COLLECT_EXIT=$?
+fi
+```
 
-4. Read `$ANALYZER_ROOT/README.md` if the installed CLI rejects an option or its version differs from the workflow assumed here. The tool is authoritative for collection behavior.
+Capture the collection exit without discarding JSON. Exit `0` means all requested suites are complete, including terminal red suites. Exit `3` means evidence is unfinished or unavailable and requires a warning report. Exits `2`, `4`, `5`, or `6` are input, trust, remote, or storage failures: report the structured diagnostic and stop unless the result establishes both PR and commit identity and a manifest exists; in that case write only a warning report.
 
-## Step 2: Pin the Snapshot Commit
+Do not repeat either command to improve the snapshot. Use the returned `.output_dir`; never select an older bundle as the current result.
 
-Map suite names to CLI commands exactly:
+## 2. Validate the bundle
 
-| Suite | `cubrid-ci` command |
+Use `/home/vimkim/gh/cubrid-ci/schema` as the schema root. Validate the command result and `<output_dir>/manifest.json` with `command-result-v2.schema.json` and `manifest-v2.schema.json`. Require them to agree on repository, PR number and URL, full commit, output directory, requested suite set, suite states, and errors. Also require:
+
+- schema version `2`, repository `CUBRID/cubrid`, and the pinned status SHA;
+- manifest `.pr.head_sha` and `.commit` equal the pinned SHA;
+- each `completed` suite's run and attempt equal its summary's identity;
+- each completed summary validates against `suite-summary-v2.schema.json`;
+- its `raw/index.json` validates against `raw-evidence-index-v2.schema.json`;
+- every summary failure has one matching `failures/<stable_id>/metadata.json` validated by `failure-v2.schema.json`, and its declared message and optional diff file exist beneath that suite directory;
+- counts reconcile: `.counts.tests = passed + failures + errors + skipped`, `.counts.planned = run + unrun + skipped`, and failure records total `failures + errors`.
+
+Treat path escape, identity disagreement, missing declared evidence, count disagreement, or schema failure as untrusted evidence. Produce only a warning report when PR and commit identity remain established; otherwise stop without inventing report identity.
+
+`running`, `not_observed`, `job_level_failure`, and `collection_failed` are distinct states. Do not infer a test verdict for a suite without a validated complete summary.
+
+## 3. Inspect exact evidence and source
+
+For a complete bundle, read the manifest, each completed summary, failure metadata, `message.txt`, optional `diff.txt`, and only the targeted raw text named in `raw/index.json` that bears on a failure. An absent diff with `diff_extraction: not_available` is an observed limitation, not missing-message evidence and not proof that outputs matched.
+
+For each failure, select the testcase SHA from the matching summary shard and choose the local repository:
+
+| Suite | Local Git repository |
 |---|---|
-| `test_medium` | `test-medium` |
-| `test_sql` | `test-sql` |
-| `test_shell` | `test-shell` |
+| `test_medium`, `test_sql` | `/home/vimkim/gh/cubrid-testcases/develop` |
+| `test_shell` | `/home/vimkim/gh/cubrid-testcases-private-ex/develop` |
 
-Choose the first requested command as the anchor. Use `test-medium` when all three suites are requested. Run the anchor once without a commit, with no `--wait`:
+Require the recorded commit and full testcase path to exist, then read it with `git -C <repo> show <sha>:<path>`. Use the same form for related answer or fixture paths. Never checkout, reset, fetch, or modify the testcase repository. If the local object or path is absent, record the exact source as unknown and keep the conclusion bounded.
 
-```bash
-PR_URL='<pr-url>'
-ANCHOR_COMMAND=test-medium
-MARKER_FILE=$(mktemp -t cubrid-ci-marker.XXXXXX)
-RESULT_FILE=$(mktemp -t cubrid-ci-result.XXXXXX.json)
+Inspect CUBRID code only from a local checkout proven to contain the manifest commit, using `git show <commit>:<path>` where practical. A different local `HEAD` is context, not exact evidence. Consult relevant material in `my-cubrid-docs` and `my-cubrid-jira` when it directly informs attribution.
 
-if cubrid-ci --json "$ANCHOR_COMMAND" "$PR_URL" \
-    --data-dir "$DATA_ROOT" \
-    --artifact-mode text \
-    --include-test-sources >"$RESULT_FILE"
-then
-  ANCHOR_EXIT=0
-else
-  ANCHOR_EXIT=$?
-fi
-```
+## 4. Write the report
 
-The `if` form captures a nonzero exit without allowing shell `errexit` to abort the workflow.
-
-- Exit `0`: read the suite path from `.output_dir` in `RESULT_FILE`, set `MANIFEST_PATH` to the sibling commit-level `manifest.json`, and read the full SHA from `.resolved_commit` there.
-- Exit `3`: the requested suite is unavailable, but the tool wrote a commit manifest. Select it with the exact procedure below and retain the anchor warning.
-- Exit `2`, `4`, `5`, or `6`: stop. Report the collector error and its documented meaning; do not create a CI analysis from untrusted or incomplete evidence.
-
-For exit `3`, inspect only manifests created or replaced by this invocation and matching the exact PR URL:
-
-```bash
-MATCHING_MANIFESTS=()
-while IFS= read -r -d '' candidate
-do
-  if jq -e --arg pr_url "$PR_URL" '.pr_url == $pr_url' "$candidate" >/dev/null
-  then
-    MATCHING_MANIFESTS+=("$candidate")
-  fi
-done < <(find "$DATA_ROOT" -type f -name manifest.json -newer "$MARKER_FILE" -print0)
-
-if (( ${#MATCHING_MANIFESTS[@]} != 1 ))
-then
-  echo "Expected exactly one newly written manifest for $PR_URL" >&2
-  exit 1
-fi
-MANIFEST_PATH=${MATCHING_MANIFESTS[0]}
-```
-
-For exit `0`, derive the same path without searching:
-
-```bash
-ANCHOR_SUITE_DIR=$(jq -er '.output_dir' "$RESULT_FILE")
-MANIFEST_PATH=$(dirname -- "$ANCHOR_SUITE_DIR")/manifest.json
-```
-
-Resolve and validate the commit from the selected manifest:
-
-```bash
-SOURCE_COMMIT=$(jq -er '.resolved_commit' "$MANIFEST_PATH")
-[[ "$SOURCE_COMMIT" =~ ^[0-9a-f]{40}$ ]]
-```
-
-Delete only `MARKER_FILE` and `RESULT_FILE` after extracting the identity. Do not guess from an older evidence directory if no unique newly written manifest exists.
-
-## Step 3: Collect Every Requested Suite
-
-Run the remaining requested suites sequentially with the pinned full SHA:
-
-```bash
-SUITE_COMMAND=test-sql
-if cubrid-ci --json "$SUITE_COMMAND" "$PR_URL" "$SOURCE_COMMIT" \
-    --data-dir "$DATA_ROOT" \
-    --artifact-mode text \
-    --include-test-sources
-then
-  SUITE_EXIT=0
-else
-  SUITE_EXIT=$?
-fi
-```
-
-Do not pass `--wait`. Do not launch suite collectors in parallel because they update the same commit-level manifest.
-
-Handle each result as follows:
-
-| Exit | Meaning | Action |
-|---:|---|---|
-| 0 | Terminal suite result validated and collected | Analyze the suite directory, even when CI itself failed |
-| 3 | Missing, pending, build-blocked, or otherwise unavailable | Continue and add a prominent report warning |
-| 2 | Invalid input or configuration | Stop and report the error |
-| 4 | GitHub/CircleCI identity mismatch | Stop; do not trust the evidence |
-| 5 | Remote API, authentication, or rate-limit failure | Stop and report the access boundary |
-| 6 | Local storage, schema, or normalization failure | Stop and report the collector failure |
-
-Remember that a failed CI suite collected successfully exits `0`; CI failure is evidence, not a collector error.
-
-After collection, locate the commit directory from the anchor result or the unique matching manifest and require:
+Derive the directory identity from a `CBRD-<number>` in the validated PR title, otherwise use `PR-<number>`. Write:
 
 ```text
-<DATA_ROOT>/<directory_identity>/<short_sha>/manifest.json
+/home/vimkim/gh/my-cubrid-docs/<lowercase-identity>/ci_analysis_report_<short-sha>_<agent>.md
 ```
 
-Verify that `.schema_version == 1`, `.resolved_commit`, `.pr_url`, and `.short_sha` match the pinned request before analyzing any suite. Stop and consult the analyzer repository's schemas if the version is not supported.
+If that path already identifies another PR or full commit, stop rather than overwrite it.
 
-## Step 4: Read the Evidence Bundle
+For a complete manifest, include:
 
-Read evidence in this order:
+1. Executive summary and decision boundary.
+2. CI snapshot with each suite's state, run/attempt link, verdict, and reconciled counts.
+3. Evidence scope: exact commit, collection time, collector version, evidence directory, testcase revisions, and limitations.
+4. Failure inventory: suite, testcase, result, observed signature, category, PR relation, and confidence.
+5. Root-cause analysis grouped by cause. For every group, label observed evidence, inference, unknowns, falsifier, and next action.
+6. Prioritized actions and an evidence-file inventory.
 
-1. Commit `manifest.json` for PR identity, title, branches, exact commit, prerequisites, and all suite states.
-2. Each available requested suite's `summary.json` for CircleCI job identity, counts, durations, failed nodes, artifact counts, and testcase revision.
-3. `failed-tc.txt` and `failed-tests.json` for the complete `result == "failure"` inventory and upstream messages. If `summary.json.error_count` or `.unknown_count` is nonzero, also inspect `attempts/<circleci-job>/raw/tests.json` and inventory those abnormal results explicitly.
-4. Every directory under `failures/`: read `metadata.json`, `message.txt`, and `diff.txt`. An empty `diff.txt` means no diff was extracted; it is not proof that outputs matched.
-5. Read `logs/index.json`, `artifacts.json`, and `sources/index.json` before opening targeted files under `logs/`, `artifacts/`, and `sources/`. Inspect file sizes and open only evidence relevant to a failure signature.
-6. Relevant existing context in `/home/vimkim/gh/my-cubrid-docs` and `/home/vimkim/gh/my-cubrid-jira` before drawing CUBRID-specific conclusions.
+Classify PR relation as `direct`, `plausible`, `unlikely`, or `unknown`; classify confidence explicitly. A terminal red job with no testcase records is a job-level failure, not an empty passing suite. If complete evidence contains no failures or errors, say so and do not manufacture analysis.
 
-Use downloaded testcase sources when present. If a source download failed, record the diagnostic from `sources/index.json`. Verify repository/revision/path per test against source records and CI checkout evidence. `summary.json.testcase_revision` is the first matching message SHA, not proof of a shared suite revision. Resolve SQL/medium in `CUBRID_TESTCASES_DIR` and shell in `CUBRID_TESTCASES_PRIVATE_EX_DIR`; compare local bytes and dirty state with the proven revision before treating them as exact evidence. See the linked identity contract for ambiguous/missing paths.
+For an incomplete or untrusted-but-identified bundle, write only: identity, suite-state table, completed evidence that was actually validated, structured diagnostics, unknowns, and actions needed to obtain trustworthy terminal evidence. Put a prominent statement that no regression or root-cause conclusion is supported by this snapshot.
 
-If an exact local CUBRID checkout for the tested commit is already available, inspect the relevant changed code and call paths. Do not substitute a different local `HEAD`. If exact source is unavailable, state that limitation and keep conclusions bounded by the collected evidence.
+Never include credentials, headers, signed URLs, or environment values.
 
-Never use an older CI bundle as the current result. Historical bundles may be used only for an explicitly labeled baseline comparison, and only after validating their PR URL, full commit, suite, and CircleCI job identity.
+## 5. Reconcile and hand off
 
-## Step 5: Analyze Failures
+Re-read the saved report against the selected manifest and evidence. Require every requested suite to appear exactly once, every validated failure/error to appear exactly once, all totals to reconcile, every attribution to cite concrete evidence, and every inference to have a falsifier. Correct discrepancies before sharing.
 
-For every test whose result is `failure`, `error`, or unknown:
-
-1. State the directly observed failure signature: diff, fatal message, timeout, crash, missing output, or generic `Test failed`.
-2. Explain what the test exercises, using exact downloaded source when available.
-3. Determine the narrowest defensible root-cause category. Group tests by underlying cause, not by similar-looking symptoms.
-4. Assess relation to the PR or feature as `direct`, `plausible`, `unlikely`, or `unknown`, and cite the concrete behavioral connection or absence of one.
-5. Assign a confidence level and identify the next observation that could falsify the hypothesis.
-6. Recommend a concrete next action at testcase, file, function, command, or artifact level. Do not propose answer-file churn until intended behavior or a stable baseline supports it.
-
-Prefer these evidence labels in prose and tables:
-
-- **Observed**: directly present in the exact bundle.
-- **Inferred**: a reasoned explanation supported by stated evidence.
-- **Unknown**: evidence is insufficient; local reproduction, another artifact mode, or exact source inspection is required.
-
-A terminal failed job with no failed-test records remains a job-level failure; inspect setup/build/runner logs and record it separately. Treat `failure_count`, `error_count`, and `unknown_count` separately. Do not count skipped tests as failures. If there are no failed or abnormal tests in the available requested suites, say so explicitly and do not manufacture failure analysis. If every requested suite is unavailable, write a snapshot warning report with no regression conclusion.
-
-## Step 6: Resolve Report Identity
-
-Read identity from the validated manifest (or equivalent validated provenance metadata for an API fallback bundle):
-
-- `SOURCE_COMMIT=.resolved_commit`
-- `SHORT_SHA=.short_sha`
-- ticket from `.directory_identity`
-- PR number and URL from `.pr_number` and `.pr_url`
-- active host identity: `codex` for Codex, `claude` for Claude Code, or another stable lowercase runtime name
-
-Use the discovered `CBRD-XXXXX` identity. If none exists, preserve the collector's `PR-<number>` identity for the report directory rather than inventing a ticket.
-
-Normalize the directory to lowercase and set the path once:
-
-```text
-REPORT_PATH=/home/vimkim/gh/my-cubrid-docs/<lowercase-ticket-or-pr-identity>/ci_analysis_report_<SHORT_SHA>_<AGENT>.md
-```
-
-If `REPORT_PATH` already exists, verify that it names the same PR and full commit before revising it. If either identity differs, stop and ask the user; do not overwrite it or invent a suffix. Preserve unrelated user changes in the docs worktree.
-
-## Step 7: Write the Report
-
-Use English `##` section headers and concise technical English. Keep the snapshot table brief and devote detail to failures.
-
-```markdown
-# CI Failure Analysis: PR #<number> at `<short-sha>`
-
-## Executive Summary
-
-<failure count, strongest conclusion, warnings, and decision boundary>
-
-## CI Snapshot
-
-| Suite | State | CircleCI job | Tests | Failures | Errors | Unknown | Warning |
-|---|---|---:|---:|---:|---:|---:|---|
-
-## Evidence Scope
-
-<exact commit, collection time, tool version, evidence directory, testcase revisions, limitations>
-
-## Failure Inventory
-
-| Suite | Test | Result | Observed signature | Category | PR relation | Confidence |
-|---|---|---|---|---|---|---|
-
-## Root-Cause Analysis
-
-### <Category> (<count> tests)
-
-<observed evidence, inference, falsifier, and concrete next action>
-
-## Recommended Actions
-
-<prioritized, actionable follow-up>
-
-## Evidence and Limitations
-
-<files inspected, unavailable suites, missing sources/artifacts, and conclusions not supported>
-```
-
-Include direct CircleCI job links from each `summary.json`. Name the persistent evidence directory, but do not include credentials, signed artifact URLs, authorization headers, or environment values. Do not claim that an unavailable suite passed, failed, or is unrelated to the PR.
-
-## Step 8: Review and Validate the Report
-
-Review the saved `REPORT_PATH` in the current session against the manifest, suite summaries, every failed-test record, targeted logs/artifacts/sources, relevant local docs, and exact source context if available. Verify:
-
-1. PR URL, full commit, short SHA, suite names, job numbers, counts, and testcase revisions match JSON evidence.
-2. Every requested suite appears either as collected or as an explicit warning.
-3. Every `failure`, `error`, and unknown test result appears exactly once in the inventory and in one root-cause category.
-4. Totals reconcile across the snapshot, inventory, categories, and executive summary.
-5. Observations, inferences, and unknowns are clearly separated; every attribution has concrete evidence and hypotheses are falsifiable.
-6. Categories reflect root causes and recommendations identify concrete next actions.
-7. The report contains no token, authorization header, signed artifact URL, or unrelated local change.
-
-Correct defects in the same file and recheck affected claims and totals. When evidence is unavailable, state the limitation and bound the conclusion accordingly. Ask a concise clarification only for a decision or required input that the conversation and sources cannot resolve.
-
-Use an independent reviewer only when the user requests one; provide the report, evidence paths, and these criteria, and request concrete findings. A design interview is a separate user-requested activity, not a report-delivery prerequisite.
-
-## Step 9: Hand Off
-
-Return the report path, exact analyzed commit, failure/error/unknown counts by suite, unavailable-suite warnings, and the highest-priority next action. Leave the report uncommitted and unpushed unless the user asks for publication.
+Return the report path, exact commit, suite states and counts, incomplete-evidence warnings, and the highest-priority next action.

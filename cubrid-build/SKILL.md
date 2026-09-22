@@ -111,7 +111,7 @@ git submodule update --init cubrid-jdbc
 direnv exec . just configure-build
 ```
 
-Shared worktree preparation initializes CCI and does not replace JDBC initialization. Use `cubrid-test-shell-run` for shell, `cubrid-isolation-test` for isolation, and `cubrid-test-sql-run` for focused SQL execution. There is no specialized medium runner in this collection. These personal just recipes are local tooling; use standard build/test terminology in organization-facing documentation.
+Shared worktree preparation initializes CCI and does not replace JDBC initialization. Use `cubrid-test-shell-run`, `cubrid-test-sql-run`, and `cubrid-test-medium-run` for focused regression execution. This collection has no isolation runner. These personal just recipes are local tooling; use standard build/test terminology in organization-facing documentation.
 
 ## 7. Handle failures
 

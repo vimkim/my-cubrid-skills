@@ -7,7 +7,9 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | Skill | Description |
 |-------|-------------|
 | `cubrid-jira` | Look up CUBRID JIRA issue context (CBRD-XXXXX) |
-| `cubrid-test-sql-run` | Run focused SQL cases and verify actual execution |
+| `cubrid-test-sql-run` | Run focused SQL cases with native testkit and verify artifact verdicts |
+| `cubrid-test-medium-run` | Run complete medium directories serially with native testkit and verify artifact verdicts |
+| `cubrid-test-shell-run` | Run focused shell cases with contained native testkit and verify artifact verdicts |
 | `cubrid-ci-analyze` | Collect exact-commit CircleCI snapshots with `cubrid-ci` and write failure-analysis reports |
 | `cubrid-pr-create` | Create GitHub PRs with `[CBRD-XXXXX]` title format and Korean body |
 | `cubrid-jira-issue-write` | Write structured JIRA issue reports in Korean |
@@ -26,13 +28,12 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | Authorized one-shot CI trigger and duplicate prevention | `cubrid-ci-trigger` |
 | Focused local shell execution | `cubrid-test-shell-run` |
 | Focused local SQL execution | `cubrid-test-sql-run` |
-| Focused local medium execution | Not yet available |
-| Multi-session isolation tests | `cubrid-isolation-test` |
+| Focused local medium execution | `cubrid-test-medium-run` |
 | Build/install and configured ctest suite | `cubrid-build` |
 | New behavioral testcases | `create-testcases` |
-| Shared CTP preflight, CI evidence identity, and common helpers | `cubrid-common` |
+| Shared native testkit preflight/configuration/verdict, CI evidence identity, and common helpers | `cubrid-common` |
 
-Snapshot analysis and triggering are independent capabilities; shell and SQL keep their different configuration and result handling. Shared preparation and CI evidence identity live under `cubrid-common`, not a user-facing coordinator. Runner names stay independent of the current runner implementation.
+Snapshot analysis and triggering are independent capabilities; SQL, medium, and shell retain distinct selection and result contracts. Shared native-testkit preparation and CI evidence identity live under `cubrid-common`, not a user-facing coordinator. Runner names stay independent of the current runner implementation.
 
 ## Installation
 
@@ -86,6 +87,8 @@ Some skills require external tools:
 | `cubrid-jira` | `cubrid-jira` | `uv tool install git+https://github.com/vimkim/cubrid-jira` |
 | `gh` | `cubrid-pr-create` | [cli.github.com](https://cli.github.com/) |
 | `cubrid-ci` | `cubrid-ci-analyze` | `cargo install --path /home/vimkim/gh/cubrid-circleci-analyzer --locked` |
+| `testkit` | `cubrid-test-sql-run`, `cubrid-test-medium-run`, `cubrid-test-shell-run` | Manually install the intended `cubrid-testkit` revision with `go install` |
+| JDK 8 + CTP assets | `cubrid-test-sql-run`, `cubrid-test-medium-run` | Use the selected worktree environment's configured installations |
 | `work-tracker` | `track-work` | `just install` in `/home/vimkim/gh/work-tracker` |
 
 ## License

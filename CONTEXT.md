@@ -15,3 +15,15 @@ _Avoid_: Single-test helper, replay helper
 **Runner implementation**:
 The executable mechanism used by a focused test runner to discover, execute, judge, and record testcases while preserving the test suite's result contract.
 _Avoid_: Test framework, backend
+
+**Run identity**:
+The provenance binding one attempt to its selected source worktree, installed engine, runner executable, testcase revision, and effective configuration.
+_Avoid_: Build version, environment details
+
+**Attempt**:
+One runner invocation and its retained configuration, logs, status, and verdict artifacts. A later attempt supplements rather than replaces earlier evidence.
+_Avoid_: Run result, latest run
+
+**Suite migration gate**:
+The suite-specific evidence threshold for adopting a runner implementation in a defined workflow; SQL, medium, and shell gates are independent.
+_Avoid_: Global testkit readiness, migration complete

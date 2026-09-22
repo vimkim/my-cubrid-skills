@@ -30,7 +30,7 @@ Does the implemented skill and each justified supporting-skill correction satisf
 
 ## Implementation evidence
 
-Created cubrid-ci-fix and the user-approved cubrid-sql-run; shared CTP preflight lives under cubrid-common/references. Corrected cubrid-ci-analyze, cubrid-ci-trigger, cubrid-build, cubrid-shell-run, create-testcases, and cubrid-isolation-test. README documents the accepted layout, and AGENTS lists the new skills.
+Created cubrid-ci-fix and the user-approved SQL runner; shared preflight lives under cubrid-common/references. Corrected the CI analysis/trigger, build, shell-runner, and testcase-creation skills; the unvalidated isolation runner was later removed. README documents the accepted layout, and AGENTS lists the new skills.
 
 Both new skills pass quick_validate. Eight changed/new skill identities and YAML frontmatter were checked, along with local Markdown links and git diff --check. The strict Codex validator rejects existing argument-hint metadata in older cross-host skills; that existing metadata was preserved and parsed separately. Independent [forward review](../research/forward-review.md) exercised five synthetic scenarios and inspected local medium setup; no concrete defect was demonstrated. No live CTP or CI execution was attempted for this documentation task.
 

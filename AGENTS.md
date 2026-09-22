@@ -13,9 +13,9 @@ Each top-level directory with a `SKILL.md` is a skill:
 - `cubrid-jira/` — CUBRID JIRA issue lookup
 - `cubrid-build/` — prepare, build, and test local CUBRID worktrees
 - `cubrid-test-sql-run/` — run focused SQL cases locally
+- `cubrid-test-medium-run/` — run complete focused medium directories locally
 - `cubrid-ci-analyze/` — exact-commit GitHub Actions evidence analysis with `cubrid-ci`
 - `cubrid-ci-trigger/` — trigger CUBRID CI suites on GitHub PRs
-- `cubrid-isolation-test/` — create and run CUBRID concurrency and MVCC isolation tests
 - `cubrid-pr-create/` — GitHub PR creation with CBRD title format
 - `cubrid-jira-issue-write/` — JIRA issue report writer
 - `cubrid-manual-search/` — evidence-backed English/Korean CUBRID manual search

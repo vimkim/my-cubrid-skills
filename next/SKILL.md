@@ -6,4 +6,4 @@ disable-model-invocation: true
 
 # Next
 
-What to do next? Recommend me next prompt.
+$ask-matt What is the recommended next steps and prompt?

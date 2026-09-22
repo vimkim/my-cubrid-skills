@@ -17,3 +17,5 @@ source "$common"
 Keep skill-specific policy in the calling skill. This helper owns reusable checks only: git worktree detection, CUBRID source-tree detection, CMake preset validation, PR metadata validation, and canonical CUBRID remote detection.
 
 Before executing focused CTP shell or SQL/medium tests, read [CTP preflight](references/ctp-preflight.md) for shared JDBC/build preparation, child-process installation identity, and execution isolation. The specialized runner skills own configuration and result handling.
+
+For a focused replay of a CI failure, read [CI evidence and testcase identity](references/ci-evidence.md) to bind runtime evidence to the exact engine and testcase revisions before execution.

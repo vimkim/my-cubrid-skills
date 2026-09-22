@@ -8,7 +8,7 @@ argument-hint: "<test-dir-or-subtree>"
 
 ## 1. Resolve the test and prepare
 
-Resolve `CUBRID_TESTCASES_PRIVATE_EX_DIR` from the loaded worktree environment and verify its Git root, HEAD and dirty state. Inspect configuration if unset; ask for the root if it cannot be established. Locate the requested full path with `rg --files` or search test content; disambiguate duplicate basenames. For CI replay, verify repository/revision/path using [CI evidence collection](../cubrid-ci-fix/references/ci-evidence.md).
+Resolve `CUBRID_TESTCASES_PRIVATE_EX_DIR` from the loaded worktree environment and verify its Git root, HEAD and dirty state. Inspect configuration if unset; ask for the root if it cannot be established. Locate the requested full path with `rg --files` or search test content; disambiguate duplicate basenames. For CI replay, verify repository/revision/path using [CI evidence collection](../cubrid-common/references/ci-evidence.md).
 
 `TEST_DIR` must contain `cases/<name>.sh`; it is not the script or `cases/` itself. An ancestor runs a subtree, so enumerate the expected case set before launching. Preserve the checkout's fixtures and answers.
 
@@ -60,4 +60,4 @@ The helper rejects NOK, zero execution and missing summary, but inspect the case
 
 ## 5. Iterate within authorization
 
-Rebuild/install after authorized engine changes using `cubrid-build`, then repeat the selected case. Inspect the first relevant failure before changing the hypothesis or patch. Test execution alone does not authorize answer changes, source fixes, commits or pushes. When invoked from `cubrid-ci-fix`, return the exact command, identity, results and logs to its approved repair loop.
+Rebuild/install after authorized engine changes using `cubrid-build`, then repeat the selected case. Inspect the first relevant failure before changing the hypothesis or patch. Test execution alone does not authorize answer changes, source fixes, commits or pushes. If reproduction identifies a likely defect, report the exact command, identity, results, logs, and proposed next action for review.

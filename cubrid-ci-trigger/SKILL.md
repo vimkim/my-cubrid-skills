@@ -40,7 +40,7 @@ git rev-parse HEAD          # local
 git status --porcelain      # uncommitted changes
 ```
 
-- Local `HEAD` differs from `headRefOid` → report which revision CI would test. Trigger authorization alone does not authorize a push. For a repair, follow cubrid-ci-fix's verified-diff push approval gate, then reread the remote head. If testing the already-pushed head was intended, proceed with that identified revision.
+- Local `HEAD` differs from `headRefOid` → report which revision CI would test. Trigger authorization alone does not authorize a push. If the user intends to test local changes, stop for their publication decision; if they intend to test the already-pushed head, proceed with that identified revision.
 - Tree is dirty → never commit on the user's behalf; report that uncommitted changes won't be tested and let the user decide whether to commit first or trigger anyway.
 - Skip this check entirely when the PR lives in a repo other than the current checkout.
 
@@ -65,7 +65,7 @@ If a prior trigger is associated with the current head, do not post another with
 gh pr comment <pr-url> --body "/run sql medium"
 ```
 
-Require user authorization for posting, including authorization passed from an approved repair publication plan. Immediately recheck the PR head; if it changed, reassess the trigger against the new revision. Post one bare `/run ...` line and save the returned comment URL/ID, body, time and head SHA. If the response is lost, reconcile comments before retrying.
+Require user authorization for posting. Immediately recheck the PR head; if it changed, reassess the trigger against the new revision. Post one bare `/run ...` line and save the returned comment URL/ID, body, time and head SHA. If the response is lost, reconcile comments before retrying.
 
 ## Step 5: Verify pickup and report
 

@@ -1,6 +1,6 @@
 ---
 name: cubrid-ci-analyze
-description: Analyze exact-commit CUBRID GitHub Actions evidence collected by cubrid-ci and write an evidence-backed report under my-cubrid-docs. Use for failed-test analysis, failure attribution, root causes, or a CI analysis report for a CUBRID pull request. Use cubrid-ci status for a simple status query and cubrid-ci-fix when the user wants failures repaired or CI monitored.
+description: Analyze exact-commit CUBRID GitHub Actions evidence collected by cubrid-ci and write an evidence-backed report under my-cubrid-docs. Use for failed-test analysis, failure attribution, root causes, or a CI analysis report for a CUBRID pull request. Use cubrid-ci status for a simple status query; this skill remains read-only when the user asks about repairs.
 ---
 
 # CUBRID CI Analyzer

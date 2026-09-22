@@ -7,7 +7,6 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | Skill | Description |
 |-------|-------------|
 | `cubrid-jira` | Look up CUBRID JIRA issue context (CBRD-XXXXX) |
-| `cubrid-ci-fix` | Repair PR CI with approval before fixes/pushes and local plus remote verification |
 | `cubrid-sql-run` | Run focused CTP SQL/medium cases and verify actual execution |
 | `cubrid-ci-analyze` | Collect exact-commit CircleCI snapshots with `cubrid-ci` and write failure-analysis reports |
 | `cubrid-pr-create` | Create GitHub PRs with `[CBRD-XXXXX]` title format and Korean body |
@@ -23,7 +22,6 @@ A collection of Claude Code skills for CUBRID database engine development. These
 
 | Responsibility | Skill |
 |---|---|
-| Approved repair loop and durable failure history | `cubrid-ci-fix` |
 | Read-only runtime snapshot and root-cause report | `cubrid-ci-analyze` |
 | Authorized one-shot CI trigger and duplicate prevention | `cubrid-ci-trigger` |
 | Focused local shell replay | `cubrid-shell-run` |
@@ -31,9 +29,9 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | Multi-session isolation tests | `cubrid-isolation-test` |
 | Build/install and configured ctest suite | `cubrid-build` |
 | New behavioral testcases | `create-testcases` |
-| Shared CTP preflight and common helpers | `cubrid-common` |
+| Shared CTP preflight, CI evidence identity, and common helpers | `cubrid-common` |
 
-The repair skill coordinates these capabilities. Snapshot analysis and triggering remain independently useful; shell and SQL/medium keep their different configuration and result handling. Shared preparation lives in a reference under `cubrid-common`, not another user-facing subskill. The repair ledger is a reference contract, not a separate skill. A new test framework remains separate proposed work if existing CTP execution proves insufficient.
+Snapshot analysis and triggering are independent capabilities; shell and SQL/medium keep their different configuration and result handling. Shared preparation and CI evidence identity live under `cubrid-common`, not a user-facing coordinator. A new test framework remains separate proposed work if existing CTP execution proves insufficient.
 
 ## Installation
 

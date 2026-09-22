@@ -7,7 +7,7 @@ description: "Run a focused CUBRID CTP SQL or medium testcase against the intend
 
 ## 1. Resolve the case and prepare
 
-Resolve the selected test under `CUBRID_TESTCASES_DIR` from the loaded worktree environment. Validate the Git root, tracked full path, HEAD and dirty state. Ask for a missing root or ambiguous test identity rather than choosing a basename match. Preserve answer files, fixtures and category context. For CI replay, use the per-test revision contract in [CI evidence collection](../cubrid-ci-fix/references/ci-evidence.md).
+Resolve the selected test under `CUBRID_TESTCASES_DIR` from the loaded worktree environment. Validate the Git root, tracked full path, HEAD and dirty state. Ask for a missing root or ambiguous test identity rather than choosing a basename match. Preserve answer files, fixtures and category context. For CI replay, use the per-test revision contract in [CI evidence collection](../cubrid-common/references/ci-evidence.md).
 
 Read [CTP preflight](../cubrid-common/references/ctp-preflight.md) before execution. It covers JDBC initialization, `just configure-build`, child-process installation identity and the runner's broad cleanup side effects. Verify an execution environment isolated from unrelated CUBRID work.
 
@@ -39,4 +39,4 @@ A long-running invocation needs a managed process/session handle so progress can
 
 Record suite, exact case path, engine/test revisions and local patches, effective configuration, binary identity, command, output path and expected/actual case counts. Keep each failed attempt before retrying. A skipped or zero-case run is inconclusive; one later pass does not erase an earlier flaky result.
 
-Use `cubrid-build` after authorized engine changes. Reuse prepared locale/database state only with evidence of matching prerequisites. This runner invocation authorizes execution, not changes to regression answers or publication. For an approved CI repair, return evidence to `cubrid-ci-fix`, which owns fix and push approval. Stop with a concrete missing dependency or fidelity limit if the existing runner cannot execute the case; propose a separate framework rather than silently substituting direct csql output for CTP verification.
+Use `cubrid-build` after authorized engine changes. Reuse prepared locale/database state only with evidence of matching prerequisites. This runner invocation authorizes execution, not changes to regression answers or publication. If reproduction identifies a likely defect, report the evidence and proposed next action for review. Stop with a concrete missing dependency or fidelity limit if the existing runner cannot execute the case; propose a separate framework rather than silently substituting direct csql output for CTP verification.

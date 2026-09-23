@@ -5,7 +5,7 @@ description: Analyze exact-commit CUBRID GitHub Actions evidence collected by cu
 
 # CUBRID CI Analyzer
 
-Take one status snapshot, collect one exact-commit snapshot, and interpret the resulting schema-v2 evidence. Collection success means the requested evidence is complete; a red CI verdict is evidence, not a collector failure.
+Take one status snapshot, collect one exact-commit snapshot, and interpret the resulting schema-v2 evidence together with its append-only collection observation. Collection success means the requested evidence is complete; a red CI verdict is evidence, not a collector failure.
 
 ## Boundaries
 
@@ -14,7 +14,7 @@ Take one status snapshot, collect one exact-commit snapshot, and interpret the r
 - Keep collection mechanics in `cubrid-ci`: accept its run selection, provenance checks, failure inventory, and durable paths.
 - Read testcase source at the recorded Git revision from the local testcase repositories. Preserve every worktree and index unchanged.
 - Separate observations, inferences, and unknowns. Every causal claim needs a PR relation, confidence, falsifier, and concrete next action.
-- Write a full analysis only when the manifest says the requested collection is complete. For any incomplete collection, write a bounded warning report and make no regression or root-cause conclusion.
+- Write a full analysis only when the manifest and matching terminal observation say the requested collection is complete. For any incomplete, interrupted, or unvalidated collection, write a bounded warning report and make no regression or root-cause conclusion.
 - Write under `/home/vimkim/gh/my-cubrid-docs`. Leave the report uncommitted and unpushed unless the user separately requests publication.
 - This workflow is read-only outside its evidence and report outputs. It does not trigger CI, call provider APIs directly, download source, reproduce tests, edit source, or repair failures.
 
@@ -62,21 +62,30 @@ Capture the collection exit without discarding JSON. Exit `0` means all requeste
 
 Do not repeat either command to improve the snapshot. Use the returned `.output_dir`; never select an older bundle as the current result.
 
-## 2. Validate the bundle
+## 2. Validate the observation and bundle
 
-Use `/home/vimkim/gh/cubrid-ci/schema` as the schema root. Validate the command result and `<output_dir>/manifest.json` with `command-result-v2.schema.json` and `manifest-v2.schema.json`. Require them to agree on repository, PR number and URL, full commit, output directory, requested suite set, suite states, and errors. Also require:
+Use `/home/vimkim/gh/cubrid-ci/schema` as the schema root. Under the returned `<output_dir>/observations`, select the observation whose terminal `result.json.command` equals the saved collector result, including `collected_at`. Validate its `request.json` and `result.json` with `collection-observation-request-v1.schema.json` and `collection-observation-result-v1.schema.json`. Require matching observation IDs; require the request to match the pinned repository, PR, commit, canonical requested suite set, and collection options; and require the result command to equal the saved collector result. If no unique matching observation exists, treat the collection as unvalidated raw evidence.
+
+An observation with `request.json` but no `result.json` records an interrupted local collector process. It does not establish a provider, workflow, suite, or testcase failure. Select such an observation only when its identity, requested suites, and invocation time uniquely match this invocation; ambiguity leaves unvalidated raw evidence. Write a warning report from its validated request and retained files, without assigning CI causality.
+
+For a terminal observation, validate the command result and `<output_dir>/manifest.json` with `command-result-v2.schema.json` and `manifest-v2.schema.json`. Require them to agree on repository, PR number and URL, full commit, output directory, requested suite set, suite states, and errors. Also require:
 
 - schema version `2`, repository `CUBRID/cubrid`, and the pinned status SHA;
 - manifest `.pr.head_sha` and `.commit` equal the pinned SHA;
 - each `completed` suite's run and attempt equal its summary's identity;
 - each completed summary validates against `suite-summary-v2.schema.json`;
 - its `raw/index.json` validates against `raw-evidence-index-v2.schema.json`;
+- when binary collection was requested, `binary-inventory.json` validates against `binary-inventory-v2.schema.json`, each downloaded file matches its declared length and digest, and the observation budget arithmetic and per-artifact consumption reconcile;
 - every summary failure has one matching `failures/<stable_id>/metadata.json` validated by `failure-v2.schema.json`, and its declared message and optional diff file exist beneath that suite directory;
 - counts reconcile: `.counts.tests = passed + failures + errors + skipped`, `.counts.planned = run + unrun + skipped`, and failure records total `failures + errors`.
 
-Treat path escape, identity disagreement, missing declared evidence, count disagreement, or schema failure as untrusted evidence. Produce only a warning report when PR and commit identity remain established; otherwise stop without inventing report identity.
+Treat path escape, identity disagreement, missing declared evidence, count disagreement, or schema failure as unvalidated raw evidence. Produce only a warning report when PR and commit identity remain established; otherwise stop without inventing report identity.
+
+After these validations, write a temporary assessment JSON with exactly `identity`, `observation`, `manifest`, `requested_summaries`, `result_matches_observation`, and `requested_suites_reconciled`, using the closed values accepted by this skill's `scripts/report_mode.py`. From the skill source directory, run `python3 scripts/report_mode.py <assessment.json>`. Its `mode` is the strongest permitted output: `full` permits the complete report, `warning` permits only the bounded warning report, and `stop` permits no report. Never upgrade its decision. The fixture-backed script is the executable safety boundary; the evidence checks above remain the source of its inputs.
 
 `running`, `not_observed`, `job_level_failure`, and `collection_failed` are distinct states. Do not infer a test verdict for a suite without a validated complete summary.
+
+For incomplete terminal observations, report each requested shard as `retained`, `failed`, or `not_attempted` from the validated acquisition ledger. A retained shard means its raw response set was durably acquired; it is not a suite verdict and does not support regression attribution without a validated suite summary. Report suite-level and shard-level acquisition failures with their precise stage, sanitized endpoint, consumed response bytes, and diagnostic. Report `not_attempted` as unknown, not failed. Treat binary bytes consumed by excluded or interrupted transfers as spent budget, and describe absent later binaries as budget-limited rather than provider-absent when the observation says the total budget was exhausted.
 
 ## 3. Inspect exact evidence and source
 
@@ -114,7 +123,7 @@ For a complete manifest, include:
 
 Classify PR relation as `direct`, `plausible`, `unlikely`, or `unknown`; classify confidence explicitly. A terminal red job with no testcase records is a job-level failure, not an empty passing suite. If complete evidence contains no failures or errors, say so and do not manufacture analysis.
 
-For an incomplete or untrusted-but-identified bundle, write only: identity, suite-state table, completed evidence that was actually validated, structured diagnostics, unknowns, and actions needed to obtain trustworthy terminal evidence. Put a prominent statement that no regression or root-cause conclusion is supported by this snapshot.
+For an incomplete, interrupted, or unvalidated-but-identified bundle, write only: identity, observation outcome, suite-state table, acquisition ledger, completed evidence that was actually validated, binary-budget limitations, structured diagnostics, unknowns, and actions needed to obtain validated terminal evidence. Put a prominent statement that no regression or root-cause conclusion is supported by this snapshot.
 
 Never include credentials, headers, signed URLs, or environment values.
 

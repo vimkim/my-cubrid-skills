@@ -1,0 +1,8 @@
+{
+  "identity": "established",
+  "observation": "incomplete",
+  "manifest": "validated",
+  "requested_summaries": "partial",
+  "result_matches_observation": true,
+  "requested_suites_reconciled": true
+}

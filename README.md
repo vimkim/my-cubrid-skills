@@ -10,7 +10,8 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | `cubrid-test-sql-run` | Run focused SQL cases with native testkit and verify artifact verdicts |
 | `cubrid-test-medium-run` | Run complete medium directories serially with native testkit and verify artifact verdicts |
 | `cubrid-test-shell-run` | Run focused shell cases with contained native testkit and verify artifact verdicts |
-| `cubrid-ci-analyze` | Collect exact-commit CircleCI snapshots with `cubrid-ci` and write failure-analysis reports |
+| `cubrid-ci-analyze` | Collect exact-commit GitHub Actions evidence with `cubrid-ci` and write failure-analysis reports |
+| `cubrid-ci-trigger` | Trigger or rerun GitHub Actions gha-ci on supported CUBRID pull requests |
 | `cubrid-pr-create` | Create GitHub PRs with `[CBRD-XXXXX]` title format and Korean body |
 | `cubrid-jira-issue-write` | Write structured JIRA issue reports in Korean |
 | `cubrid-manual-search` | Answer CUBRID questions from the local English/Korean RST manual with file-and-line citations |
@@ -85,8 +86,8 @@ Some skills require external tools:
 | Tool | Required by | Install |
 |------|------------|---------|
 | `cubrid-jira` | `cubrid-jira` | `uv tool install git+https://github.com/vimkim/cubrid-jira` |
-| `gh` | `cubrid-pr-create` | [cli.github.com](https://cli.github.com/) |
-| `cubrid-ci` | `cubrid-ci-analyze` | `cargo install --path /home/vimkim/gh/cubrid-circleci-analyzer --locked` |
+| `gh` | `cubrid-ci-trigger`, `cubrid-ci-analyze`, `cubrid-pr-create` | [cli.github.com](https://cli.github.com/) |
+| `cubrid-ci` | `cubrid-ci-analyze` | `cargo install --path /home/vimkim/gh/cubrid-ci --locked` |
 | `testkit` | `cubrid-test-sql-run`, `cubrid-test-medium-run`, `cubrid-test-shell-run` | Manually install the intended `cubrid-testkit` revision with `go install` |
 | JDK 8 + CTP assets | `cubrid-test-sql-run`, `cubrid-test-medium-run` | Use the selected worktree environment's configured installations |
 | `work-tracker` | `track-work` | `just install` in `/home/vimkim/gh/work-tracker` |

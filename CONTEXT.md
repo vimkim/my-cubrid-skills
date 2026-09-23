@@ -17,12 +17,20 @@ The executable mechanism used by a focused test runner to discover, execute, jud
 _Avoid_: Test framework, backend
 
 **Run identity**:
-The provenance binding one attempt to its selected source worktree, installed engine, runner executable, testcase revision, and effective configuration.
+The provenance binding one focused test attempt to its selected source worktree, installed engine, runner executable, testcase revision, and effective configuration.
 _Avoid_: Build version, environment details
 
-**Attempt**:
+**Focused test attempt**:
 One runner invocation and its retained configuration, logs, status, and verdict artifacts. A later attempt supplements rather than replaces earlier evidence.
-_Avoid_: Run result, latest run
+_Avoid_: Attempt without its scope, run result, latest run
+
+**CI workflow run**:
+One CI execution with a stable run identifier. A newly triggered execution has a new run identifier even when it selectively carries failures from an earlier run.
+_Avoid_: Attempt, build
+
+**CI workflow attempt**:
+One execution attempt within a CI workflow run, sharing its run identifier and distinguished by an attempt number. A later attempt may update the run's reported verdict and evidence.
+_Avoid_: Rerun without saying whether it creates a new run or a new attempt
 
 **Suite migration gate**:
 The suite-specific evidence threshold for adopting a runner implementation in a defined workflow; SQL, medium, and shell gates are independent.

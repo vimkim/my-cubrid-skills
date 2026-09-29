@@ -48,6 +48,16 @@ With no supplied PR, discover the current branch's PR only from a CUBRID checkou
 
 When the current checkout is the PR branch, compare `git rev-parse HEAD` with `headRefOid` and inspect `git status --porcelain`. Report unpublished commits and uncommitted changes because gha-ci tests only the pushed PR head. Trigger authorization does not authorize a commit or push.
 
+## 1a. Check the feature testcase baseline
+
+A PR gha-ci run takes testcases from `tc/pr-<number>` in both testcase repositories and fails when either branch is missing. For a `feature/<name>` base, those branches must contain the latest `origin/feature/<name>` in both testcase repositories, or the run tests stale feature testcases. Run the check-only helper from `~/my-cubrid/bin`:
+
+```bash
+cubrid-pr-tc-base-check --pr "$PR_NUMBER"
+```
+
+It skips a `develop` base with exit `0`. Exit `0` otherwise means both branches pass. Exit `1` (stale, diverged, unrelated, or missing branch) or `2` (fetch or setup error) blocks the trigger: report the per-repository result and ask whether to trigger anyway. Trigger authorization does not authorize merging, rebasing, or pushing testcase branches.
+
 ## 2. Snapshot current-head activity
 
 Capture all issue comments and both the complete and required check views before mutating anything:

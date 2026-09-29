@@ -58,6 +58,14 @@ cubrid-pr-tc-base-check --pr "$PR_NUMBER"
 
 It skips a `develop` base with exit `0`. Exit `0` otherwise means both branches pass. Exit `1` (stale, diverged, unrelated, or missing branch) or `2` (fetch or setup error) blocks the trigger: report the per-repository result and ask whether to trigger anyway. Trigger authorization does not authorize merging, rebasing, or pushing testcase branches.
 
+A feature merge PR (base `develop`, head `feature/<name>` in `CUBRID/cubrid`) has the stricter rule: its `tc/pr-<number>` must have the same tip as `origin/feature/<name>` in both testcase repositories. Run instead:
+
+```bash
+cubrid-feature-tc-sync-check --check --pr "$PR_NUMBER" "$HEAD_REF_NAME"
+```
+
+Always pass `--check`; without it the helper prompts to push a fast-forward. Exit `0` means both repositories are synced. Any other exit blocks the trigger the same way: report the result, and if `tc/pr-<number>` is only behind, name `cubrid-feature-tc-sync-check-oos` (for `feature/oos-merge`) or `cubrid-feature-tc-sync-check` without `--check` as the user's sync step.
+
 ## 2. Snapshot current-head activity
 
 Capture all issue comments and both the complete and required check views before mutating anything:

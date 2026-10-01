@@ -43,7 +43,7 @@ If Step 2 was deferred, derive the skill name now from the workflow's verb + obj
 
 Create `<collection-root>/<skill-name>/SKILL.md` with complete content — no placeholder comments. Follow the valid skill structure below.
 
-Note: `SKILL.md` is installed to both Claude Code and Codex via `just install`. Use `$ARGUMENTS` for input; avoid Claude-Code-only constructs unless explicitly flagged.
+Note: `SKILL.md` is installed to both Claude Code and Codex via `just sync`. Use `$ARGUMENTS` for input; avoid Claude-Code-only constructs unless explicitly flagged.
 
 ### Step 6: Validate the SKILL.md
 
@@ -66,7 +66,7 @@ After validation, ask whether to reinstall the skills and commit and push the in
 For an authorized reinstall, run from the collection root:
 
 ```bash
-just reinstall
+just sync
 just list
 ```
 

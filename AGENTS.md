@@ -48,8 +48,8 @@ The `.agents/`, `.claude/`, and other generated directories created by `npx skil
 ## Completion workflow
 
 - After finishing and verifying any skill change, ask the user whether to:
-  1. reinstall the skills with `just reinstall`, and
+  1. sync the installed skills with `just sync`, which also removes deleted or renamed skills, and
   2. commit and push the repository changes.
 - Run those publication steps only after the user explicitly confirms (for example, `yes`).
-- After reinstalling, verify the installed skills with `just list`.
+- After syncing, verify the installed skills with `just list`.
 - Before committing, preserve unrelated user changes and include only the intended skill work.

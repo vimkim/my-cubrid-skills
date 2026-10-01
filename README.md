@@ -50,18 +50,19 @@ Or clone locally and use the justfile:
 ```bash
 git clone https://github.com/vimkim/my-cubrid-skills.git ~/gh/my-cubrid-skills
 cd ~/gh/my-cubrid-skills
-just install
+just sync
 ```
 
 **Managing:**
 
 ```bash
+just sync                # Prune deleted/renamed skills, then install all current ones
+just sync-dry-run        # Show what sync would prune
 just list                # List installed skills
-just check               # Check for available updates
 just remove cubrid-jira  # Remove a specific skill
 ```
 
-Run `just reinstall` after source updates. For a rename, remove the legacy installed name explicitly before reinstalling, then use `just list` to verify that the new name exists and the old name is absent.
+Run `just sync` after source updates. `npx skills add .` only adds skills, and local-path installs are not recorded in `~/.agents/.skill-lock.json`, so `tools/sync-skills.sh` first removes any installed skill that once had `<name>/SKILL.md` in this repo's Git history but no longer exists in the working tree, skipping names owned by another source in the lock file. Deletions and renames therefore need no manual cleanup; use `just list` to verify the result.
 
 ## Usage
 

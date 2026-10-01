@@ -1,25 +1,16 @@
 # my-cubrid-skills justfile
 
-# Install all skills globally for Claude Code and Codex
-install:
-    npx skills add . -y -g --agent claude-code --agent codex
+# Sync installed skills with this repo: prune deleted/renamed skills, then install all current ones
+sync:
+    tools/sync-skills.sh
 
-# Reinstall all skills globally for Claude Code and Codex
-reinstall: install
-
-# Update this repo, update global skills, then reinstall this collection
-update:
-    git pull --ff-only
-    npx skills update -g -y
-    just install
+# Show which installed skills sync would prune, without changing anything
+sync-dry-run:
+    tools/sync-skills.sh --dry-run
 
 # List installed skills
 list:
     npx skills list -g --agent claude-code --agent codex
-
-# Update installed global skills
-update-installed:
-    npx skills update -g -y --agent claude-code --agent codex
 
 # Remove a specific skill
 remove skill:

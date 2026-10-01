@@ -26,7 +26,6 @@ Each top-level directory with a `SKILL.md` is a skill:
 - `gh-pr-comments-all/` — fetch and merge all GitHub PR comment types
 - `my-cubrid-skills-create/` — create new skills in this collection
 - `resolve-greptile-comments/` — resolve replied Greptile review threads
-- `schedule-visualizer/` — single-file HTML schedule generator with templates in `assets/` and a `verify_html.sh` check
 - `track-work/` — register, update, and inspect long-running work in the `work-tracker` ledger across agent sessions
 - `cubrid-common/` — shared helper scripts used by CUBRID skills; an internal dependency rather than a user-facing workflow
 

@@ -17,7 +17,6 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | `cubrid-manual-search` | Answer CUBRID questions from the local English/Korean RST manual with file-and-line citations |
 | `cubrid-oos-context` | Load OOS (Out-of-row Overflow Storage) project context |
 | `create-testcases` | Create CUBRID test cases (unit/SQL/shell) for features or bug fixes |
-| `schedule-visualizer` | Generate single-file HTML project schedules (daily Excel-like calendar grid + Gantt timeline) from issues, dates, and milestones |
 | `track-work` | Register, update, and inspect long-running work in the `work-tracker` ledger so status and context survive agent sessions |
 | `cubrid-common` | Shared helper scripts used internally by other CUBRID skills |
 

@@ -1,18 +1,13 @@
 ---
 name: cubrid-jira-issue-write
-description: Write and publish a CUBRID JIRA issue report in Korean with English section headers (##). Top of issue is an Issue Triage block — 목적 (필수) + 이유 (필수, 현재 동작·한계와 그 영향 두 축을 모두 포함, 가능하면 AS-IS/TO-BE 대비 명시) + 방안 (합의된 스펙은 구체적으로, 미결정은 TBD) — written in whatever format reads best (short prose, mini-tables, ASCII call-flow diagrams, callouts — NOT forced dot-lists), followed by an explicitly separated AI-Generated Context block. Favors diagrams and comparison tables for call flows and option trade-offs. Writes versioned markdown with source-commit and AI-agent suffixes to /home/vimkim/gh/my-cubrid-jira/issues/, commits and pushes that file, then uploads it to the matching existing issue through the cubrid-jira skill without a second confirmation. Use when the user wants to write up and file a JIRA issue, document a bug finding, or create a feature/task report for CUBRID.
+description: Write and publish CUBRID JIRA bug reports, feature requests, and task reports in Korean. Preserve the team's four-field triage and AI-Generated Context separation, explain background and causes clearly, and publish the versioned Markdown report to the matching existing issue.
 ---
 
 # CUBRID JIRA Issue Writer
 
 Write a structured JIRA issue saved as markdown to `/home/vimkim/gh/my-cubrid-jira/issues/`.
 
-Two goals govern every issue:
-
-1. **A reviewer can triage it in 10 seconds** from the top block alone.
-2. **A new hire who reads C/C++ but has never opened this subsystem can follow the whole thing on one read** — through the writing itself, never by announcing that it was written to be readable.
-
-These two goals fight verbosity from both ends: the triage block stays tiny, the body stays plain, and **no fact is told twice**. The single most common failure of this skill is the same "why" appearing in the triage, then the Summary, then the Description. The **Layer Ownership** rule below is the cure — read it before drafting.
+Help a reader unfamiliar with the subsystem understand the situation, why a change is needed, and what is proposed. Keep the team's summary above the AI-Generated Context divider, then develop the background and causal explanation below it. Let the explanation determine its length.
 
 ## When to Use
 
@@ -67,51 +62,42 @@ Reference: https://dev.cubrid.org/dev-process/jira/open — determine the type *
 
 ## Output Structure
 
-Every issue is two stacked layers separated by an explicit divider:
+The team requires all four fields above the explicit AI-Generated Context divider. Keep the reason summarized here; explain its background and causes in detail below.
 
 ```markdown
 # [TAG] 한국어 제목
 
 ## Issue Triage
 
-**이슈 수행 목적** (필수): <결과 상태 1-2 문장. 분석/메커니즘 금지.>
+**이슈 수행 목적**: <달성하려는 결과>
 
-**이슈 수행 이유** (필수): <현재 동작·한계 + 영향, 두 축을 모두. 전/후 대비가 명확하면 AS-IS / TO-BE 를 명시. 형식 자유.>
+**이슈 수행 이유**: <어떤 상황에서 무엇이 달라졌거나 문제가 되었는지 요약>
 
-**이슈 수행 방안**: <합의된 결정은 구체적으로, 가능하면 TO-BE 의 구현 방향으로 연결. 미결정은 TBD.>
+**영향**: <누가 어떤 불편이나 실패를 겪는지, 또는 무엇이 제한되는지>
+
+**이슈 수행 방안**: <합의된 변경 방향과 범위. 미결정 사항은 TBD>
 
 ---
 
 ## AI-Generated Context
 
-> 아래는 AI 가 코드/맥락을 분석해 작성한 상세 자료다. 빠른 triage 에는 위 Issue Triage 블록만으로 충분하며, 본문은 구현/리뷰 단계에서 참고하면 된다.
+> 아래는 AI가 코드와 맥락을 분석해 작성한 상세 자료다.
 
-### Summary
-
-- **변경 범위 / 영향**: 영향받는 모듈·파일·사용자·호환성. (문제/원인/제안을 여기서 다시 적지 않는다 — Layer Ownership 참고.)
-
----
-
-<type-specific sections below>
+<type-specific sections below, beginning with Description>
 ```
 
-Fill `<...>` slots. The three triage concerns — **목적 / 이유 / 방안** — are required; their *formatting is free* (short prose, mini-table, ASCII flow diagram, callout — whatever reads in one pass). Do not force every field into a `-` dot-list.
+In `## Description`, establish the situation before presenting technical changes: explain the relevant background, what changed or fails, and how that leads to the reported impact. Then develop the proposal and supporting evidence in the appropriate sections. Several paragraphs are appropriate when the reader needs them; a straightforward bug may need only a short explanation.
 
-### Layer Ownership (the de-duplication rule — read before drafting)
+The summary and detailed explanation may repeat facts, reasons, and impact. Reintroduce them when it helps the reader follow the argument, adding context, mechanisms, or evidence. Remove repetition that adds no understanding, rather than enforcing one location per fact. An extra scope summary is optional.
 
-Each layer owns **different content for a different reader**. Verbosity comes from layers repeating the same "why". Stop it at the source:
+### Triage content
 
-| Layer | Owns (the only thing it carries) | Must NOT contain |
-|-------|----------------------------------|------------------|
-| **Issue Triage** (목적/이유/방안) | the *decision* — result state, justification, agreed plan. Human register, 10-sec read. | mechanism, code, `file:line`, repro, step-by-step. |
-| **AI Context — Summary** | *orthogonal* facts the triage skips — affected modules/files, compatibility, blast radius. | restated 문제/원인/제안 (that is the triage's job). |
-| **Description** | the full root-cause *narrative* with glosses — the "why", told in depth once. | sentences copied verbatim from the triage. |
-| **Implementation** | code flow, data structures, diffs, algorithm. | re-explaining the "why" already in Description. |
-| **Repro / Expected / Actual** | executable commands/SQL and observed output. | prose narrative. |
+- **목적**: the intended outcome, stated briefly.
+- **이유**: enough situational context to explain why this work is needed now. Use concrete evidence appropriate to the issue: observed behavior, changed requirements, a workflow problem, or a relevant technical limit.
+- **영향**: the practical consequence for users, developers, QA, performance, or maintainability. Keep this field visible even when the reason also mentions the consequence.
+- **이슈 수행 방안**: the agreed approach and scope, grounded in the conversation, JIRA decisions, or an explicit design document. Distinguish proposals from agreed decisions. Use `TBD - 합의 미확인` for an unresolved decision, or `TBD - ANALYSIS 단계에서 결정` when that deferral is agreed.
 
-The litmus test: **Triage = conclusions, Description = mechanism, Summary = scope.** If a sentence fits two of those, it belongs in exactly one — pick the strongest and cut the others.
-
-**Post-draft check (mandatory):** re-read and find any sentence/fact appearing in 2+ layers. Keep the strongest location, delete the rest. The old `### Summary` 4-bullet `문제/원인/제안/영향` pattern is banned precisely because 문제/원인/제안 duplicate the triage — Summary now carries scope/impact only.
+Show AS-IS/TO-BE when a before/after comparison clarifies the change. Choose prose, a table, or a list to suit the material. Put detailed source references, algorithms, and reproduction steps below the divider; retain a precise identifier in the summary when it is needed to understand the issue.
 
 ### Type-specific sections (go below the `## AI-Generated Context` divider)
 
@@ -119,13 +105,13 @@ The litmus test: **Triage = conclusions, Description = mechanism, Summary = scop
 
 ```markdown
 ## Description
-(버그 개요 + 근본 원인 narrative)
+(발생 상황과 배경, 관찰한 문제와 영향, 확인된 원인 또는 조사할 내용)
 
 ## Test Build
 (예: `CUBRID-11.0.0.0248-b53ae4a`, OS 포함)
 
 ## Repro
-(복붙으로 재현 가능한 명령/SQL. 서술 금지.)
+(필요한 환경과 복붙으로 재현 가능한 명령/SQL)
 
 ## Expected Result
 ## Actual Result
@@ -156,118 +142,14 @@ The litmus test: **Triage = conclusions, Description = mechanism, Summary = scop
 
 **Internal Management / Task:** just `## Description`.
 
-**Section rules:** Patch/Revision versions go in the description explicitly (JIRA UI shows only Major.Minor). Don't delete unused official sections — fill `N/A`. Use `TBD` for unknowns. Optional tail add-ons: `## 참고 코드` (key source refs), `## Remarks` (follow-ups, PR links, related tickets).
+**Section rules:** Patch/Revision versions go in the description explicitly (JIRA UI shows only Major.Minor). Don't delete unused official sections — fill `N/A`. Use `TBD` for unknowns. Optional tail add-ons: `## Code References` (key source refs), `## Remarks` (follow-ups, PR links, related tickets).
 
-## Triage Rules (목적 / 이유 / 방안)
+## Writing Guidance
 
-- **목적 (필수)**: result state, 1-2 sentences. Analysis/background belongs in 이유, not here.
-- **이유 (필수)**: cover both axes —
-  - **AS-IS (현재 동작 / 배경)**: cite thresholds/params/conditions by their code name (`DB_PAGESIZE/8`, `LZ4_MAX_INPUT_SIZE`, `pgbuf_fix`), ideally with file:line. No "약 512 바이트" hand-waving; expanding a macro in parens is encouraged (`LZ4_MAX_INPUT_SIZE`(0x7E000000, 약 2.11GB)).
-  - **TO-BE (목표 상태 / 기대 동작)**: when the source material clearly states a desired behavior, write it explicitly as the contrast to AS-IS. Keep it at behavior/spec level here; code flow still belongs in `## Implementation`. If TO-BE is not decided, write `TBD - 합의 미확인` instead of inventing it. For a pure bug with an obvious expected result, TO-BE can be the one-line expected behavior.
-  - **영향**: pick the one applicable category (고객 장애 · QA 실패 · 성능 저하 · 설계 의도 훼손 · 기술 부채) with a concrete example. Listing all five is menu-padding. Abstract one-liners ("일관성 유지", "성능 개선 필요") are rejected.
-  - **Correct Error 특례**: AS-IS = one-line repro summary, TO-BE = one-line expected result, 영향 = the failure mode the user sees. Still write them as separate items.
-- **방안**: state already-decided spec concretely; leave only the undecided as TBD.
-  - "합의된" = quotable concrete decision from this session's user messages · a quotable JIRA comment · an explicit design doc. Nothing else (analogy to a sibling ticket, plausible AI inference) counts. When citing a user message, quote the original fragment ("사용자 인용: \"...\"").
-  - TBD markers: `TBD - ANALYSIS 단계에서 결정` when deferral is itself agreed; `TBD - 합의 미확인` when even the existence of a decision is unclear (default to this when unsure so the reviewer catches it). In an interactive session, just ask the user.
-  - Detailed code flow / data structures go to `## Implementation`, not here. 방안 says only *what was decided*.
-
-**AS-IS / TO-BE rule:** prefer an explicit AS-IS/TO-BE pair whenever the issue is about changing current behavior, policy, default, data flow, API behavior, or operational procedure. Use a two-column mini-table when it reads cleaner than bullets. Do not force it for issues that only record investigation scope or internal housekeeping with no before/after contrast.
-
-**Triage structure-label exception:** only these bold labels are exempt from the "no English-direct labels" rule (they are slot identifiers, not prose): `**이슈 수행 목적**`, `**이슈 수행 이유**`, `**이슈 수행 방안**`, `**AS-IS (현재 동작 / 배경)**`, `**TO-BE (목표 상태 / 기대 동작)**`, `**영향**`. Any other label (`**Fact**:`, `**Risk**:`, `**무엇을**:`) follows the natural-Korean rules everywhere.
-
-**Triage anti-patterns:** merging 목적 into 이유 in one sentence; an abstract 이유 with no number/threshold/condition; a pure-TBD 방안 when decisions exist (under-writing) OR an AI-invented plan in 방안 (over-guessing); reflexively dot-listing all three fields (see 닷 리스트 강박 below); pulling AI analysis up into the triage block (it lives under `## AI-Generated Context`).
-
-**Worked example (OOS migration policy — Improve):**
-
-```markdown
-## Issue Triage
-
-**이슈 수행 목적**: heap 레코드의 큰 가변 컬럼이 OOS 의도대로 일관되게 외부로 이관되도록 한다.
-
-**이슈 수행 이유**:
-
-- **AS-IS (현재 동작 / 배경)**: 현재 코드는 레코드 총 길이가 `DB_PAGESIZE/8` 을 넘는 경우에만 512 바이트 초과 가변 컬럼을 OOS 로 보내므로, 511 바이트 가변 컬럼만 있는 레코드는 임계치에 못 미친 채 overflow 경로로 빠진다 (개발 편의용 임시 임계치).
-- **TO-BE (목표 상태 / 기대 동작)**: 레코드가 `DB_PAGESIZE/4` 이하가 될 때까지 큰 가변 컬럼을 순차적으로 OOS 로 이관한다.
-- **영향**: 설계 의도 훼손 — 511 바이트 가변 컬럼 페이로드가 OOS 대상에서 누락된 채 heap 내부 overflow 로 빠져 OOS 도입 효과가 무력화된다.
-
-**이슈 수행 방안**:
-
-- 레코드 총 길이가 `DB_PAGESIZE/4` 를 넘으면 가장 큰 가변 컬럼부터 순차 OOS 이관하며, `DB_PAGESIZE/4` 이하가 될 때까지 반복한다.
-- OOS 이관 시 lz4 압축 적용, P 사 기본값 EXTENDED 모드 차용.
-- P 사의 다른 정책(MAIN, EXTERNAL, PLAIN)은 범위 밖이며 CBRD-26536 으로 분리한다.
-- lz4 압축 레벨 세부값: `TBD - 합의 미확인`.
-```
-
-핵심: 이유가 AS-IS/TO-BE 를 명시해 현재 정책과 목표 상태를 한눈에 대비시키고, 영향을 한 카테고리 + 구체 시나리오로 좁혔으며, 방안이 합의된 결정만 적되 범위 밖은 별도 티켓으로 분리하고 미확인은 보수적 마커로 표기했다. 이 방안은 평면 목록이라 bullet 이 맞다 — 후보 비교였다면 아래 toolkit 의 ranked 표를 썼을 것이다.
-
-## Readability Toolkit — 닷 리스트 대신 (모델: CBRD-26890, CBRD-26788)
-
-불릿은 평면 목록 한 종류에만 맞는다. 내용에 구조가 있으면 아래 도구를 골라 쓴다. 막히면 CBRD-26890 / CBRD-26788 을 펼쳐 형식을 베낀다.
-
-**1. ASCII 호출 흐름도** — 압축/해제, scan, 복구 같은 호출 체인. `★` 로 한계 지점·분기점을 표시 (CBRD-26890 §압축 코드 흐름).
-
-````markdown
-```
-[압축] 직렬화(DB_VALUE -> 디스크)
- mr_data_writeval_string()                  object_primitive.c
-   └ pr_do_db_value_string_compression()
-        └ cubcompress::compress<LZ4>()       compressor.hpp
- ★ 크기 게이트: charlen > LZ4_MAX_INPUT_SIZE -> 압축 스킵, 원본 저장
-```
-````
-
-**2. Ranked 후보 비교 표** — 방안이 "여러 선택지 중 고르기" 일 때. 권장 순서대로 행을 놓고 마지막 칸에 권장 이유/고려사항 (CBRD-26890 §상세 내용).
-
-```markdown
-| 순위 | 후보 | 권장 이유 / 고려사항 |
-|------|------|---------------------|
-| 1 | zstd 도입 | 4GB+ 단일 호출 처리, DB 채택 검증. 외부 의존성 추가 비용. |
-| 2 | LZ4 frame 청킹 | 라이브러리 교체 없음. 스트리밍 해제 설계 필요. |
-| 3 | 비압축 fallback | 가장 단순. 압축 이득 포기 — 단기 baseline. |
-```
-
-**3. 현황 조사 표** — 타입/경로/조건별 상태를 한눈에 (CBRD-26890 §현황 조사).
-
-```markdown
-| 가변 타입 | 최대 길이 | 압축 적용 |
-|-----------|-----------|-----------|
-| VARCHAR | 약 1 GiB (0x3fffffff) | O (LZ4) |
-| internal LOB (신규) | 4 GB | 대상이나 LZ4 로는 불가 |
-```
-
-**4. 요지 callout** — 표/도식 뒤에 한 문단으로 핵심을 박는다. JIRA `{panel:title=요지}` 의 markdown 대응은 blockquote.
-
-```markdown
-> **요지**: 컬럼 값 압축 대상은 ~1 GiB 라 LZ4 한계 안이었다. 4GB LOB 만 한계를 넘어 새 방안을 요구한다.
-```
-
-조사/설계 이슈(CBRD-26788 류)는 `## 주요 검토 항목` 을 번호 매긴 `###` 소제목으로 펼치고, 결정 못 한 부분은 `## Open Questions` 로 모은다 — 억지로 방안 bullet 에 욱여넣지 않는다.
-
-## New-hire Readability (silent — never stated)
-
-Readers include the CTO and senior peers, but also QA, CS, and an engineer who joined last month and has never opened this module. Write so that last reader follows on one pass — *without ever telling them you did so* (see Hard Constraints).
-
-- **Gloss internal terms on first use, once, in one clause** — acronyms and module-specific identifiers (`OOS`, `recdes`, `pgbuf_*`, `OR_VAR_*`, `WAL`, `MVCC`, `latch`, `sysop`, heap/btree policy names, build-mode names). Then use the term raw.
-  - "`OOS` (Out-of-row Storage — heap 의 큰 가변 컬럼을 외부 페이지로 분리하는 저장 방식)"
-  - "`pgbuf_fix` (페이지 버퍼 풀에서 페이지를 잠가 가져오는 함수)"
-  - Skip the gloss for universal C/DB terms (`malloc`, `mutex`, `assert`).
-- **Every threshold/magic number gets a one-clause rationale.** "`DB_PAGESIZE/8` 미만이면 OOS 이관이 일어나지 않아 큰 가변 컬럼이 heap 내부로 흘러든다" beats a bare "`DB_PAGESIZE/8`".
-- **Short sentences, one idea each. Lead with what changed, then where, then why.** "heap 의 OOS 이관 임계치를 `DB_PAGESIZE/8` 에서 `DB_PAGESIZE/4` 로 올린다 (`heap_file.c:12300` 부근) — 511 바이트 가변 컬럼이 OOS 대상에서 빠지는 문제 때문" reads in one pass.
-- **Concrete over abstract.** "에러 코드 6곳을 모두 갱신해야 한다" beats "전반적인 일관성을 유지해야 한다." Name the file, the function, the number.
-- **No tutorial mode.** A 1-line gloss is fine; a paragraph explaining what a heap is, is not. No meta-labels in headers (`### 왜 (한 번만 설명)`). No obvious-statement filler — if the diff or Repro makes it obvious, drop it.
-- **Reproducible Repro.** Copy-pasteable commands/SQL, not narrative.
-
-## Natural Korean (avoid translationese / AI cadence)
-
-The biggest tell of LLM prose is rhythm. After drafting, hunt and rewrite:
-
-- **Translationese**: "에러가 ... 흘러간다" -> "결과셋에 섞여 나간다"; "측면도/측면에서는" -> restructure; "수용한다"(limitation) -> "그대로 둔다"; "위함이다" -> "위해서다".
-- **Lockstep cadence**: several short "...한다." sentences in a row. Vary with `-므로`, `-기 때문에`, `-라`, `-도록`, longer subordinate clauses.
-- **English-direct labels**: `**무엇을**: / **어떻게**: / **왜**:` and header `### 왜` -> Korean (`**변경**:`, `**부수 수정**:`, `### 배경`). (Triage's five slot labels are the only exception — see above.)
-- **`Fact: / Effect: / Ops 결론:` bullet labels** (RFC/ITIL parody) -> peer-to-peer prose.
-- **명사구 종결** ("...없음.", "...불필요.") OK in table cells, NOT in body prose.
-- **존댓말 leak**: fix any `합니다`/`입니다` to 평어.
-- **닷 리스트 강박**: 목적/이유/방안을 무조건 `-` 불릿으로 쪼개지 말 것. 불릿이 4개를 넘거나, 한 불릿이 두 줄을 넘거나, 항목 간에 비교·순위·흐름 관계가 있으면 표·흐름도·산문으로 가라는 신호다.
+- Explain the background before asking the reader to interpret a technical list or table. Include relevant history and changed circumstances when the sources establish them. Read the conversation and available source material first; ask only for consequential context that cannot be recovered there.
+- Distinguish confirmed facts, user experience, hypotheses, and proposals through natural attribution. Leave unavailable causes or decisions open instead of supplying a plausible story.
+- Explain unfamiliar terms and the significance of technical limits where needed. Give enough connected prose to make the causal relationship understandable; the issue need not become a general tutorial.
+- Write natural Korean in 한다체. Use prose for explanations, tables for comparisons, and diagrams for flows when they help. Keep audience and readability guidance outside the issue body.
 
 ## Local-only Tooling (keep issues portable)
 
@@ -279,26 +161,16 @@ JIRA issues are read by devs, QA, and CS who do not share the author's local set
 - **If a personal recipe is the easiest repro for the author**, paraphrase the underlying command in the issue; keep the `just`/alias form in private notes only. Never put both.
 - **Pre-upload scan**: `rg -nP '\bjust\s+\w' file.md` must return zero hits.
 
-## Reference Examples
-
-**Read these first for the free-form, diagram-rich style:**
-
-- `CBRD-26890-lob-compression-algorithm.md` — canonical readability model. ASCII call-flow diagrams with `★` markers, type/limit survey table, `> **요지**` callout, ranked candidate-comparison table.
-- `CBRD-26788-scan-prefetch-mechanism.md` — investigation/design model. Numbered `###` review items; undecided parts collected, not forced into a 방안 bullet list.
-- `CBRD-26824-bug-bts-14917-regression.md` — strong new-hire glossing and clean separation of plain narrative from a `## 엔지니어용 기술 참고` deep-dive. (Note: this file states its readability target at the top — that opening note is exactly what the Hard Constraints now forbid; copy its *glossing and structure*, not that banner.)
-
-**On-disk convention examples** (English `##`, Korean body): `CBRD-26637-refactor-error-handling.md`, `CBRD-26630-oos-inline-length.md` (before/after tables), `CBRD-26609-oos-physical-delete.md` (call-flow + WAL design), `CBRD-26769-heap-attrvalue-point-variable-int-return.md` (Case 1..N taxonomy).
-
 ## Execution Steps
 
 1. **Check output directory** exists (else stop — see Hard Constraints).
 2. **Determine issue type** (section structure depends on it; ask if unclear).
 3. **Gather context**: read source, prior analysis, `/cubrid-jira CBRD-XXXXX`, repro logs.
 4. **Resolve artifact identity**: set `SOURCE_COMMIT`, `SHORT_SHA`, `AGENT`, and the final output path using **Artifact Identity**.
-5. **Draft the Issue Triage block first** — forces a clear thesis and the 10-second triage path.
-6. **Add the `## AI-Generated Context` divider** + caveat note; all AI-written detail goes below it.
-7. **Write the body** from the type template, applying **Layer Ownership** so nothing repeats.
-8. **Run the mandatory checks**: (a) Layer-Ownership de-dup grep — no fact in 2+ layers; (b) AS-IS/TO-BE appears when the issue has a clear before/after contrast; (c) `rg -nP '\bjust\s+\w'` returns zero.
+5. **Develop the background and causal explanation** from the gathered context. Establish the situation, problem, and impact before listing changes or implementation details.
+6. **Compose the issue** using Output Structure and the type-specific sections. Summarize 목적, 이유, 영향, and 이슈 수행 방안 above the divider; place the detailed explanation under `## AI-Generated Context`. Useful restatement is allowed.
+7. **Check evidence and decisions**: distinguish observations from inferred causes, and agreed changes from proposals or unknowns. Use AS-IS/TO-BE where it clarifies the change.
+8. **Check output constraints**: Korean prose and English `##` headers, no emoji/non-BMP characters, portable commands. The `rg -nP '\bjust\s+\w'` scan must return zero matches.
 9. **Save** to the resolved path ending in `_<SHORT_SHA>_<AGENT>.md`.
 10. **Review the saved file** against the Document Review criteria below and correct defects in place.
 11. **Show the publication preview**: path, source commit, agent name, chosen type, and Issue Triage block. This is informational; continue without asking for confirmation.
@@ -326,13 +198,11 @@ JIRA issues are read by devs, QA, and CS who do not share the author's local set
 
 Review the saved issue file in the current session against the ticket, issue type, source material, and the following criteria. Correct defects in the same file before publication:
 
-- Technical accuracy; Repro is executable; CUBRID conventions (Korean body, English `##`, no emoji/non-BMP).
-- **Issue Triage** present, all three fields filled, not collapsed into one sentence. 이유 cites code-named thresholds, uses explicit AS-IS/TO-BE when a before/after contrast exists, AND names impact (abstract one-liners = reject). 방안 states decided spec concretely; pure-TBD when decisions exist = reject; AI-invented plan = reject.
-- **Layer Ownership**: no fact repeated across Triage / Summary / Description (the prime reject — this is the verbosity bug).
-- **Format matches content**: triage fields not reflexively dot-listed; comparisons -> table, call chains -> ASCII diagram with `★`, single thesis -> prose.
-- **New-hire readability**: every internal acronym glossed once on first use; every threshold has a one-clause rationale. Untreated insider shorthand = reject. The readability target itself must NEVER appear in the body (audience/grade-level note = reject).
-- **Natural Korean**: apply the "New-hire Readability" and "Natural Korean" sections above.
+- **Understanding**: the summary conveys why the issue matters, and Description establishes the background and causal explanation before technical changes. The reader can follow the situation, problem, impact, and proposed response without reconstructing them from code references.
+- **Team structure**: 목적, 이유, 영향, and 이슈 수행 방안 are all above the explicit AI-Generated Context divider. The detailed body may repeat and expand the summary.
+- **Evidence and scope**: claims match the sources; user observations and hypotheses are attributed; agreed changes and unresolved proposals are distinguishable. Reproduction commands include the necessary conditions and observed results are represented accurately.
+- **Writing and output**: the explanation is sufficient and natural, technical terms are explained where needed, and the Hard Constraints and Local-only Tooling requirements hold. Repetition earns its place by helping understanding.
 
-Ask a concise clarification only for a decision or required input that the conversation and sources cannot resolve. Use an independent reviewer only when the user requests one; provide the saved file, source material, these criteria, and the "New-hire Readability" and "Natural Korean" sections, and request concrete findings. A design interview is a separate user-requested activity, not a publication prerequisite.
+Ask a concise clarification only for a decision or required input that the conversation and sources cannot resolve. Use an independent reviewer only when the user requests one; provide the saved file, source material, and these criteria, and request concrete findings. A design interview is a separate user-requested activity, not a publication prerequisite.
 
 Once the criteria are satisfied, continue directly with the preview, validation, commit, push, and `cubrid-jira` upload steps under the Automatic Completion Contract.

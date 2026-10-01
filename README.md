@@ -56,13 +56,28 @@ just sync
 **Managing:**
 
 ```bash
-just sync                # Prune deleted/renamed skills, then install all current ones
-just sync-dry-run        # Show what sync would prune
+just sync                # Verify current skills, then recoverably prune obsolete owned skills
+just sync-dry-run        # Preview additions, conflicts and removals
 just list                # List installed skills
 just remove cubrid-jira  # Remove a specific skill
 ```
 
-Run `just sync` after source updates. `npx skills add .` only adds skills, and local-path installs are not recorded in `~/.agents/.skill-lock.json`, so `tools/sync-skills.sh` first removes any installed skill that once had `<name>/SKILL.md` in this repo's Git history but no longer exists in the working tree, skipping names owned by another source in the lock file. Deletions and renames therefore need no manual cleanup; use `just list` to verify the result.
+Run `just sync` after source updates. It never pulls Git. Python 3.12+, Git, just, Node 22.20+ and npm/npx are required. The Python standard-library engine invokes `skills@1.7.0` in an isolated staging home, verifies both agent installations, and promotes changes before pruning. Source layout remains top-level `<name>/SKILL.md`.
+
+Ownership lives in `~/.local/state/skill-collections/state.json` and applicable installer metadata. Git history alone never authorizes deletion. Edited or manually managed installations and third-party ownership are preserved; conflicts return 2 while independent eligible installs may proceed. Current conflicts suppress collection pruning. Installer, scan and verification failures return 1; missing peer evidence skips pruning and returns 2. Local legacy copies without ownership evidence require review and backup before explicit replacement.
+
+`collection-sync.json` lists both personal collections and the five approved old-to-new transfers. Default paths expect sibling checkouts; for worktrees or another layout pass `just sync --config /absolute/path/config.json` with correct collection paths. Missing peers never imply deletion. Destination-supplied or destination-owned skills remain protected whichever collection synchronizes first. The destination verifies installation and ownership transfer before original source files are removed.
+
+Removed unchanged owned skills are backed up under `$XDG_STATE_HOME/skill-collections/recovery/removed-*` (default `~/.local/state`). Sync prints the verified recovery location. Restore content, agent links, ownership and installer metadata without overwriting existing skills:
+
+```sh
+just sync-dry-run --restore /absolute/path/to/recovery/removed-XXXX
+just sync --restore /absolute/path/to/recovery/removed-XXXX
+```
+
+Restore the source directory too before the next normal sync. Explicit `just remove` remains a direct installer action without recovery. Sync does not manage third-party updates.
+
+`tools/sync_skills.py` is a standalone vendored copy of `vimkim/my-skills/scripts/sync_skills.py`; maintain both copies together. The authoritative engine, public-command tests and full conflict/recovery documentation are in `my-skills`. Validate byte equality, the old wrapper and restoration in isolation using `python3 ../my-skills/tests/check_vendored_sync.py .` from this checkout. No live synchronization is part of that check.
 
 ## Usage
 

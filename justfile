@@ -1,12 +1,12 @@
 # my-cubrid-skills justfile
 
-# Sync installed skills with this repo: prune deleted/renamed skills, then install all current ones
-sync:
-    tools/sync-skills.sh
+# Verify current installations, then recoverably prune eligible obsolete skills
+sync *args:
+    tools/sync-skills.sh {{args}}
 
-# Show which installed skills sync would prune, without changing anything
-sync-dry-run:
-    tools/sync-skills.sh --dry-run
+# Preview installations, conflicts and removals without mutation
+sync-dry-run *args:
+    tools/sync-skills.sh --dry-run {{args}}
 
 # List installed skills
 list:

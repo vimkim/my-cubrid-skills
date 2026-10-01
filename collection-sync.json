@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "collection": "vimkim/my-cubrid-skills",
+  "skill_root": ".",
+  "collections": {
+    "vimkim/my-skills": "../my-skills",
+    "vimkim/my-cubrid-skills": "."
+  },
+  "migrations": [
+    {
+      "name": "gh-pr-comments-all",
+      "from": "vimkim/my-cubrid-skills",
+      "to": "vimkim/my-skills"
+    },
+    {
+      "name": "resolve-greptile-comments",
+      "from": "vimkim/my-cubrid-skills",
+      "to": "vimkim/my-skills"
+    },
+    {
+      "name": "markdown-write",
+      "from": "vimkim/my-cubrid-skills",
+      "to": "vimkim/my-skills"
+    },
+    {
+      "name": "question-socratically",
+      "from": "vimkim/my-cubrid-skills",
+      "to": "vimkim/my-skills"
+    },
+    {
+      "name": "track-work",
+      "from": "vimkim/my-cubrid-skills",
+      "to": "vimkim/my-skills"
+    }
+  ]
+}

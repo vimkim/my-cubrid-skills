@@ -79,4 +79,4 @@ Verify that the frontmatter `name:` appears for both Claude Code and Codex. For 
 - Body: `# Title` heading and numbered execution steps.
 - No placeholders or `<!-- ... -->` comments in the final file.
 
-Real examples: `resolve-greptile-comments/SKILL.md`, `cubrid-pr-create/SKILL.md`.
+Real examples: `cubrid-jira/SKILL.md`, `cubrid-pr-create/SKILL.md`.

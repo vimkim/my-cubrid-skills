@@ -19,7 +19,7 @@ Control sheets state facts with a snapshot date. Snapshots are stale by definiti
 
 1. Get the real time: `date '+%Y-%m-%d %H:%M %Z (%A)'`. Note remaining working hours and upcoming Korean holidays the sheets mention.
 2. Read the newest `week-*.md` whose date is ≤ today, and today's `today-YYYY-MM-DD.md` if it exists.
-3. Read the ledger: `work-tracker today --json` (fall back to `work-tracker list --json` for the open backlog). If `work-tracker` is missing, say so and continue from the sheets alone. Follow the `track-work` skill for all ledger mutations.
+3. Read the ledger: `work-tracker today --json` (fall back to `work-tracker list --json` for the open backlog). If `work-tracker` is missing, say so and continue from the sheets alone. Follow the `track-work` skill from `vimkim/my-skills` for all ledger mutations. If it is unavailable, install that collection before mutating the ledger; schedule-sheet reads remain available.
 4. Detect work already done today by other sessions: `git -C /home/vimkim/gh/my-cubrid-docs log --oneline --since=midnight` — agents commit evidence reports there.
 5. For every candidate next action that references a PR or CI, re-check live state, e.g. `gh pr view <n> --repo CUBRID/cubrid --json state,isDraft,reviewDecision,mergeStateStatus` and `gh pr checks <n> --repo CUBRID/cubrid`.
 

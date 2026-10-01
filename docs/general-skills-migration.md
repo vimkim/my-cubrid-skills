@@ -1,0 +1,11 @@
+# General-purpose skill migration
+
+The authoritative sources for `gh-pr-comments-all`, `resolve-greptile-comments`, `markdown-write`, `question-socratically`, and `track-work` now live under `skills/` in [vimkim/my-skills](https://github.com/vimkim/my-skills). Their original names, all ten resources, executable bits and MIT declaration are preserved. Source revision `795015e` and exact resource fingerprints are recorded in that repository's `docs/migration-provenance.json`.
+
+`daily-schedule` and `my-cubrid-skills-create` remain here. Install the new collection for `daily-schedule`'s `track-work` ledger-mutation workflow. The creator skill uses examples that remain in this collection. Other CUBRID skill dependencies remain here unchanged.
+
+Both repositories adopted the same ownership-aware sync engine and explicit five-name transfer configuration before source removal. Destination copies were installed and verified in disposable homes with the real pinned skills CLI before these original source directories were removed. Verification exercises old-first and new-first processing, complete resources and both agents, ownership transfers, conflicting/edited installed files, and repeat/dry-run convergence. The former collection protects destination-supplied and destination-owned names; Git history never proves permission to prune.
+
+For reproducible evidence run `python3 /path/to/my-skills/tests/check_migration.py /path/to/this/checkout`, then repeat with `--real`. The verifier uses actual source files and disposable environments. The destination's `docs/migration.md` documents prerequisites, provenance, commands and the full sequence. `python3 /path/to/my-skills/tests/check_vendored_sync.py /path/to/this/checkout` verifies engine equality and the retained old public interface.
+
+These are coordinated topic-branch changes, not a live installation. Local rebase/fast-forward merge, pushing, and deployment retain their separate authorization boundaries. Public default-branch GitHub URL installation remains gated on publication in ticket #6. Existing untracked local installations remain protected conflicts until separately reviewed; do not invent ownership evidence to force the migration.

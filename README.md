@@ -17,8 +17,9 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | `cubrid-manual-search` | Answer CUBRID questions from the local English/Korean RST manual with file-and-line citations |
 | `cubrid-oos-context` | Load OOS (Out-of-row Overflow Storage) project context |
 | `create-testcases` | Create CUBRID test cases (unit/SQL/shell) for features or bug fixes |
-| `track-work` | Register, update, and inspect long-running work in the `work-tracker` ledger so status and context survive agent sessions |
 | `cubrid-common` | Shared helper scripts used internally by other CUBRID skills |
+
+The general-purpose skills `gh-pr-comments-all`, `resolve-greptile-comments`, `markdown-write`, `question-socratically`, and `track-work` moved to [vimkim/my-skills](https://github.com/vimkim/my-skills). Maintain and install them from that collection. `daily-schedule` and `my-cubrid-skills-create` remain here; `daily-schedule` uses the external `track-work` skill. See [migration coordination](docs/general-skills-migration.md).
 
 ## CI and test skill layout
 
@@ -89,7 +90,6 @@ Once installed, invoke skills as slash commands in Claude Code:
 /cubrid-ci-analyze https://github.com/CUBRID/cubrid/pull/6864
 /cubrid-manual-search What is the default value of max_clients?
 /create-testcases CBRD-26609
-/track-work register this CI wait and keep its status current
 ```
 
 Skills also trigger automatically based on context.
@@ -105,7 +105,7 @@ Some skills require external tools:
 | `cubrid-ci` | `cubrid-ci-analyze` | `cargo install --path /home/vimkim/gh/cubrid-ci --locked` |
 | `testkit` | `cubrid-test-sql-run`, `cubrid-test-medium-run`, `cubrid-test-shell-run` | Manually install the intended `cubrid-testkit` revision with `go install` |
 | JDK 8 + CTP assets | `cubrid-test-sql-run`, `cubrid-test-medium-run` | Use the selected worktree environment's configured installations |
-| `work-tracker` | `track-work` | `just install` in `/home/vimkim/gh/work-tracker` |
+| `work-tracker` | `daily-schedule` (uses external `track-work`) | `just install` in `/home/vimkim/gh/work-tracker` |
 
 ## License
 

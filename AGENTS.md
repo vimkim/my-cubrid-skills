@@ -2,7 +2,7 @@
 
 ## Purpose
 
-- This Git-managed repository is the single source of truth (SSOT) for the user's skills, especially skills used in their work as a CUBRID DBMS researcher and engineer.
+- This Git-managed repository is the source collection for CUBRID development skills. General-purpose skills are maintained in `vimkim/my-skills`.
 - Skills are installed globally for Claude Code and Codex via the repository `justfile` and `npx skills`.
 - Make skill fixes and improvements in this repository first. Do not edit globally installed or generated skill copies.
 
@@ -23,11 +23,10 @@ Each top-level directory with a `SKILL.md` is a skill:
 - `cubrid-qa-fetch/` — authenticated CUBRID internal QA result retrieval and analysis
 - `cubrid-test-shell-run/` — run and debug focused shell tests locally
 - `create-testcases/` — CUBRID test case generator
-- `gh-pr-comments-all/` — fetch and merge all GitHub PR comment types
 - `my-cubrid-skills-create/` — create new skills in this collection
-- `resolve-greptile-comments/` — resolve replied Greptile review threads
-- `track-work/` — register, update, and inspect long-running work in the `work-tracker` ledger across agent sessions
 - `cubrid-common/` — shared helper scripts used by CUBRID skills; an internal dependency rather than a user-facing workflow
+
+For `gh-pr-comments-all`, `resolve-greptile-comments`, `markdown-write`, `question-socratically`, and `track-work`, edit the `skills/<name>/` source in `vimkim/my-skills`. `daily-schedule` and `my-cubrid-skills-create` remain here. See `docs/general-skills-migration.md` for the coordinated transfer.
 
 The `.agents/`, `.claude/`, and other generated directories created by `npx skills` are not editable sources.
 

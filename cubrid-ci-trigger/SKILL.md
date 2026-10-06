@@ -123,4 +123,4 @@ Re-read the PR head and poll checks for up to two minutes. For a new `/run`, req
 - any still-missing stable required gha-ci context;
 - the live `gh pr checks --required` result without replacing it with a hard-coded total.
 
-Do not wait for terminal results unless the user asks. Use `cubrid-ci status` for a later status-only request and `cubrid-ci-analyze` for failure analysis.
+Do not wait for terminal results unless the user asks. Use `cubrid-ci status` for a later status-only request and `cubrid-ci-analyze` for failure analysis, including its read-only exact merge-base comparison. Finding or lacking baseline evidence does not authorize another run or waive required CI contexts.

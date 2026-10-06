@@ -26,8 +26,8 @@ def load_assessment(path: Path) -> dict[str, object]:
         value = json.loads(path.read_text())
     except (OSError, json.JSONDecodeError) as error:
         fail(str(error))
-    if not isinstance(value, dict) or set(value) != EXPECTED_KEYS:
-        fail("assessment must contain exactly the documented validation fields")
+    if not isinstance(value, dict) or set(value) not in (EXPECTED_KEYS, EXPECTED_KEYS | {"baseline"}):
+        fail("assessment must contain the documented head fields and optional baseline state")
     allowed = {
         "identity": {"established", "unknown"},
         "observation": {
@@ -46,6 +46,9 @@ def load_assessment(path: Path) -> dict[str, object]:
     for field in ("result_matches_observation", "requested_suites_reconciled"):
         if not isinstance(value[field], bool):
             fail(f"{field} must be boolean")
+    value.setdefault("baseline", "not_assessed")
+    if not isinstance(value["baseline"], str) or value["baseline"] not in {"not_assessed", "validated_exact", "partial_exact", "unavailable", "invalid"}:
+        fail("baseline must be not_assessed, validated_exact, partial_exact, unavailable, or invalid")
     return value
 
 
@@ -62,9 +65,13 @@ def decide(value: dict[str, object]) -> dict[str, object]:
         mode = "full"
     else:
         mode = "warning"
+    scope = "none"
+    if mode == "full" and value.get("baseline") in {"validated_exact", "partial_exact"}:
+        scope = "validated_cases_only"
     return {
         "mode": mode,
-        "regression_conclusions_allowed": mode == "full",
+        "regression_conclusions_allowed": scope != "none",
+        "comparison_scope": scope,
     }
 
 

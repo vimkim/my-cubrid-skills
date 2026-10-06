@@ -19,3 +19,5 @@ Keep skill-specific policy in the calling skill. This helper owns reusable check
 Before executing focused SQL, medium, or shell tests, read [Native testkit focused-run contract](references/testkit-focused.md). Use `scripts/testkit-focused.py` for its source/install identity gate, attempt configuration, and artifact verdict. The specialized runner skills own case selection and suite-specific interpretation.
 
 For a focused replay of a CI failure, read [CI evidence and testcase identity](references/ci-evidence.md) to bind runtime evidence to the exact engine and testcase revisions before execution.
+
+For PR failure attribution or historical Engine CI lookup, read [Merge-base comparison](references/ci-baseline.md). It defines the shared collector, validation, comparison, and missing-baseline contract.

@@ -1,1 +1,5 @@
-{"mode":"full","regression_conclusions_allowed":true}
+{
+  "mode": "full",
+  "regression_conclusions_allowed": false,
+  "comparison_scope": "none"
+}

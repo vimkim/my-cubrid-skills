@@ -2,9 +2,11 @@
 
 ## Runtime collector and fallback
 
-Prefer `cubrid-ci-analyze` and its `cubrid-ci` collector for runtime snapshots. Preserve its SHA/job validation, exit handling and sequential shared-manifest updates. The collector's normalized failure inventory covers `result=failure`; inspect raw tests for errors/unknowns and failed jobs with no test records.
+Prefer `cubrid-ci-analyze` and its `cubrid-ci` collector for runtime snapshots. Preserve exact Engine and testcase identity, schema/observation validation, raw-file digests, and acquisition states. Current suite summaries include failures and errors; a job-level failure without trustworthy testcase records has no testcase verdict.
 
-Direct read-only API collection is allowed when the collector is unavailable, unsupported or incomplete, and for miscellaneous GitHub checks. Record the reason and store an API bundle separately from collector schema output. An integrity mismatch must be resolved, never bypassed by silently trusting the same suspect evidence through another endpoint.
+For PR failure attribution, use [exact merge-base comparison](ci-baseline.md). The `cubrid-ci collect-base` and `collect-commit` commands own historical GitHub acquisition; status-only requests need no baseline.
+
+Separate read-only API evidence is allowed for unavailable or unsupported collector capabilities, incomplete acquisition, and miscellaneous GitHub checks. First use the supported CLI path; API evidence cannot upgrade an incomplete collector report or stand in for a validated baseline. Record missing CLI support as an unknown baseline in the analyzer. Record the reason and store an API bundle separately from collector schema output. An integrity mismatch must be resolved, never bypassed by silently trusting the same suspect evidence through another endpoint.
 
 Resolve variables from validated PR metadata, not user-supplied shell fragments. Example GitHub GET collection after setting `PR_URL`, `REPO` (owner/repo), `PR_NUMBER`, `SOURCE_COMMIT` and a dedicated `EVIDENCE_DIR`:
 
@@ -12,10 +14,10 @@ Resolve variables from validated PR metadata, not user-supplied shell fragments.
 gh pr view "$PR_URL" --json url,number,state,headRefOid,baseRefOid,headRefName,baseRefName > "$EVIDENCE_DIR/pr.json"
 gh api --paginate --slurp "repos/$REPO/commits/$SOURCE_COMMIT/statuses?per_page=100" > "$EVIDENCE_DIR/status-pages.json"
 gh api --paginate --slurp "repos/$REPO/commits/$SOURCE_COMMIT/check-runs?per_page=100&filter=all" > "$EVIDENCE_DIR/check-pages.json"
-gh api --paginate --slurp "repos/$REPO/actions/runs?event=pull_request&per_page=100" > "$EVIDENCE_DIR/action-run-pages.json"
+gh api --paginate --slurp "repos/$REPO/actions/runs?per_page=100" > "$EVIDENCE_DIR/action-run-pages.json"
 ```
 
-Restrict Actions results to the requested PR and proven head linkage; do not accept all runs returned by the repository query. Record run ID, run_attempt, head SHA, event, PR association, base/merge tree when applicable, timestamps and check app/context. A `pull_request` workflow can test a synthetic merge tree: preserve its relation to the pinned PR head, rather than requiring its tested tree to equal that head or merging evidence from unrelated heads.
+Treat repository-wide Actions results as discovery candidates only; record search coverage. For exact Engine comparison, prove the tested revision from plan/build/shard evidence. Dispatch runs and reused builds are eligible; workflow `head_sha`, run titles, and PR linkage alone do not prove the tested Engine. Record run ID, run_attempt, head SHA, event, PR association, base/merge tree when applicable, timestamps and check app/context. A `pull_request` workflow can test a synthetic merge tree: preserve its relation to the pinned PR head, rather than requiring its tested tree to equal that head or merging evidence from unrelated heads.
 
 For a validated Actions run/attempt:
 
@@ -36,7 +38,7 @@ Primary API references when an endpoint or schema needs verification: [GitHub ch
 
 Use `CUBRID_TESTCASES_DIR` for SQL/medium, `CUBRID_TESTCASES_PRIVATE_EX_DIR` for shell. Record each root's Git identity and local changes. CI engine and testcase commits are independent. Current CI can select each testcase repository's own `tc/pr-N` branch or a fallback; inspect the actual tested configuration and checkout logs instead of assuming the branch name or revision.
 
-The collector's `summary.json.testcase_revision` is a first matching message SHA, not proof that all tests used that revision. Prefer per-file `sources/index.json` owner/repo/revision/path records and actual CI checkout evidence. Flag contradictions or unproven revisions. Source downloads for abnormal non-failure results may need separate lookup.
+For current suite-summary v2, use each matching shard's `testcases.sha` and `testcases.branch`, reconciled with the plan by the collector. Use the shard's `build.sha`, producing run and attempt for Engine provenance. Historical formats need their own schema-specific identity validation; never assume a first message SHA proves all shards.
 
 Find the evidence-relative path using `rg --files` and confirm it is Git-tracked. When only a basename is available, enumerate matches and disambiguate using suite, message, configuration and source content. Reject path traversal and paths outside the intended repository. For a validated repository-relative `TC_PATH` and proven `TC_SHA`:
 

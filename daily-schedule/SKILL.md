@@ -19,9 +19,20 @@ Control sheets state facts with a snapshot date. Snapshots are stale by definiti
 
 1. Get the real time: `date '+%Y-%m-%d %H:%M %Z (%A)'`. Note remaining working hours and upcoming Korean holidays the sheets mention.
 2. Read the newest `week-*.md` whose date is ≤ today, and today's `today-YYYY-MM-DD.md` if it exists.
-3. Read the ledger: `work-tracker today --json` (fall back to `work-tracker list --json` for the open backlog). If `work-tracker` is missing, say so and continue from the sheets alone. Follow the `track-work` skill from `vimkim/my-skills` for all ledger mutations. If it is unavailable, install that collection before mutating the ledger; schedule-sheet reads remain available.
+3. Read scheduled commitments with `work-tracker todo today --json` (or `todo --days 3` / `todo --days 5` for a requested horizon), and use `work-tracker today --json` to detect ongoing/recently finished work (fall back to `work-tracker list --json` for the open backlog). If the installed CLI lacks `todo`, report the missing capability and use the sheets; do not claim structured dates were stored. If `work-tracker` is missing, say so and continue from the sheets alone. Follow the `track-work` skill from `vimkim/my-skills` for all ledger mutations. If it is unavailable, install that collection before mutating the ledger; schedule-sheet reads remain available.
 4. Detect work already done today by other sessions: `git -C /home/vimkim/gh/my-cubrid-docs log --oneline --since=midnight` — agents commit evidence reports there.
 5. For every candidate next action that references a PR or CI, re-check live state, e.g. `gh pr view <n> --repo CUBRID/cubrid --json state,isDraft,reviewDecision,mergeStateStatus` and `gh pr checks <n> --repo CUBRID/cubrid`.
+
+## Structured scheduling
+
+Use `work-tracker` as the authority for `planned_date`, `due_date`, and `priority`; Markdown explains the plan and links Work Item IDs. Follow `track-work` for actor attribution and history. Inspect current items before adding or updating to avoid duplicates and preserve other sessions' changes.
+
+- Record user-specified commitments with `add` or `update ID --due YYYY-MM-DD --priority high|normal|low`. Use `--planned YYYY-MM-DD` only for an explicitly accepted work date; a suggested next action does not create a commitment. Interpret relative dates in Asia/Seoul and preserve the original deadline even when entered later.
+- Use high for explicit top/high priority, normal by default, and low when stated. Omitted update flags preserve existing values. Clear a date only when the user removes it: `--clear-planned` or `--clear-due`; reset Priority with `--priority normal`.
+- Keep independently completable milestones as separate Work Items, linking the broader item in their descriptions. A PR handoff due today must not assign today's deadline to the entire integration project.
+- `todo` horizons are consecutive calendar days including today, weekends, and holidays. Keep any actual workday constraints in planning advice without changing the CLI window.
+- The view selects unfinished items by either date through its end, includes carryover and overdue work, sorts by Priority then deadline, and separates blocked/waiting items. Rescheduling a Planned Date does not erase an overdue Due Date. The CLI does not refresh GitHub; its last-update time is ledger activity, not external verification.
+- On plan intake, write the accepted dates/priorities through the CLI immediately and verify with `show ID --json` or the requested Todo View. Leave the older undated backlog untouched. Suggestions stay in the sheet's progress log until accepted.
 
 ## 2. Answer "what should I do today / what's next"
 
@@ -32,7 +43,7 @@ Control sheets state facts with a snapshot date. Snapshots are stale by definiti
 
 ## 3. Record progress
 
-When the user reports an item done, blocked, or deferred: update the today sheet immediately, and mirror the change into work-tracker (`work-tracker status <ID> ... --note "..."` or `work-tracker note <ID> "..."`). Never mark an item done from assumption; require the user's word or verified evidence (merged PR, green CI, committed report).
+When the user reports an item done, blocked, or deferred: update the today sheet immediately, and mirror the change into work-tracker (`work-tracker status <ID> ... --note "..."` or `work-tracker note <ID> "..."`). When deferred, change the Planned Date if the user supplied a replacement; preserve the Due Date unless they changed the deadline. Never mark an item done from assumption; require the user's word or verified evidence (merged PR, green CI, committed report).
 
 ## 4. End of day ("wrap up", "퇴근")
 
@@ -44,12 +55,12 @@ When the user reports an item done, blocked, or deferred: update the today sheet
 
 1. Save the plan verbatim as `YYYY-MM-DD-raw-prompt*.md`.
 2. Build `week-YYYY-MM-DD.md`: calendar notes (holidays shrink the real working days — say so), one section per item with JIRA/PR links, a date-stamped live-state snapshot, concrete next actions, and related work-tracker item IDs.
-3. Register a work-tracker umbrella item whose description points at the week sheet; register new items for objectives not yet tracked; add cross-reference notes to existing related items instead of creating duplicates.
+3. Register a work-tracker umbrella item whose description points at the week sheet; register new items for objectives not yet tracked; add cross-reference notes to existing related items instead of creating duplicates. Apply the accepted structured dates and priorities under Structured scheduling.
 4. Verify the plan's premises against live state before accepting them — an item may already be further along than the user thinks (for example, a "get review" item whose PR is already approved). Report such corrections.
 5. Close with sequencing advice: name the long-pole item to start first and any people-dependent request to send before the next holiday or weekend.
 
 ## Edge cases
 
 - No week sheet covers today: build the day plan from work-tracker plus live PRs, and tell the user a weekly plan is missing.
-- Sheet and ledger disagree: the ledger wins for status, the sheet wins for intent; reconcile both and note the correction.
+- Sheet and ledger disagree: the ledger wins for status and structured dates/priorities; the latest explicit user direction governs intent; reconcile both and note the correction.
 - Today is past the governing week sheet's range: answer from what exists, then prompt the user for the next weekly plan.

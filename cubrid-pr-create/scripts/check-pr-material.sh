@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat >&2 <<'EOF'
-Usage: check-pr-material.sh --body PR_BODY.md FILE...
+Usage: check-pr-material.sh --body PR_BODY.md [FILE...]
 
 Checks generated CUBRID PR material before publishing.
 

@@ -12,7 +12,7 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | `cubrid-test-shell-run` | Run focused shell cases with contained native testkit and verify artifact verdicts |
 | `cubrid-ci-analyze` | Collect exact-commit GitHub Actions evidence with `cubrid-ci` and write failure-analysis reports |
 | `cubrid-ci-trigger` | Trigger or rerun GitHub Actions gha-ci on supported CUBRID pull requests |
-| `cubrid-pr-create` | Create GitHub PRs with `[CBRD-XXXXX]` title format and Korean body |
+| `cubrid-pr-create` | Save Korean PR drafts for review, then create or update GitHub PRs after confirmation |
 | `cubrid-jira-issue-write` | Write structured JIRA issue reports in Korean |
 | `cubrid-manual-search` | Answer CUBRID questions from the local English/Korean RST manual with file-and-line citations |
 | `cubrid-oos-context` | Load OOS (Out-of-row Overflow Storage) project context |
@@ -93,6 +93,11 @@ Once installed, invoke skills as slash commands in Claude Code:
 ```
 
 Skills also trigger automatically based on context.
+
+`cubrid-pr-create` first saves the PR body and resume context in `my-cubrid-docs`
+for you to read or edit. After you confirm the listed publication steps, it creates
+a draft PR or updates the existing PR description from that saved body. A detailed
+explanation is optional.
 
 ## Prerequisites
 

@@ -1,282 +1,217 @@
 ---
 name: cubrid-pr-create
-description: Publish a draft GitHub pull request for the CUBRID project with a [CBRD-XXXXX] title, Korean PR body, linked detailed doc, explicit AS-IS/TO-BE contrast when the change supports it, and pre-publish material checks. For the safe default path, commit and push the detailed doc, push the source branch to github.com/vimkim/cubrid, and create the draft PR against CUBRID/CUBRID without asking for publication confirmation. Use when the user wants to create, draft, push, or publish a CUBRID PR, including requests like "create pr", "make pr", "PR 만들어", "PR 올려", or "풀리퀘".
+description: Prepare a CUBRID PR body as persistent Markdown in my-cubrid-docs for human review, then create a draft PR or update an existing description after explicit confirmation. Use for creating, drafting, publishing, or revising CUBRID PR descriptions, including resuming a saved draft.
 ---
 
 # CUBRID PR Creator
 
-Create GitHub pull requests for the CUBRID project following team conventions.
+Use one skill in two phases: prepare reviewable files, then publish the reviewed
+material after confirmation. A **PR body draft** is saved text; a **draft PR** is
+an actual pull request on GitHub.
 
-## Non-Negotiable Output Contracts
+## Review and Publication Contract
 
-- The PR body always uses exactly these `##` sections, in this order: `## Purpose`, `## Implementation`, `## Remarks`.
-- Keep `##` headers in English and body prose in plain Korean.
-- Put the JIRA issue URL at the very top, before `## Purpose`.
-- Keep the whole PR body to one screen, roughly 25-35 lines.
-- Put deep technical detail in the separate markdown doc, not in the PR body.
-- When the change has a clear before/after contrast, state `AS-IS` and `TO-BE` explicitly inside `## Purpose` in both the PR body and detailed doc. Do not add new top-level sections for them.
-- Never include local absolute paths, `file://` URLs, or machine-specific workspace paths in PR material. Use repo-relative paths or public GitHub/JIRA URLs.
-- Never include project shortcut commands beginning with the `just` task runner in PR material. Replace them with the actual public verification command, or describe the verification outcome in words.
-- Run the bundled material checker before showing the body draft, before committing the doc repo, and before creating the PR.
+- A request to create or update a PR starts preparation. Save the proposed body in
+  `my-cubrid-docs` and present its location and intended publication operations.
+  Preparation ends with the files ready for human review, without remote writes.
+- Publication requires the user's explicit confirmation after the draft is
+  available. One confirmation covers the exact listed operations, including any
+  necessary docs integration/push and source push. Skill invocation, saved context,
+  or an approval flag in a file does not establish permission.
+- When the user edits the draft and says to publish, reread and validate its current
+  contents, then upload them unchanged. An agent rewrite requires another review.
+  Explain validation failures instead of silently repairing approved material.
+- New PRs are created in draft status. Existing PRs receive a body update by default;
+  change the title only if that change was presented and approved. Preserve their
+  draft/ready status. A description-only update does not authorize a source push.
+- A source revision change or an edit to the existing GitHub description requires
+  reconciliation and another review. A changed destination or expanded operation
+  list also returns to review. Unchanged retries retain the existing authorization.
 
-## Automatic Draft Publication Contract
+## Route the Request
 
-A request that triggers this skill authorizes the safe default publication path end to end. Show the title, branches, doc URL, and body before publication for visibility, then continue without asking for confirmation.
+- For preparation or revision, follow the steps below.
+- For confirmed publication of a saved draft, load its context and read
+  [Publish reviewed material](references/publish.md). If the conversation does not
+  establish confirmation of those files and operations, present them for review.
+- Use a supplied PR URL/number to identify updates. Otherwise discover an open PR
+  matching the exact target repository, head repository/branch, and base. Reuse that
+  PR rather than creating a duplicate; ask if the intended PR is ambiguous.
 
-Automatic publication is allowed only when all of these are true:
+Examples: `/cubrid-pr-create CBRD-26583`, a request to revise PR #1234, or
+“publish the saved draft for CBRD-26583.” Extract a required ticket from the request,
+branch, or existing PR; ask if it cannot be determined.
 
-- The source push remote resolves to the user's fork at `github.com/vimkim/cubrid` in HTTPS or SSH form.
-- The target repository is exactly `CUBRID/CUBRID`.
-- The new PR is created with `--draft`.
-- The detailed doc is committed and pushed only to the validated `github.com/vimkim/my-cubrid-docs` repository.
+## Prepare the Review
 
-If any boundary differs, ask before publishing. Never silently broaden this authorization to another fork, target repository, or ready-for-review PR.
+### 1. Establish the Source and Target
 
-## Arguments
+Read `/home/vimkim/my-cubrid/CUBRID.md` and the applicable repository instructions.
+Inspect source status, branch/tracking information, and remote URLs. Preserve
+unrelated changes; clarify whether relevant uncommitted work belongs in the PR
+instead of committing it implicitly.
 
-Pass optional arguments to customize:
+Resolve the target repository (normally `CUBRID/CUBRID`), source repository and
+branch, and base. For an existing PR, read its actual metadata and body. For a new
+PR, prefer the user's explicit base and current project integration guidance;
+otherwise use `develop` for ordinary `CBRD-*` branches, `cubvec/cubvec` for
+`cubvec/*`, or ask when unclear. Inspect live branches instead of assuming a
+historical OOS integration branch still applies. Select source push routing using
+`CUBRID.md`; the usual personal fork is `github.com/vimkim/cubrid`. Routing is not
+publication permission.
 
-- `/cubrid-pr-create CBRD-26583` - Use this JIRA ticket number
-- `/cubrid-pr-create CBRD-26583 feat/oos` - Ticket plus base branch
-- `/cubrid-pr-create` - Detect from branch name or ask
+Set `SOURCE_COMMIT` to the full hexadecimal source commit from
+`git rev-parse --verify 'HEAD^{commit}'` and `SHORT_SHA` to its first seven characters.
+For an update, compare it with the remote PR head and resolve discrepancies before
+writing: the draft must explain the revision intended for publication. Record the
+observed remote head commit, or that the branch does not yet exist for a new PR.
 
-## Title Format
+Fetch the base, inspect the commits and full diff, and consult `cubrid-jira` for
+issue context. Summarize the whole change, not each commit separately. For an
+existing PR, start from its current GitHub body and preserve manual content unless
+the requested revision changes it. Retain its original body fingerprint for the
+publication freshness check.
 
-```text
-[CBRD-XXXXX] Short English description
-```
+### 2. Save Persistent Files
 
-- The JIRA ticket number is required. Extract it from arguments or from branch names like `cbrd-26583-oos-compact`; otherwise ask the user.
-- Keep the description concise, under 60 characters after the tag.
-- Use imperative mood: `Fix`, `Add`, `Refactor`, `Support`; not `Fixed` or `Adding`.
+Resolve the docs repository from `${CUBRID_PR_DOCS_REPO:-$HOME/gh/my-cubrid-docs}`.
+Require a Git worktree whose `origin` fetch and push URLs resolve to
+`github.com/vimkim/my-cubrid-docs` (SSH or HTTPS). Resolve canonical source and docs
+paths; keep all draft files outside the CUBRID source worktree.
 
-## Two Artifacts, Two Audiences
+Inspect docs status, branches, worktrees, and instructions. Create or reuse a task
+worktree from its integration branch, normally `main`, following the user's Git
+workflow. Save the draft files in that task worktree. Keep meaningful draft files
+tracked; local task commits are separate from remote publication.
 
-Produce two separate artifacts:
+Use `cbrd-XXXXX/` and a short kebab-case change slug. Set `AGENT` from the active
+runtime (`codex` or `claude`), not installed binaries. Ask if the runtime identity
+is unclear. Use the source commit for identity, never the docs commit:
 
-1. The PR body: a short, plain-Korean one-screen summary. It answers what changed, why it matters, where reviewers should look, and, when possible, the AS-IS/TO-BE contrast.
-2. The detailed explanation doc: a separate markdown file in the `my-cubrid-docs` repo. It holds the full technical write-up, including the detailed AS-IS/TO-BE explanation, and the PR body links to it.
+| Artifact | Filename inside `cbrd-XXXXX/` |
+| --- | --- |
+| Required PR body | `CBRD-XXXXX-<slug>-pr-body_<SHORT_SHA>_<AGENT>.md` |
+| Required draft context | `CBRD-XXXXX-<slug>-pr-context_<SHORT_SHA>_<AGENT>.md` |
+| Optional detailed explanation | `CBRD-XXXXX-<slug>_<SHORT_SHA>_<AGENT>.md` |
 
-Do not put deep detail in the PR body. If a paragraph is too technical for a Korean 11th-grade student with no CUBRID-internal knowledge, move it to the doc.
+Set `body_file` and `context_file` to these saved files. Set `doc_file` only when
+an explanation is warranted. The body file contains exactly the text to upload:
+no frontmatter, proposed title, approval notes, or publication checklist.
 
-## PR Body Format
+Inspect matching drafts before writing. Resume the selected draft and preserve
+user edits; create a distinct revision if a new draft would overwrite unrelated or
+previously reviewed material. When the source revision changes, retain the old
+files, reconcile their content, and prepare files identified by the new commit.
 
-Use this exact section shape for every PR, including trivial typo or comment fixes:
+Create a detailed explanation only when technical context exceeds the short body's
+scope. Use English `## Purpose`, `## Implementation`, and `## Remarks` headings with
+Korean prose; place structured test details under `### Test Plan` in Remarks.
+Choose its final public URL before review, normally
+`https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-XXXXX/<filename>`.
+A new explanation linked by the body must be published before the PR write.
+
+### 3. Record Draft Context
+
+Keep resume metadata in `context_file`, separate from the uploaded body:
+
+- Ticket, full `SOURCE_COMMIT`, agent identity, source repository/branch, base, and
+  observed remote head commit or absence.
+- Target repository, operation (`create` or `update`), and existing PR URL/number.
+- Proposed title for creation; existing title and optional proposed replacement for
+  updates. Record the existing PR's open/closed and draft/ready state.
+- For updates, a SHA-256 fingerprint of the original GitHub body. Use the same
+  decoded UTF-8 bytes for every comparison, with no added newline; for example,
+  hash the `body` string from `gh pr view ... --json body` after JSON decoding.
+- Docs task branch, integration branch, and repo-relative body/context/detail paths.
+  Include any public explanation URL. Rediscover worktree locations with Git when
+  resuming; keep machine-local paths out of tracked context.
+- Exact proposed operations and destinations: docs commits to integrate/push (and
+  files included), source push if needed, new draft PR creation or existing body
+  update, and title change only when proposed. Include docs rebase/fast-forward
+  merge, including final execution-record commits, if required by the local workflow.
+  For creation, include the default `vimkim` assignment in the proposal.
+
+The context is a proposal, not a durable approval token. When confirmed publication
+begins, record the body/explanation fingerprints for that attempt. Record operation
+results as they are verified, so a later session can distinguish an interrupted
+attempt from a new revision. Establish authorization from the conversation.
+
+### 4. Validate and Hand Back for Review
+
+Review saved material against the diff, issue, and related context. Claims and
+verification outcomes must match evidence; include limits and follow-up when
+relevant. Resolve unknown intended behavior before proposing unsupported claims.
+Use an independent reviewer only when the user requests one.
+
+Run the material checker below and correct preparation defects. If a correction
+changes text after the user has reviewed it, return that revision for review.
+Commit only the intended files locally when required by the worktree workflow.
+
+Show clickable local links to the body, context, and any explanation; identify the
+source commit, target PR or branches, proposed title, and the exact publication
+operations. Explain that the user can edit the body file directly. Ask for review
+and explicit publication confirmation, then **end preparation here**. Keep the
+docs task worktree available for review. Read the publication reference only when
+continuing after confirmation.
+
+## Writing Conventions
+
+Titles use `[CBRD-XXXXX] Short English description`, with an imperative verb such
+as `Fix`, `Add`, or `Refactor` and fewer than 60 characters after the ticket tag.
+
+The body starts with the JIRA URL and uses exactly these `##` sections in order:
 
 ```markdown
 https://jira.cubrid.org/browse/CBRD-XXXXX
 
 ## Purpose
 
-- 이 PR이 해결하려는 문제와 필요한 이유를 1-3줄로 설명합니다.
-- 가능하면 `AS-IS:` 로 현재 동작/한계를 한 줄, `TO-BE:` 로 바뀐 동작/목표 상태를 한 줄로 대비합니다.
+- 이 변경이 필요한 이유를 짧게 설명합니다.
+- AS-IS: 현재 동작이나 한계를 한 문장으로 설명합니다.
+- TO-BE: 변경 후 동작을 한 문장으로 설명합니다.
 
 ## Implementation
 
-- 실제로 바꾼 내용을 2-5줄로 설명합니다.
-- 파일명, 함수명, 브랜치명은 `src/...`, `heap_record_replace_oos_oids`, `feat/oos`처럼 그대로 씁니다.
+- 실제로 바꾼 내용을 설명합니다.
 
 ## Remarks
 
-- 리뷰어가 먼저 봐야 할 곳, 제한 사항, 후속 작업을 적습니다.
-- 자세한 설명: https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-XXXXX/CBRD-XXXXX-<slug>_<SHORT_SHA>_<AGENT>.md
+- 검증 결과, 리뷰할 부분, 제한 사항을 적습니다.
 ```
 
-Rules:
-
-- Do not use `## What Changed`, `## Why`, `## Review Points`, `## Description`, or a top-level `## Test Plan` in the PR body.
-- Do not drop any of the three required sections. If a section is small, keep it short.
-- Put the detailed doc URL exactly once, normally as the last bullet in `## Remarks`.
-- The body must stand alone: a reviewer who does not open JIRA or the doc still understands the change at a high level.
-
-### AS-IS / TO-BE Rule
-
-- Use explicit `AS-IS:` and `TO-BE:` bullets in `## Purpose` when the PR changes current behavior, policy, default values, data flow, API behavior, recovery behavior, or operational procedure.
-- Keep PR-body AS-IS/TO-BE bullets one sentence each. Put root cause, code path, and edge cases in the detailed doc.
-- In the detailed doc, put AS-IS/TO-BE under `## Purpose` as bullets or a compact table, then explain implementation under `## Implementation`.
-- Do not invent a TO-BE. If the intended behavior is not in the diff, JIRA, design doc, or user-provided context, ask before publishing or write `TO-BE: TBD - 합의 미확인` in the detailed doc and keep the PR body more conservative.
-- Do not force AS-IS/TO-BE for pure cleanup, comment-only changes, dependency bumps, or internal maintenance where no reader-facing before/after contrast exists.
-
-## Writing for an 11th-Grade Korean Reader
-
-The PR body must be understandable by a Korean high-school 11th grader: fluent in Korean, but with zero CUBRID-internal knowledge.
-
-- Use short sentences. One idea per sentence.
-- Prefer everyday Korean. When a CUBRID or database term is unavoidable, gloss it once: `OOS (큰 컬럼 값을 따로 떼어 다른 페이지에 저장하는 방식)`.
-- Keep code identifiers, file paths, branch names, and function names in English code style.
-- Explain the reason for the change concretely. Avoid filler like `본 PR은`, `전반적으로`, and `필요에 따라`.
-- Move any third paragraph of technical explanation into the detailed doc.
-
-## Detailed Explanation Doc
-
-Every PR's deep technical write-up lives in the `my-cubrid-docs` repo, not in the PR body.
-
-- Resolve the local docs repo as `${CUBRID_PR_DOCS_REPO:-$HOME/gh/my-cubrid-docs}`.
-- Require it to be a Git worktree whose `origin` remote points to `github.com/vimkim/my-cubrid-docs` (HTTPS or SSH form). Stop if this validation fails.
-- Resolve both the CUBRID source root and docs root to canonical absolute paths. Reject a docs root equal to the CUBRID source root or current working directory; never write the detailed doc into the source worktree.
-- Directory: `cbrd-XXXXX/` using lowercase `cbrd-`.
-- Filename: `CBRD-XXXXX-<slug>_<SHORT_SHA>_<AGENT>.md` using uppercase `CBRD-` in the filename.
-- Published URL: `https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-XXXXX/CBRD-XXXXX-<slug>_<SHORT_SHA>_<AGENT>.md`.
-
-Resolve both identity suffixes before choosing `doc_file`:
-
-1. Set `SOURCE_COMMIT` with `git rev-parse --verify 'HEAD^{commit}'` in the current CUBRID worktree, validate the returned hexadecimal commit, and set `SHORT_SHA` to its first seven characters. This is the commit the PR will publish; never use the docs repository's commit.
-2. Set `AGENT` from the active AI host's runtime identity. Use `codex` for Codex and `claude` for Claude Code. For another host, use its stable lowercase agent name. Do not infer the host from installed binaries because multiple AI CLIs may coexist; ask the user if runtime identity is unclear.
-3. Keep `SOURCE_COMMIT`, `SHORT_SHA`, and `AGENT` unchanged throughout the workflow. Immediately before committing the doc and again before creating the PR, require `git rev-parse HEAD` in the CUBRID worktree to equal `SOURCE_COMMIT`. If it changed, stop and regenerate the filename, URL, and PR material for the new commit.
-
-Use the same top-level section contract in the doc:
-
-- `## Purpose` - background, problem, intended outcome, and AS-IS/TO-BE contrast when applicable
-- `## Implementation` - full technical change list with repo-relative file paths and function names
-- `## Remarks` - limits, risks, compatibility notes, reviewer focus, follow-up, and verification notes
-
-If test details need structure, put `### Test Plan` under `## Remarks` instead of adding another top-level PR-format section.
-
-Doc convention matches the PR body: English headers, Korean prose, code identifiers as-is.
+- Keep the whole body to one screen, roughly 25–35 lines or fewer for small changes.
+  Keep all three sections even for trivial fixes; use `### Test Plan` under Remarks
+  if needed rather than a fourth `##` section.
+- Use short, plain Korean sentences understandable by an 11th-grade Korean reader
+  without CUBRID-internal knowledge. Gloss unfamiliar database terms once. Keep
+  code identifiers and repo-relative paths in English code style.
+- Use explicit `AS-IS:` and `TO-BE:` under Purpose when the change has a meaningful
+  before/after contrast. Omit them for pure cleanup with no such contrast. Use the
+  same contrast under Purpose in an explanation if one is written.
+- When an explanation is included, link its public URL once, normally as the final
+  Remarks bullet. Otherwise omit the link. The body must stand alone either way.
+- Put deep technical detail in the optional explanation. Express verification
+  with public project scripts, CMake/ctest, or outcomes, not personal `just` recipes.
+- PR bodies and explanations contain repo-relative paths or public URLs, never
+  local absolute paths, `file://` URLs, or machine-specific workspace paths.
 
 ## Material Checker
 
-Use the bundled checker at `scripts/check-pr-material.sh`, relative to this skill directory. Resolve it once as `checker="<this-skill-directory>/scripts/check-pr-material.sh"` before running commands from the CUBRID worktree. It validates the PR body section contract and rejects forbidden machine-local material.
+Resolve `checker` to this skill's `scripts/check-pr-material.sh`. It checks the
+body's three-section contract and known local-path/task-runner patterns; it does
+not establish factual accuracy, review approval, or source/PR freshness.
 
-Run it on the generated PR body file and the detailed doc before showing the publication preview, before committing the docs repo, and again immediately before `gh pr create`:
-
-```bash
-body_file="$(mktemp)"
-# Write the PR body into "$body_file".
-bash "$checker" --body "$body_file" "$doc_file"
-```
-
-If it fails, edit the PR body and doc until it passes. Do not ask the user to approve material that still contains local paths, `file://` URLs, machine-specific workspace paths, old PR headings, or task-runner shortcut commands.
-
-## Execution Steps
-
-### Step 1: Gather Context
-
-Run these in parallel:
-
-1. `git status` - check for uncommitted changes
-2. `git branch -vv` - current branch and tracking info
-3. `git remote -v` - available remotes
-
-If there are uncommitted changes, warn the user and determine whether the committed `HEAD` still represents the intended PR. Continue without a publication confirmation when the dirty paths are unrelated and can be excluded. If it is unclear whether the uncommitted changes belong in the PR, ask before choosing their disposition; never commit them implicitly.
-
-### Step 2: Determine PR Parameters
-
-1. JIRA ticket: extract from arguments, branch name (`cbrd-XXXXX` or `CBRD-XXXXX`), or ask.
-2. Base branch:
-   - For `feat/oos*` branches, use `feat/oos`.
-   - For `CBRD-*` branches, use `develop`.
-   - For `cubvec/*` branches, use `cubvec/cubvec`.
-   - Otherwise ask the user.
-3. Target repo: default to `CUBRID/CUBRID` unless the user specifies another repo.
-4. Source: determine the user's fork remote, require its push URL to resolve to `github.com/vimkim/cubrid`, and use `vimkim:<branch>` for the PR head. If it points elsewhere, leave the automatic-publication boundary and ask.
-5. Docs repo: set `docs_repo="${CUBRID_PR_DOCS_REPO:-$HOME/gh/my-cubrid-docs}"`, require the expected `origin`, and reject the CUBRID source root/current working directory as described above.
-6. Set `SOURCE_COMMIT`, `SHORT_SHA`, and `AGENT` using the **Detailed Explanation Doc** identity rules. If the runtime does not identify the active AI host, ask rather than guessing.
-
-### Step 3: Analyze Changes
-
-1. Fetch the base branch: `git fetch <upstream-remote> <base-branch>`.
-2. Show commits: `git log --oneline <upstream>/<base>..HEAD`.
-3. Show diff stat: `git diff <upstream>/<base>...HEAD --stat`.
-4. Read the full diff to understand all changes.
-5. If a JIRA ticket was identified, fetch context with `/cubrid-jira CBRD-XXXXX` for richer description.
-
-### Step 4: Write the Detailed Explanation Doc
-
-1. Pick a short kebab-case `<slug>` from the change, such as `reenable-oos-oid-replacement`.
-2. Create `doc_dir="$docs_repo/cbrd-XXXXX"` and `doc_file="$doc_dir/CBRD-XXXXX-<slug>_<SHORT_SHA>_<AGENT>.md"`.
-3. Write the full technical explanation with `## Purpose`, `## Implementation`, and `## Remarks`. If a before/after contrast exists, make AS-IS/TO-BE explicit under `## Purpose`.
-4. Use repo-relative paths like `src/storage/heap_file.c`, never local absolute paths.
-5. Review and revise the saved doc using the Document Review criteria below.
-
-### Step 5: Draft the One-Screen PR Body
-
-1. Write the PR body to `body_file="$(mktemp)"`.
-2. Use only the required section order: `## Purpose`, `## Implementation`, `## Remarks`.
-3. Keep it within 25-35 lines and at the 11th-grade-reader bar.
-4. If the change has a clear before/after contrast, include short `AS-IS:` and `TO-BE:` bullets in `## Purpose`.
-5. Put the detailed doc URL exactly once as the final bullet in `## Remarks`.
-
-### Step 6: Run the Material Checker
-
-Run:
+Run it before the review handoff, before committing body/explanation changes, and
+immediately before creating or updating a PR:
 
 ```bash
-bash "$checker" --body "$body_file" "$doc_file"
+material_files=("$body_file")
+if [[ -n "${doc_file:-}" ]]; then
+  material_files+=("$doc_file")
+fi
+bash "$checker" --body "${material_files[@]}"
 ```
 
-Fix every failure, then re-run. This check is required before showing the body to the user, before committing the docs repo, and before creating the PR.
-
-### Step 7: Show the Publication Preview
-
-Show the draft title, base branch, head branch, doc URL, and PR body for visibility. Continue directly to publication without asking for confirmation when the Automatic Draft Publication Contract is satisfied.
-
-### Step 8: Commit and Push the Docs Repo
-
-After the checker passes and the safe publication boundary is verified:
-
-1. Verify that the CUBRID worktree `HEAD` still equals `SOURCE_COMMIT`; stop and regenerate the artifact identity if it changed.
-2. Commit and push only the intended detailed document:
-
-```bash
-git -C "$docs_repo" add -- "cbrd-XXXXX/CBRD-XXXXX-<slug>_<SHORT_SHA>_<AGENT>.md"
-git -C "$docs_repo" commit -m "docs(CBRD-XXXXX): add PR explanation for <slug>"
-git -C "$docs_repo" push origin main
-```
-
-After pushing, use the published GitHub URL in the PR body's `## Remarks` section.
-
-### Step 9: Push the Branch and Create the PR
-
-1. Push the branch to the user's fork:
-   ```bash
-   git push <fork-remote> <branch> -u
-   ```
-2. Re-run the checker:
-   ```bash
-   bash "$checker" --body "$body_file" "$doc_file"
-   ```
-3. Verify once more that the CUBRID worktree `HEAD` equals `SOURCE_COMMIT`. Stop if it changed.
-4. Create the PR:
-   ```bash
-   gh pr create --repo CUBRID/CUBRID \
-     --draft \
-     --base <base-branch> \
-     --head <user>:<branch> \
-     --assignee vimkim \
-     --title "[CBRD-XXXXX] Title" \
-     --body-file "$body_file"
-   ```
-5. Print the resulting PR URL.
-
-## Example Output
-
-```text
-Doc pushed: https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-26583/CBRD-26583-reenable-oos-oid-replacement_f5794fb_codex.md
-PR created: https://github.com/CUBRID/cubrid/pull/6950
-
-Title: [CBRD-26583] Re-enable OOS OID replacement in heap records
-Base:  feat/oos
-Head:  vimkim:feat/oos-replace-oos-oid
-```
-
-## Tips
-
-- If the branch has already been pushed, skip the branch push step.
-- If a PR already exists for the branch, show it instead of creating a duplicate. If the doc has changed, still update the docs repo and PR body link.
-- For multi-commit PRs, summarize the overall change rather than listing each commit message.
-- Use `--body-file "$body_file"` for multi-line Korean text.
-- The one-screen rule is a hard limit. When in doubt, cut a sentence from the body and add it to the doc.
-
-## Document Review
-
-Review the saved `doc_file` in the current session against the diff, JIRA output, related issues, and related PRs. Check:
-
-- `## Purpose`, `## Implementation`, and `## Remarks` are complete and technically accurate.
-- AS-IS/TO-BE is explicit when the change supports it.
-- Claims and verification notes match the source evidence; limitations are stated.
-- CUBRID doc conventions are followed and CUBRID-internal terms are glossed on first use.
-
-Correct defects in the same file. Ask a concise clarification only for a decision or required input that the conversation and sources cannot resolve. Use an independent reviewer only when the user requests one; provide the doc, source material, and these criteria, and request concrete findings. A design interview is a separate user-requested activity, not a publication prerequisite.
-
-Once the criteria are satisfied, continue with Steps 5–9 to draft the PR body, run the material checker, and publish under the existing authorization contract.
+Check publication material only; the companion context is not the PR body. During
+confirmed publication, validation is read-only. Report failures and return any
+needed text changes to review instead of rewriting the approved files.

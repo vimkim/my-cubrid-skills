@@ -1,30 +1,42 @@
 ---
 name: cubrid-oos-context
-description: Load the authoritative CUBRID Out-of-row Overflow Storage project context when the task specifically concerns OOS behavior, design, implementation, defects, or tests—for example, an OOS-specific CBRD ticket, source file, identifier, or design decision.
+description: Consult the authoritative CUBRID Out-of-row Overflow Storage specification only when an answer depends on required OOS behavior, accepted design, or implementation/test conformance. Routine CI status, scheduling, wording edits, and loader maintenance use their own task evidence.
 ---
 
 # CUBRID OOS Context
 
-This skill loads context about the **OOS (Out-of-row Overflow Storage)** project — a CUBRID feature that separates large variable-length columns from heap records into dedicated OOS files to reduce unnecessary disk I/O.
+This skill loads the authoritative **OOS (Out-of-row Overflow Storage)** specification for CUBRID tasks that need its requirements or design rationale.
 
 $ARGUMENTS
 
-## Step 0: Load the source of truth
+## Step 0: Check scope
 
-Read the complete authoritative context before answering or taking action:
+Identify the OOS requirement or design decision needed to answer the request. Continue to Step 1 when explaining required behavior or assessing design, implementation, defects, or test expectations against the specification.
+
+Routine CI or PR status checks, scheduling, wording edits, and maintenance of this loader use task-specific evidence. Finish this workflow here for those requests; context loading, workspace validation, and OOS evidence reconciliation apply only after the scope check passes. Treat an OOS mention, branch name, PR title, or ticket label as a task identifier; select this workflow based on the question to answer.
+
+If a routine request expands into a behavioral question, apply the scope check to that question.
+
+## Step 1: Load or reuse the source of truth
+
+Resolve the authoritative file and check its content fingerprint only after the scope check passes:
 
 ```bash
 context_file="${CUBRID_OOS_CONTEXT_FILE:-/home/vimkim/gh/cubrid-oos-context/OOS-CONTEXT.md}"
 test -r "$context_file"
+context_file="$(realpath -- "$context_file")"
+sha256sum -- "$context_file"
 ```
 
-Then read `$context_file` through EOF. Resolve relative links such as `docs/adr/...` against the directory containing that file and read the linked document when its decision or rationale is relevant.
+Reuse a previous complete read when its recorded resolved path and SHA-256 still match and the full contents remain available in the active session context. Otherwise read `$context_file` through EOF without truncation, confirm its fingerprint is unchanged across the read, and retain its resolved path and fingerprint for later turns. A changed file, a different resolved path, an unknown prior fingerprint, or a summary left by compaction requires a fresh complete read.
+
+Resolve relative links such as `docs/adr/...` against the directory containing that file and read the linked document when its decision or rationale is relevant.
 
 If the file is missing or unreadable, stop and report the resolved path. Do not substitute remembered OOS facts, the summary from a previous turn, or the deleted quick reference from this skill.
 
 `OOS-CONTEXT.md` is the normative specification and single source of truth for OOS. This skill is only its loader and usage policy; it must not duplicate thresholds, layouts, invariants, ticket states, milestone dates, or implementation status.
 
-## Step 1: Validate the workspace when needed
+## Step 2: Validate the workspace when needed
 
 Run the bundled validation script when the request involves source inspection, implementation, debugging, building, or testing:
 
@@ -50,7 +62,7 @@ Do not run it for a documentation-only or conceptual question unless the answer 
 **If the script reports only warnings (exit code 0):**
 - Note the warnings but proceed normally — the environment is usable
 
-## Step 2: Check freshness and reconcile evidence
+## Step 3: Check freshness and reconcile evidence
 
 Treat volatile statements in the context file—ticket status, branch status, line numbers, milestone dates, and labels such as proposed, pending, open, or merged—as dated observations, not timeless facts.
 
@@ -71,7 +83,7 @@ Use this authority and reconciliation rule:
 
 If source and specification disagree, classify the difference as an implementation conformance gap unless the specification explicitly marks the behavior proposed, historical, or non-normative. State the conflict and identify the revision/date involved. Ask for clarification only when the specification itself is ambiguous or internally inconsistent.
 
-## Step 3: Answer or act
+## Step 4: Answer or act
 
 - Distinguish current implementation, accepted design, proposed work, known defect, and historical behavior.
 - Do not treat incomplete `feat/oos` implementation or temporary merge-readiness instrumentation as normative behavior.

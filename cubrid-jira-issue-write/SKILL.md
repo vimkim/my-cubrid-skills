@@ -146,6 +146,7 @@ Show AS-IS/TO-BE when a before/after comparison clarifies the change. Choose pro
 
 ## Writing Guidance
 
+- If `$asd-ste100` is available, use its STE-flavored mode for English explanatory text. Use Strict mode for English procedures. Preserve required headings, identifiers, quotations, and uncertainty. Keep the required Korean prose and 한다체.
 - Explain the background before asking the reader to interpret a technical list or table. Include relevant history and changed circumstances when the sources establish them. Read the conversation and available source material first; ask only for consequential context that cannot be recovered there.
 - Distinguish confirmed facts, user experience, hypotheses, and proposals through natural attribution. Leave unavailable causes or decisions open instead of supplying a plausible story.
 - Explain unfamiliar terms and the significance of technical limits where needed. Give enough connected prose to make the causal relationship understandable; the issue need not become a general tutorial.

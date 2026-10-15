@@ -209,6 +209,11 @@ When the user asks for a separate persistent AI-authored analysis, save that doc
 
 Compute the path once and reuse it for all revisions and the final handoff. If `/home/vimkim/gh/my-cubrid-docs` is unavailable, stop and ask for another version-controlled docs repository. Reject the fetcher repository, CUBRID source worktree, current working directory, or any non-docs fallback; never fall back to `pwd`.
 
+If `$asd-ste100` is available, use its STE-flavored mode for English AI-authored
+analysis. Use Strict mode for procedures. Preserve the requested language,
+identifiers, quoted diagnostics, and uncertainty. Keep the fetcher's deterministic
+reports unchanged.
+
 ## Reporting
 
 Always tell the user:

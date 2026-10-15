@@ -112,6 +112,10 @@ Compare each exact testcase path and observed signature with the validated basel
 
 ## 4. Write the report
 
+If `$asd-ste100` is available, use its STE-flavored mode for English report prose.
+Use Strict mode for procedures. Preserve evidence labels, identifiers, uncertainty,
+and the strength of causal claims. Keep the report's requested language.
+
 Derive the directory identity from a `CBRD-<number>` in the validated PR title, otherwise use `PR-<number>`. Write:
 
 ```text

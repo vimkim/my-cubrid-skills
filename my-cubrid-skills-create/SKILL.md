@@ -43,6 +43,10 @@ If Step 2 was deferred, derive the skill name now from the workflow's verb + obj
 
 Create `<collection-root>/<skill-name>/SKILL.md` with complete content — no placeholder comments. Follow the valid skill structure below.
 
+If `$asd-ste100` is available, use its Strict mode for English skill descriptions
+and instructions. Preserve commands, identifiers, conditions, scope, and
+authorization. Continue without it when unavailable.
+
 Note: `SKILL.md` is installed to both Claude Code and Codex via `just sync`. Use `$ARGUMENTS` for input; avoid Claude-Code-only constructs unless explicitly flagged.
 
 ### Step 6: Validate the SKILL.md

@@ -156,6 +156,10 @@ continuing after confirmation.
 
 ## Writing Conventions
 
+During preparation, use `$asd-ste100` if available for English titles and
+explanatory prose. Use its STE-flavored mode. Preserve required headings,
+identifiers, quotations, uncertainty, and the required Korean prose.
+
 Titles use `[CBRD-XXXXX] Short English description`, with an imperative verb such
 as `Fix`, `Add`, or `Refactor` and fewer than 60 characters after the ticket tag.
 

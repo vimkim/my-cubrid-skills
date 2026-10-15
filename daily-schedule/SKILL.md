@@ -15,6 +15,10 @@ File conventions inside the schedule home:
 
 Control sheets state facts with a snapshot date. Snapshots are stale by definition: before recommending any PR-, CI-, or JIRA-related action, re-query the live source.
 
+If `$asd-ste100` is available, use it for English planning text. Use Strict mode
+for action instructions and STE-flavored mode for summaries. Preserve the user's
+verbatim plan, requested language, dates, priorities, and uncertainty.
+
 ## 1. Establish current state (every invocation)
 
 1. Get the real time: `date '+%Y-%m-%d %H:%M %Z (%A)'`. Note remaining working hours and upcoming Korean holidays the sheets mention.

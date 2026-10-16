@@ -10,8 +10,11 @@ Schedule home: `/home/vimkim/temp/todays-schedule/` (a git repository; leave fil
 File conventions inside the schedule home:
 
 - `YYYY-MM-DD-raw-prompt*.md` — the user's verbatim plan dump, saved unedited.
-- `week-YYYY-MM-DD.md` — weekly control sheet, named by the Monday of the week it covers.
-- `today-YYYY-MM-DD.md` — daily control sheet.
+- `weekly/week-YYYY-MM-DD.md` — weekly control sheet, named by the Monday of the week it covers.
+- `daily/today-YYYY-MM-DD.md` — daily control sheet.
+
+Resolve these paths from the schedule home, regardless of the session's working directory. Create `daily/` and `weekly/` as needed. Keep verbatim plan dumps in the schedule home. Resolve Markdown links relative to the sheet: daily-to-weekly links use `../weekly/`, and weekly-to-intake links use `../`.
+For historical root-level sheet references, find `today-*` under `daily/` and `week-*` under `weekly/`.
 
 Control sheets state facts with a snapshot date. Snapshots are stale by definition: before recommending any PR-, CI-, or JIRA-related action, re-query the live source.
 
@@ -22,7 +25,7 @@ verbatim plan, requested language, dates, priorities, and uncertainty.
 ## 1. Establish current state (every invocation)
 
 1. Get the real time: `date '+%Y-%m-%d %H:%M %Z (%A)'`. Note remaining working hours and upcoming Korean holidays the sheets mention.
-2. Read the newest `week-*.md` whose date is ≤ today, and today's `today-YYYY-MM-DD.md` if it exists.
+2. Read the newest `weekly/week-*.md` whose date is ≤ today, and today's `daily/today-YYYY-MM-DD.md` if it exists.
 3. Read scheduled commitments with `work-tracker todo today --json` (or `todo --days 3` / `todo --days 5` for a requested horizon), and use `work-tracker today --json` to detect ongoing/recently finished work (fall back to `work-tracker list --json` for the open backlog). If the installed CLI lacks `todo`, report the missing capability and use the sheets; do not claim structured dates were stored. If `work-tracker` is missing, say so and continue from the sheets alone. Follow the `track-work` skill from `vimkim/my-skills` for all ledger mutations. If it is unavailable, install that collection before mutating the ledger; schedule-sheet reads remain available.
 4. Detect work already done today by other sessions: `git -C /home/vimkim/gh/my-cubrid-docs log --oneline --since=midnight` — agents commit evidence reports there.
 5. For every candidate next action that references a PR or CI, re-check live state, e.g. `gh pr view <n> --repo CUBRID/cubrid --json state,isDraft,reviewDecision,mergeStateStatus` and `gh pr checks <n> --repo CUBRID/cubrid`.
@@ -40,7 +43,7 @@ Use `work-tracker` as the authority for `planned_date`, `due_date`, and `priorit
 
 ## 2. Answer "what should I do today / what's next"
 
-1. On the first ask of a day, create `today-YYYY-MM-DD.md` from the governing week sheet, the ledger, and live state: working window, per-item status and next action, a 운영 규칙 header (like `week-2026-09-21.md`), and a 진행 로그 section. Carry unfinished items forward from the previous today-sheet.
+1. On the first ask of a day, create `daily/today-YYYY-MM-DD.md` from the governing week sheet, the ledger, and live state: working window, per-item status and next action, a 운영 규칙 header (like `weekly/week-2026-09-21.md`), and a 진행 로그 section. Carry unfinished items forward from the previous today-sheet.
 2. Recommend one most important next action with a timebox. Offer one fallback only if the primary is blocked. Do not enumerate the whole backlog unless asked.
 3. Prefer actions that unblock people or long-running machines first: review requests, QA data requests, and CI triggers go out before deep solo work, especially before weekends and holidays.
 4. Append the recommendation to the today sheet's 진행 로그.
@@ -58,7 +61,7 @@ When the user reports an item done, blocked, or deferred: update the today sheet
 ## 5. Weekly plan intake (the user pastes a plan, "차주 계획")
 
 1. Save the plan verbatim as `YYYY-MM-DD-raw-prompt*.md`.
-2. Build `week-YYYY-MM-DD.md`: calendar notes (holidays shrink the real working days — say so), one section per item with JIRA/PR links, a date-stamped live-state snapshot, concrete next actions, and related work-tracker item IDs.
+2. Build `weekly/week-YYYY-MM-DD.md`: calendar notes (holidays shrink the real working days — say so), one section per item with JIRA/PR links, a date-stamped live-state snapshot, concrete next actions, and related work-tracker item IDs.
 3. Register a work-tracker umbrella item whose description points at the week sheet; register new items for objectives not yet tracked; add cross-reference notes to existing related items instead of creating duplicates. Apply the accepted structured dates and priorities under Structured scheduling.
 4. Verify the plan's premises against live state before accepting them — an item may already be further along than the user thinks (for example, a "get review" item whose PR is already approved). Report such corrections.
 5. Close with sequencing advice: name the long-pole item to start first and any people-dependent request to send before the next holiday or weekend.

@@ -4,7 +4,7 @@
 
 Prefer `cubrid-ci-analyze` and its `cubrid-ci` collector for runtime snapshots. Preserve exact Engine and testcase identity, schema/observation validation, raw-file digests, and acquisition states. Current suite summaries include failures and errors; a job-level failure without trustworthy testcase records has no testcase verdict.
 
-For PR failure attribution, use [exact merge-base comparison](ci-baseline.md). The `cubrid-ci collect-base` and `collect-commit` commands own historical GitHub acquisition; status-only requests need no baseline.
+For PR failure attribution, use [exact merge-base comparison](ci-baseline.md). The `cubrid-ci collect-base` and `collect-commit` commands own exact-commit baseline and historical Engine CI acquisition; status-only requests need no baseline. Use [Chronicle](#testcase-history-with-chronicle) for broader testcase failure history.
 
 Separate read-only API evidence is allowed for unavailable or unsupported collector capabilities, incomplete acquisition, and miscellaneous GitHub checks. First use the supported CLI path; API evidence cannot upgrade an incomplete collector report or stand in for a validated baseline. Record missing CLI support as an unknown baseline in the analyzer. Record the reason and store an API bundle separately from collector schema output. An integrity mismatch must be resolved, never bypassed by silently trusting the same suspect evidence through another endpoint.
 
@@ -33,6 +33,57 @@ For a `release/11.x` PR or historical evidence whose pinned status actually targ
 Follow GitHub Link pagination. Check every request exit/status, use bounded backoff for transient/rate-limit responses and honor retry guidance. Record permanent authentication/access failures and truncation as incomplete coverage. Empty tests, missing artifacts and missing checks are not success. Keep only relevant bounded text artifacts by default; ask before downloading large cores/binaries unless already authorized. Do not POST reruns, cancels or comments during collection.
 
 Primary API references when an endpoint or schema needs verification: [GitHub checks](https://docs.github.com/en/rest/checks/runs), [Actions jobs](https://docs.github.com/en/rest/actions/workflow-jobs), [Actions runs](https://docs.github.com/en/rest/actions/workflow-runs), and, only for the scoped legacy path above, [CircleCI API](https://circleci.com/docs/api/v2/index.html).
+
+## Testcase history with Chronicle
+
+Use `cubrid-tcc` to investigate earlier failures of a validated testcase in retained `gha-ci` SQL, medium, or shell results. Its queries read local evidence offline. If the command is unavailable or a query fails, record the limitation and continue the independently validated CI analysis. Record `cubrid-tcc --version` when available.
+
+### Select the testcase and occurrence
+
+Set `HISTORY_CASE` to the full testcase path and `HISTORY_RUN` to the run ID from the validated failure's suite. Map the suite to `HISTORY_SUITE`:
+
+| CI suite | Chronicle suite |
+|---|---|
+| `test_sql` | `sql` |
+| `test_medium` | `medium` |
+| `test_shell` | `shell` |
+
+```bash
+cubrid-tcc status "$HISTORY_CASE" --suite "$HISTORY_SUITE" --json
+cubrid-tcc explain --run "$HISTORY_RUN" --case "$HISTORY_CASE" \
+    --suite "$HISTORY_SUITE" --json
+```
+
+Read `status`, `flakiness.assessment`, `freshness`, and coverage separately. `status` defaults to a recent window; use `history` or `explain` for older evidence. Exit `0` includes unknown, failing, and empty results. Exit `2` reports an operational error. For exit `3`, select a returned path/suite/variant candidate; use a returned `--execution` ID instead of `--run`, and `--ordinal` when needed to identify a repeated record. Execution IDs belong to the queried local index.
+
+Match the selected occurrence to the pinned Engine SHA, testcase SHA, path, suite, variant, and available run/attempt/job identity. Shared result directories can leave attempt attribution unresolved: a same-run occurrence then supplies context, without proving it is the selected CI attempt. Preserve that uncertainty.
+
+When the current occurrence is not indexed, inspect broader retained history with:
+
+```bash
+cubrid-tcc history "$HISTORY_CASE" --suite "$HISTORY_SUITE" --json
+```
+
+`history` anchors its summary to the latest ordered indexed failure, which may differ from the current failure. Label that target explicitly. Search across PRs and Engine revisions for recurrence; add current-PR or current-Engine filters only for a deliberately narrower question. An earlier execution time does not prove Git ancestry; use `--ancestor-of` with `--engine-repository` when ancestry matters, and retain unknown ancestry when local objects are missing.
+
+### Refresh a bounded scope when needed
+
+If relevant evidence is missing or stale and history would inform the analysis, group the needed coverage by run or window and choose one bounded refresh: selected runs, or an explicit UTC run-creation window covering the historical question. Set both window endpoints before using `--since` and `--until`. Select only relevant suites and use `--revisit-limit 0` so the refresh excludes unrelated queued runs. Retain the CLI's request-budget limit or lower it. Reuse the refreshed evidence across testcase queries.
+
+```bash
+cubrid-tcc sync-data --run "$HISTORY_RUN" --suite "$HISTORY_SUITE" \
+    --revisit-limit 0 --json
+```
+
+Capture the exit and JSON, inspect `coverage --json` for the selected suite/window, then repeat the affected queries once. Report remaining gaps rather than polling or expanding the search until a match appears. A successful sync does not establish complete history. Stale discovery limits claims about recent or absent results; it does not erase an earlier retained failure.
+
+### Interpret and retain history
+
+`SEEN_BEFORE` establishes an earlier failure of the same testcase identity. Compare retained messages, diffs, or stacks before claiming the same failure signature. `FIRST_OBSERVED_IN_WINDOW` applies only to the reported complete window; it does not identify the introducing commit. `UNKNOWN_HISTORY`, absent records, and incomplete coverage leave prior occurrence unknown.
+
+Report the CLI's flakiness assessment with its supporting context and limitations. Suspected flakiness needs independent comparable PASS and FAIL/ERROR observations; mixed outcomes on different Engine or testcase revisions alone are insufficient. Recurrence and matching signatures do not establish identical root causes, PR causality, or exemption from CI requirements.
+
+Use `cubrid-tcc evidence --execution <id> --json` to list retained files, then `--file <returned-name>` to read hash-verified bytes. Keep query JSON and refresh diagnostics separate from `cubrid-ci` bundles. Cite the CLI version, query scope, selected occurrence, earlier Engine/testcase SHAs, ordering, source/evidence locators and digests, and freshness/coverage limitations, marking unavailable fields unknown. Historical observations remain separate from the current inventory and exact merge-base classifications.
 
 ## Map each TC to its repository
 

@@ -1,6 +1,6 @@
 ---
 name: cubrid-ci-analyze
-description: Analyze exact-commit CUBRID GitHub Actions evidence collected by cubrid-ci and write an evidence-backed report in my-cubrid-docs. Use for failed-test analysis, failure attribution, root causes, or a CI analysis report for a CUBRID pull request. Use cubrid-ci status for a simple status query; repairs require a separate workflow.
+description: Analyze exact-commit CUBRID GitHub Actions evidence collected by cubrid-ci, add testcase-history context with cubrid-tcc, and write an evidence-backed report in my-cubrid-docs. Use for failed-test analysis, failure attribution, root causes, or a CI analysis report for a CUBRID pull request. Use cubrid-ci status for a simple status query; repairs require a separate workflow.
 ---
 
 # CUBRID CI Analyzer
@@ -11,12 +11,12 @@ Take one status snapshot and one exact-head collection, then attempt exact merge
 
 - Analyze all three suites unless the user requests a subset: `test_medium`, `test_sql`, and `test_shell`.
 - Use the snapshot available now. Add `--wait` only when the user explicitly asks to wait.
-- Keep collection mechanics in `cubrid-ci`: accept its run selection, provenance checks, failure inventory, and durable paths.
+- Keep exact-head and baseline collection mechanics in `cubrid-ci`: accept its run selection, provenance checks, failure inventory, and durable paths. Use `cubrid-tcc` for testcase history under section 3b.
 - Read testcase source at the recorded Git revision from the local testcase repositories. Preserve source and testcase worktrees and indexes unchanged.
 - Separate observations, inferences, and unknowns. Every causal claim needs a PR relation, confidence, falsifier, and concrete next action.
 - Write a full head analysis only when the head manifest and matching terminal observation say the requested head collection is complete. Missing baseline evidence limits comparison without downgrading a validated head inventory. For any incomplete, interrupted, or unvalidated collection, write a bounded warning report and make no regression or root-cause conclusion.
 - Locate the report repository at `/home/vimkim/gh/my-cubrid-docs`. Before writing, follow [Document Git workflow](../cubrid-common/references/document-git-workflow.md) to select its task checkout, commit the reviewed report locally, and handle approved integration and publication.
-- This workflow writes collector-owned evidence and Git cache data, plus documents in the report repository. Keep GitHub acquisition in the CLI; trigger, cancellation, comments, testcase/source edits, reproduction, repairs, and source/testcase merges require their own authorized workflow. For unsupported evidence sources, follow the separately labeled fallback boundary in [CI evidence](../cubrid-common/references/ci-evidence.md); integrity failures never authorize bypass.
+- This workflow writes collector-owned evidence and Git cache data, Chronicle-owned history evidence and index data, plus documents in the report repository. Keep provider acquisition in the respective CLI; trigger, cancellation, comments, testcase/source edits, reproduction, repairs, and source/testcase merges require their own authorized workflow. For unsupported evidence sources, follow the separately labeled fallback boundary in [CI evidence](../cubrid-common/references/ci-evidence.md); integrity failures never authorize bypass.
 
 ## 1. Snapshot and collect once
 
@@ -110,6 +110,12 @@ Require the baseline relationship's PR number and head SHA to match the pinned h
 
 Compare each exact testcase path and observed signature with the validated baseline evidence, preserving test revisions and configuration differences. Classify head failures as `also_observed_on_base`, `additional_on_head`, or `uncomparable`, and record `base_only` separately. Set the report-mode assessment's `baseline` to `validated_exact`, `partial_exact`, `unavailable`, or `invalid`. Partial comparison permits conclusions only for independently validated matching suites/cases. Neither a valid baseline nor the gate's permission establishes causality.
 
+## 3b. Check testcase failure history
+
+For a complete validated head bundle with testcase failures or errors, read [Testcase history with Chronicle](../cubrid-common/references/ci-evidence.md#testcase-history-with-chronicle). Follow it for each distinct failed testcase, using `cubrid-tcc` when installed. It defines exact-path and suite selection, occurrence matching, bounded index refresh, and the evidence needed for recurrence, matching symptoms, or suspected flakiness.
+
+Keep historical context separate from the exact merge-base classification. Record unavailable history and unresolved identities as unknown. History cannot upgrade the report-mode gate, supply a missing validated baseline, or change the current failure inventory.
+
 ## 4. Write the report
 
 If `$asd-ste100` is available, use its STE-flavored mode for English report prose.
@@ -132,7 +138,8 @@ For a complete manifest, include:
 4. Failure inventory: suite, full testcase path, result, observed signature, baseline classification, category, PR relation, and confidence. Reconcile head, shared, additional, uncomparable, and baseline-only counts separately.
 5. Root-cause analysis grouped by cause. For every group, label observed evidence, inference, unknowns, falsifier, and next action.
 6. Baseline comparison: pinned head/target/merge-base identities, discovery coverage, selected runs/attempts, exact input revisions, affected-file equality evidence, configuration differences, and comparison limitations. Include an explicit unavailable-baseline statement when applicable.
-7. Prioritized actions and an evidence-file inventory. Keep pre-existing signatures visible as separate follow-up work; they do not waive CI requirements.
+7. Testcase history: selected occurrence, earlier failures and their Engine/testcase revisions, symptom comparison, flakiness assessment, query scope, freshness and coverage limitations, and retained evidence references. State when history or correspondence with the selected failure is unavailable. If there are no testcase failures or errors, mark this section as not applicable.
+8. Prioritized actions and an evidence-file inventory. Keep pre-existing signatures visible as separate follow-up work; they do not waive CI requirements.
 
 Classify PR relation as `direct`, `plausible`, `unlikely`, or `unknown`; classify confidence explicitly. A terminal red job with no testcase records is a job-level failure, not an empty passing suite. If complete evidence contains no failures or errors, say so and do not manufacture analysis.
 
@@ -142,6 +149,6 @@ Never include credentials, headers, signed URLs, or environment values.
 
 ## 5. Reconcile and hand off
 
-Re-read the saved report against the selected manifest and evidence. Require every requested suite to appear exactly once, every validated failure/error to appear exactly once, all totals to reconcile, every comparison to reconcile against the independently validated baseline and input scope, every attribution to cite concrete evidence, and every inference to have a falsifier. Correct discrepancies before sharing.
+Re-read the saved report against the selected manifest and evidence. Require every requested suite to appear exactly once, every validated failure/error to appear exactly once, all totals to reconcile, every comparison to reconcile against the independently validated baseline and input scope, every attribution to cite concrete evidence, and every inference to have a falsifier. Check historical claims against retained occurrences, symptom evidence, and identity/coverage limitations. Correct discrepancies before sharing.
 
 Complete the Document Git workflow's local review and task commit, including any required report index. Return the report path, exact analyzed commit, suite states and counts, incomplete-evidence warnings, task checkout/branch and report commit, checks, and the highest-priority next action. Present any required integration approval with this committed result; continue approved integration and publication under the same workflow.

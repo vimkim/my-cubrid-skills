@@ -5,7 +5,7 @@ description: Maintain and answer the user's daily and weekly work plan from the 
 
 # Daily Schedule
 
-Schedule home: `/home/vimkim/temp/todays-schedule/` (a git repository; leave files untracked unless the user asks to commit).
+Schedule repository: `/home/vimkim/temp/todays-schedule/`. Before changing sheets or saving a plan, follow [Document Git workflow](../cubrid-common/references/document-git-workflow.md) for this repository. Set the schedule home to the selected `ARTIFACT_WORKTREE`, commit meaningful sheet changes locally before handoff, and use the user's approval rules for integration and publication. For a read-only query, read from the existing schedule checkout.
 
 File conventions inside the schedule home:
 

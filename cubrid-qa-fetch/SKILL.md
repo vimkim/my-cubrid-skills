@@ -199,15 +199,15 @@ Only use manual `curl` login and page parsing if `/home/vimkim/gh/cubrid-qahome-
 
 The fetcher's `runs/<run-id>/` tree is tool-owned source data. Keep its deterministic filenames (`manifest.json`, `summary.*`, `failure-report.*`, and `raw/*`) unchanged so the fetcher can parse and regenerate them.
 
-When the user asks for a separate persistent AI-authored analysis, save that document under `/home/vimkim/gh/my-cubrid-docs`, not under the fetcher repository or the CUBRID source worktree:
+When the user asks for a separate persistent AI-authored analysis, locate its repository at `/home/vimkim/gh/my-cubrid-docs`. Before creating report files or directories, follow [Document Git workflow](../cubrid-common/references/document-git-workflow.md) and select `ARTIFACT_WORKTREE` in that repository:
 
-1. Use `/home/vimkim/gh/my-cubrid-docs/cbrd-xxxxx/` when a CBRD ticket is known. For a ticket-free build/project analysis, use a stable lowercase project-slug directory; ask if the durable project identity is unclear.
+1. Use `cbrd-xxxxx/` relative to `ARTIFACT_WORKTREE` when a CBRD ticket is known, reusing existing directory spelling as required by the docs repository. For a ticket-free build/project analysis, use a stable lowercase project-slug directory; ask if the durable project identity is unclear.
 2. Set `SOURCE_COMMIT` to the exact resolved qahome build commit. If qahome exposes only a short suffix, resolve it against the relevant CUBRID repository; if that is impossible, ask the user rather than using an unrelated local `HEAD`. Use current CUBRID worktree `HEAD` only when no explicit build revision exists.
 3. Validate `SOURCE_COMMIT` and take its first seven hexadecimal characters as `SHORT_SHA`.
 4. Set `AGENT` from the active AI host's runtime identity: `codex` for Codex, `claude` for Claude Code, or another host's stable lowercase agent name. Do not infer it from installed binaries; ask if runtime identity is unclear.
 5. Name the file `<descriptive-name>_<SHORT_SHA>_<AGENT>.md`, for example `qa_failure_report_f5794fb_codex.md` or `qa_failure_report_f5794fb_claude.md`.
 
-Compute the path once and reuse it for all revisions and the final handoff. If `/home/vimkim/gh/my-cubrid-docs` is unavailable, stop and ask for another version-controlled docs repository. Reject the fetcher repository, CUBRID source worktree, current working directory, or any non-docs fallback; never fall back to `pwd`.
+Compute the repository-relative path once and resolve it under `ARTIFACT_WORKTREE` for revisions. Follow the Document Git workflow to review and commit the report and required index locally, present required integration approval, and complete authorized integration, publication, and cleanup. Include the task checkout/branch, report commit, checks, and surviving report path in the handoff. If `/home/vimkim/gh/my-cubrid-docs` is unavailable, stop and ask for another version-controlled docs repository. Keep persistent analysis in the selected docs checkout; never fall back to `pwd`.
 
 If `$asd-ste100` is available, use its STE-flavored mode for English AI-authored
 analysis. Use Strict mode for procedures. Preserve the requested language,

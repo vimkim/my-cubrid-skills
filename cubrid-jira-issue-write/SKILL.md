@@ -13,16 +13,16 @@ Apply the user's current instructions over this skill's writing defaults and the
 
 Preserve the team's four opening fields and explicit `AI-Generated Context` divider by default. These come from the team's writing convention, rather than the official OPEN template. Keep the issue in Korean 한다체, with English `##` headings and Korean `###` headings; retain identifiers as written. Follow an explicit user request to change the format.
 
-Read [artifact and publication rules](references/publication.md) before choosing the output path. That reference preserves the existing storage, version identity, character constraints, and publication contract. A request to revise this skill or discuss its guidance does not trigger issue publication.
+Read [artifact and publication rules](references/publication.md) before choosing the output path. That reference defines the destination task checkout, version identity, character constraints, review, and publication steps. A request to revise this skill or discuss its guidance does not trigger issue publication.
 
 ## Drafting workflow
 
 1. **Establish the problem and evidence.** Read the conversation, supplied findings, relevant source or logs, and the existing ticket through `cubrid-jira` when a key is known. Identify the observed or reported condition, needed behavior or capability, affected workflow, and consequences. For a new capability, identify the unmet need. Attribute user reports and distinguish them from independently verified observations.
 2. **Recommend classification and scope.** Read [issue classification](references/issue-classification.md). Separate the JIRA type, problem categories, and affected components. Recommend a type with a short reason and continue drafting when the choice is reversible. Ask only when ambiguity changes the problem, scope, or publication target. Separate problems that can be accepted and assigned independently; a shared symptom alone is not a reason to split one problem across modules.
 3. **Develop the triage argument.** Write the three explanations below before considering solutions. Resolve contradictions in the available accounts, or expose the unresolved discrepancy and its effect on the conclusion. Ask for missing evidence only when it changes whether or what to approve; record other unknowns as specific ANALYSIS questions.
-4. **Compose and save.** Use the opening structure, shared explanation, and relevant type-specific evidence below. Resolve the report identity and exact path using the publication reference. Save one report and revise it in place.
+4. **Compose and save.** Use the opening structure, shared explanation, and relevant type-specific evidence below. Resolve the destination task checkout, report identity, and exact path using the publication reference before writing. Save one report and revise it in place.
 5. **Review the saved report.** Apply the review criteria below and correct concrete defects. Review in the current session; an independent reviewer or design interview is optional and requires the user's request.
-6. **Complete the requested workflow.** Follow the publication reference after review. Respect an explicit draft-only request or other publication limit; otherwise retain its existing automatic completion contract for issue-writing requests.
+6. **Complete the requested workflow.** Follow the publication reference after review: commit the report locally, present required integration and publication approval, and continue authorized operations. Respect an explicit draft-only request or other publication limit, and reuse applicable authorization already established in the conversation.
 
 ## The triage argument
 

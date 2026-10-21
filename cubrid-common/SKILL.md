@@ -5,7 +5,7 @@ description: Shared helpers for CUBRID worktree, focused native testkit, PR meta
 
 # CUBRID Common Helpers
 
-This skill provides shared shell helpers used by other CUBRID skills in this collection.
+This skill provides shared helpers and workflow references used by other skills in this collection.
 
 Do not invoke it as a user-facing workflow. Source `scripts/cubrid-common.sh` from sibling skills when a task needs reusable CUBRID preflight logic.
 
@@ -21,3 +21,5 @@ Before executing focused SQL, medium, or shell tests, read [Native testkit focus
 For a focused replay of a CI failure, read [CI evidence and testcase identity](references/ci-evidence.md) to bind runtime evidence to the exact engine and testcase revisions before execution.
 
 For PR failure attribution or historical Engine CI lookup, read [Merge-base comparison](references/ci-baseline.md). It defines the shared collector, validation, comparison, and missing-baseline contract.
+
+Before writing persistent reports, issue drafts, or planning sheets, read [Document Git workflow](references/document-git-workflow.md). It applies the user's Git workflow to each document repository and resolves artifact paths from the selected task checkout.

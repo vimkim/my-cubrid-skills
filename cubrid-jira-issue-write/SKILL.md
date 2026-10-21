@@ -1,209 +1,117 @@
 ---
 name: cubrid-jira-issue-write
-description: Write and publish CUBRID JIRA bug reports, feature requests, and task reports in Korean. Preserve the team's four-field triage and AI-Generated Context separation, explain background and causes clearly, and publish the versioned Markdown report to the matching existing issue.
+description: Write or revise Korean CUBRID JIRA issues for triage, explaining the problem, its consequences, and why work should be approved and assigned. Use for bug reports, improvements, new capabilities, investigations, and development tasks; publish completed reports to existing issues through cubrid-jira.
 ---
 
 # CUBRID JIRA Issue Writer
 
-Write a structured JIRA issue saved as markdown to `/home/vimkim/gh/my-cubrid-jira/issues/`.
+Write an evidence-based case for the triage director to confirm the issue and assign analysis to the requesting author or team. The report must explain **what the problem is, why it causes a meaningful problem, and why resolving it deserves work**. Implementation is decided in ANALYSIS.
 
-Help a reader unfamiliar with the subsystem understand the situation, why a change is needed, and what is proposed. Keep the team's summary above the AI-Generated Context divider, then develop the background and causal explanation below it. Let the explanation determine its length.
+## Authority and scope
 
-## When to Use
+Apply the user's current instructions over this skill's writing defaults and the [company OPEN guideline](https://dev.cubrid.org/dev-process/jira/open). The guideline is a legacy baseline for JIRA terminology and templates; it is not a requirement to finish a design before triage. Look up its current contents when field details matter; do not depend on a temporary local copy.
 
-- User says "write a jira issue", "jira로 작성", "이슈 작성", "리포트 작성"
-- User has analysis/findings to document, or wants to formalize a bug report, feature request, or task
+Preserve the team's four opening fields and explicit `AI-Generated Context` divider by default. These come from the team's writing convention, rather than the official OPEN template. Keep the issue in Korean 한다체, with English `##` headings and Korean `###` headings; retain identifiers as written. Follow an explicit user request to change the format.
 
-## Hard Constraints (non-negotiable)
+Read [artifact and publication rules](references/publication.md) before choosing the output path. That reference preserves the existing storage, version identity, character constraints, and publication contract. A request to revise this skill or discuss its guidance does not trigger issue publication.
 
-- **Save location**: `/home/vimkim/gh/my-cubrid-jira/issues/CBRD-XXXXX-short-slug_<SHORT_SHA>_<AGENT>.md`. If the directory does not exist, **stop and tell the user** to clone/create the repo. Do NOT create it yourself. If no ticket number is known, ask whether one should be supplied; only after the user confirms this is a ticket-free draft, use `descriptive-slug_<SHORT_SHA>_<AGENT>.md`.
-- **No emoji and no non-BMP (4-byte UTF-8) characters.** The CUBRID JIRA API rejects 4-byte characters, and emoji (🚀 ✅ ❌ 😀 …) read as AI-slop regardless of plane. Everything in the BMP is allowed — Korean/CJK, and ordinary typographic symbols when they aid readability: `★` (flow-diagram limit marker), box-drawing (`└ ├ │`), `→`, `✓`. ASCII forms (`->`, `[x]`/`[ ]`, `-`/`*`) are equally fine — use whichever reads cleaner, not because the API forces it.
-- **Headers (`##`) in English. Subheaders (`###`) and all body text in Korean** (평어/한다체, never 합니다/입니다). Code, function names, file paths, identifiers stay as-is.
-- **Never state the issue's own audience or readability target in the body.** No "신입도 읽을 수 있게 작성", no "독자 대상: ...", no reading-grade note, no "고등학생도 이해할 수 있도록". Readability is writer-side guidance; the reader benefits from it silently. Any sentence describing the doc's own clarity instead of the bug/feature gets deleted.
+## Drafting workflow
 
-## Automatic Completion Contract
+1. **Establish the problem and evidence.** Read the conversation, supplied findings, relevant source or logs, and the existing ticket through `cubrid-jira` when a key is known. Identify the observed or reported condition, needed behavior or capability, affected workflow, and consequences. For a new capability, identify the unmet need. Attribute user reports and distinguish them from independently verified observations.
+2. **Recommend classification and scope.** Read [issue classification](references/issue-classification.md). Separate the JIRA type, problem categories, and affected components. Recommend a type with a short reason and continue drafting when the choice is reversible. Ask only when ambiguity changes the problem, scope, or publication target. Separate problems that can be accepted and assigned independently; a shared symptom alone is not a reason to split one problem across modules.
+3. **Develop the triage argument.** Write the three explanations below before considering solutions. Resolve contradictions in the available accounts, or expose the unresolved discrepancy and its effect on the conclusion. Ask for missing evidence only when it changes whether or what to approve; record other unknowns as specific ANALYSIS questions.
+4. **Compose and save.** Use the opening structure, shared explanation, and relevant type-specific evidence below. Resolve the report identity and exact path using the publication reference. Save one report and revise it in place.
+5. **Review the saved report.** Apply the review criteria below and correct concrete defects. Review in the current session; an independent reviewer or design interview is optional and requires the user's request.
+6. **Complete the requested workflow.** Follow the publication reference after review. Respect an explicit draft-only request or other publication limit; otherwise retain its existing automatic completion contract for issue-writing requests.
 
-A request that triggers this skill authorizes the complete workflow for an existing `CBRD-XXXXX` issue: write and review the report, commit only that report in `my-cubrid-jira`, push it to `origin/main`, and publish it as the matching live JIRA description through the `cubrid-jira` skill. Show previews for visibility, but do not pause for another confirmation.
+## The triage argument
 
-Keep this authorization inside these exact boundaries:
+Develop these as connected explanations in `Description`. Use the Korean subheadings shown in the structure when they help distinguish the questions. Give enough detail for a reader unfamiliar with the subsystem to assess the case; a short opening summary does not replace the explanation.
 
-- Require the local repository at `/home/vimkim/gh/my-cubrid-jira` to be on `main` with `origin` pointing to `github.com/vimkim/my-cubrid-jira` in HTTPS or SSH form.
-- Preserve unrelated worktree and index changes. Stage and commit only the resolved issue file.
-- Require the issue key derived from the filename to equal the JIRA target key.
-- Push the Markdown commit successfully before the live JIRA update. If the push fails, stop before uploading.
-- Use the `cubrid-jira` skill's publish-description workflow, including its dry-run, live update with `--yes`, and live read-back verification.
-- If the live update fails after the push, keep the pushed commit, report the exact JIRA error and the partial-completion state, and do not claim success.
+- **What is the problem? / 무엇이 문제인가:** Establish the relevant background and triggering conditions. State current behavior or the missing capability, what is needed instead, and the gap between them. Anchor the gap in a reproducible example, observed workflow, requirement, or attributed user report. Root-cause knowledge is not a prerequisite for reporting a problem.
+- **Why is it a problem? / 왜 문제인가:** Trace the gap to a concrete consequence: who encounters it, which work fails or becomes costly, under what conditions, and with what observed scope. Explain the connection between technical facts and practical harm. Distinguish measured impact from plausible risk; identify unknown frequency or magnitude instead of inventing numbers. A preference for cleaner code alone does not establish impact.
+- **Why do we need to fix it? / 왜 해결해야 하는가:** Explain what remains unacceptable if the issue is deferred, what outcome resolving it enables, and why available workarounds are insufficient or costly. State the reason for starting work now when evidence supports one. When urgency is unknown, say so. Address known duplication, scope, compatibility, or workaround objections that could change the triage decision.
 
-A ticket-free draft has no upload target. Save, review, commit, and push it like any other report, then report that only the JIRA upload was skipped. Creating a new JIRA issue is a separate workflow requiring the project, issue type, summary, and other required fields.
+Make the requested decision explicit: confirm the problem and assign ANALYSIS to the requesting author or team. Explain relevant expertise or continuity only when the context supports it. Assignment, priority, and confirmation remain triage decisions; proposed ownership is not an existing commitment.
 
-## Artifact Identity
-
-Resolve the filename before writing the draft:
-
-1. Set `SOURCE_COMMIT` to the specific CUBRID commit or PR head analyzed by the issue when one is supplied. Otherwise use `git rev-parse HEAD` in the current CUBRID worktree. Never use the `my-cubrid-jira` repository commit. If no relevant CUBRID commit or worktree can be identified, ask the user.
-2. Validate `SOURCE_COMMIT` and take its first seven hexadecimal characters as `SHORT_SHA`.
-3. Set `AGENT` from the active AI host's runtime identity. Use `codex` for Codex and `claude` for Claude Code. For another host, use its stable lowercase agent name. Do not infer the host from installed binaries because multiple AI CLIs may coexist; if runtime identity is unclear, ask the user.
-4. Compute the output path once and reuse that exact file through revision and final handoff. The basename must end with `_<SHORT_SHA>_<AGENT>.md`.
-
-For example, Codex documenting `f5794fb...` writes `CBRD-26972-oos-show-heap-capacity_f5794fb_codex.md`; Claude Code writes `CBRD-26972-oos-show-heap-capacity_f5794fb_claude.md`.
-
-## Issue Types
-
-Reference: https://dev.cubrid.org/dev-process/jira/open — determine the type **first**; section structure depends on it.
-
-| Type | When | Korean |
-|------|------|--------|
-| **Correct Error** | bug / error fix | 버그·에러 수정 |
-| **Improve Function/Performance** | enhance existing feature, perf | 기능·성능 개선 |
-| **Development Subject** | new feature | 신규 기능 개발 |
-| **Internal Management** | version bumps, infra, internal-only | 내부 관리 |
-
-`Refactoring` uses the Improve template; `Task` is a discouraged fallback; `Sub-task` is a child issue. If the type is unclear, ask before drafting.
-
-## Output Structure
-
-The team requires all four fields above the explicit AI-Generated Context divider. Keep the reason summarized here; explain its background and causes in detail below.
+## Output structure
 
 ```markdown
-# [TAG] 한국어 제목
+# [TAG] 문제 또는 필요한 결과를 나타내는 한국어 제목
 
 ## Issue Triage
 
-**이슈 수행 목적**: <달성하려는 결과>
+**이슈 수행 목적**: <문제가 해결되었을 때 얻어야 할 결과>
 
-**이슈 수행 이유**: <어떤 상황에서 무엇이 달라졌거나 문제가 되었는지 요약>
+**이슈 수행 이유**: <문제와 발생 조건, 지금 검토할 근거>
 
-**영향**: <누가 어떤 불편이나 실패를 겪는지, 또는 무엇이 제한되는지>
+**영향**: <누가 어떤 결과를 겪는지, 확인된 범위와 중요한 불확실성>
 
-**이슈 수행 방안**: <합의된 변경 방향과 범위. 미결정 사항은 TBD>
+**이슈 수행 방안**: TBD - ANALYSIS 단계에서 해결 방안과 구현 범위를 결정한다.
 
 ---
 
 ## AI-Generated Context
 
-> 아래는 AI가 코드와 맥락을 분석해 작성한 상세 자료다.
+> 아래는 제공된 자료와 확인한 근거를 바탕으로 작성한 상세 맥락이다. 미확인 사항은 본문에 구분한다.
 
-<type-specific sections below, beginning with Description>
-```
-
-In `## Description`, establish the situation before presenting technical changes: explain the relevant background, what changed or fails, and how that leads to the reported impact. Then develop the proposal and supporting evidence in the appropriate sections. Several paragraphs are appropriate when the reader needs them; a straightforward bug may need only a short explanation.
-
-The summary and detailed explanation may repeat facts, reasons, and impact. Reintroduce them when it helps the reader follow the argument, adding context, mechanisms, or evidence. Remove repetition that adds no understanding, rather than enforcing one location per fact. An extra scope summary is optional.
-
-### Triage content
-
-- **목적**: the intended outcome, stated briefly.
-- **이유**: enough situational context to explain why this work is needed now. Use concrete evidence appropriate to the issue: observed behavior, changed requirements, a workflow problem, or a relevant technical limit.
-- **영향**: the practical consequence for users, developers, QA, performance, or maintainability. Keep this field visible even when the reason also mentions the consequence.
-- **이슈 수행 방안**: the agreed approach and scope, grounded in the conversation, JIRA decisions, or an explicit design document. Distinguish proposals from agreed decisions. Use `TBD - 합의 미확인` for an unresolved decision, or `TBD - ANALYSIS 단계에서 결정` when that deferral is agreed.
-
-Show AS-IS/TO-BE when a before/after comparison clarifies the change. Choose prose, a table, or a list to suit the material. Put detailed source references, algorithms, and reproduction steps below the divider; retain a precise identifier in the summary when it is needed to understand the issue.
-
-### Type-specific sections (go below the `## AI-Generated Context` divider)
-
-**Correct Error:**
-
-```markdown
 ## Description
-(발생 상황과 배경, 관찰한 문제와 영향, 확인된 원인 또는 조사할 내용)
 
-## Test Build
-(예: `CUBRID-11.0.0.0248-b53ae4a`, OS 포함)
+### 무엇이 문제인가
+<배경과 현재 상태, 필요한 상태, 확인 근거>
 
-## Repro
-(필요한 환경과 복붙으로 재현 가능한 명령/SQL)
+### 왜 문제인가
+<문제가 실제 작업과 사용자에게 미치는 영향과 그 연결 관계>
 
-## Expected Result
-## Actual Result
-## Additional Information
-(스택 트레이스, 로그, 관련 이슈 링크)
+### 왜 해결해야 하는가
+<방치 비용, 우회책의 한계, 필요한 결과와 착수 근거>
+
+## Triage Request
+<이슈 확인 및 작성자 측의 ANALYSIS 배정을 요청한다. 요청 범위와 분석에서 확인할 사항을 적는다.>
 ```
 
-**Improve / Development Subject / Refactoring:**
+The four fields summarize the argument. Expand their facts below the divider with background, reasoning, and evidence. Use useful restatement; remove repetition that adds no understanding. Keep the issue's audience and writing instructions out of the issue body.
 
-```markdown
-## Description
-(배경, 목적, 문제 정의)
+For a requested feature or improvement, name the explicitly requested capability in the title and purpose. Preserve that capability as the agreed scope while leaving detailed design and integration choices for ANALYSIS.
 
-## Specification Changes
-(변경 스펙. QA/매뉴얼 갱신용. 변경 없으면 N/A)
+The default `이슈 수행 방안` is `TBD - ANALYSIS 단계에서 해결 방안과 구현 범위를 결정한다.` An explicit, already agreed direction may be summarized with its source and remaining uncertainties. A suggestion becomes a candidate for analysis, not an agreed approach. Scope the **problem and desired outcome** for triage even while the implementation scope remains open.
 
-## Implementation
-(설계·구현. 코드 흐름, 자료구조, 알고리즘)
+### Evidence and sections by issue type
 
-## Acceptance Criteria
-- [ ] 수락 조건 1
+Place the relevant evidence below the divider after the shared explanation. Preserve the official sections for the selected template unless the user requests another structure. Use `N/A` for a genuinely inapplicable section; use `TBD` with the unanswered question for missing knowledge. A missing reproduction or root cause is an unknown, not `N/A`.
 
-## Definition of done
-- [ ] 위 A/C 충족
-- [ ] QA 통과
-- [ ] 문서/매뉴얼 반영
-```
+| JIRA type | Additional sections and triage-stage content |
+|---|---|
+| Correct Error | `Test Build`, `Repro`, `Expected Result`, `Actual Result`, `Additional Information`. Give the full observed build and commit, OS and relevant settings, copyable setup and commands, and actual evidence. Mark unexecuted steps as proposed. Record tested and untested release versions separately; the source baseline alone does not prove a version is affected. |
+| Improve Function/Performance, Development Subject, Refactoring | `Specification Changes`, `Implementation`, `Acceptance Criteria`, `Definition of done`. Describe known required behavior and constraints. Default `Implementation` to `TBD - ANALYSIS 단계에서 결정한다.` Express acceptance as observable outcomes, with unagreed thresholds and final validation plans left for ANALYSIS. |
+| Internal Management, Task | Keep the shared explanation. Add deliverables, dependencies, or completion evidence when useful. An investigation can finish with evidence and a decision; its acceptance need not promise a code fix. |
+| Sub-task | Use the parent problem and the child's specific outcome and evidence. Link the parent and define the boundary of the child assignment. |
 
-**Internal Management / Task:** just `## Description`.
+Acceptance criteria describe what success means, not an unselected algorithm. `Definition of done` identifies relevant verification; choose checks suited to the issue rather than copying a generic QA/manual checklist. Detailed design, final specifications, and implementation validation can remain explicit ANALYSIS deliverables.
 
-**Section rules:** Patch/Revision versions go in the description explicitly (JIRA UI shows only Major.Minor). Don't delete unused official sections — fill `N/A`. Use `TBD` for unknowns. Optional tail add-ons: `## Code References` (key source refs), `## Remarks` (follow-ups, PR links, related tickets).
+### Optional options for analysis
 
-## Writing Guidance
+Include `## Options for Analysis` only when available evidence makes an early comparison useful or the user requests it. Omitting the section is a complete result. If included, state that these are candidates, then critically compare them against the same problem and desired outcomes:
 
-- If `$asd-ste100` is available, use its STE-flavored mode for English explanatory text. Use Strict mode for English procedures. Preserve required headings, identifiers, quotations, and uncertainty. Keep the required Korean prose and 한다체.
-- Explain the background before asking the reader to interpret a technical list or table. Include relevant history and changed circumstances when the sources establish them. Read the conversation and available source material first; ask only for consequential context that cannot be recovered there.
-- Distinguish confirmed facts, user experience, hypotheses, and proposals through natural attribution. Leave unavailable causes or decisions open instead of supplying a plausible story.
-- Explain unfamiliar terms and the significance of technical limits where needed. Give enough connected prose to make the causal relationship understandable; the issue need not become a general tutorial.
-- Write natural Korean in 한다체. Use prose for explanations, tables for comparisons, and diagrams for flows when they help. Keep audience and readability guidance outside the issue body.
+| 후보 방안 | 기대 효과와 장점 | 한계·단점과 실패 조건 | 비용·위험·호환성 | 근거와 ANALYSIS 확인 사항 |
+|---|---|---|---|---|
+| <후보> | <어떤 문제를 얼마나 해소하는가> | <남는 문제와 적용이 어려운 조건> | <근거가 있는 상대 비교; 미상은 미상> | <확인된 사실, 가정, 판별 방법> |
 
-## Local-only Tooling (keep issues portable)
+Compare the candidates explicitly after the table: what tradeoff each makes, which conditions would favor each, and what evidence would decide between them. Include the current behavior or workaround as a baseline when it clarifies the decision. With only one plausible candidate, critique it and state the evidence needed to evaluate it; avoid inventing a second candidate. Any preliminary preference must be conditional and grounded. Final selection remains in ANALYSIS.
 
-JIRA issues are read by devs, QA, and CS who do not share the author's local setup. Keep every command runnable on a fresh CUBRID dev VM.
+## Portable evidence
 
-- **Never write `just <recipe>` in an issue body, Repro, A/C, or table.** The `justfile` is local; a reader running `just shell-debug` gets `command not found`. Substitute the underlying command (e.g. `ctp.sh shell -c shell_ci.conf`, plus a 1-line note on pointing the conf's `scenario` at the test path).
-- **Same for personal aliases/functions/dotfiles** (`my-rerun`, `cb`, custom helpers). If it isn't in the public CTP/CUBRID toolchain, it doesn't belong in the issue.
-- **Acceptable wrappers** (universal to a CUBRID engineer): `ctp.sh`, `cubrid`, `csql`, `make`, `cmake`, `gh`, raw `bash`/`sh`. Prefer these.
-- **If a personal recipe is the easiest repro for the author**, paraphrase the underlying command in the issue; keep the `just`/alias form in private notes only. Never put both.
-- **Pre-upload scan**: `rg -nP '\bjust\s+\w' file.md` must return zero hits.
+Use project-provided commands, CMake, ctest, or the relevant suite's actual runner. Translate personal `just` recipes, aliases, and local-only helpers into their underlying commands. Supply required configuration, assets, and paths so another engineer can reproduce the reported result. Match the runner to the evidence; do not replace a native testkit run with a CTP command. Mark missing prerequisites explicitly.
 
-## Execution Steps
+The issue body must have zero matches for `rg -nP '\bjust\s+\w'`. This scan is a guard against one common local dependency; also review the commands and referenced assets for portability.
 
-1. **Check output directory** exists (else stop — see Hard Constraints).
-2. **Determine issue type** (section structure depends on it; ask if unclear).
-3. **Gather context**: read source, prior analysis, `/cubrid-jira CBRD-XXXXX`, repro logs.
-4. **Resolve artifact identity**: set `SOURCE_COMMIT`, `SHORT_SHA`, `AGENT`, and the final output path using **Artifact Identity**.
-5. **Develop the background and causal explanation** from the gathered context. Establish the situation, problem, and impact before listing changes or implementation details.
-6. **Compose the issue** using Output Structure and the type-specific sections. Summarize 목적, 이유, 영향, and 이슈 수행 방안 above the divider; place the detailed explanation under `## AI-Generated Context`. Useful restatement is allowed.
-7. **Check evidence and decisions**: distinguish observations from inferred causes, and agreed changes from proposals or unknowns. Use AS-IS/TO-BE where it clarifies the change.
-8. **Check output constraints**: Korean prose and English `##` headers, no emoji/non-BMP characters, portable commands. The `rg -nP '\bjust\s+\w'` scan must return zero matches.
-9. **Save** to the resolved path ending in `_<SHORT_SHA>_<AGENT>.md`.
-10. **Review the saved file** against the Document Review criteria below and correct defects in place.
-11. **Show the publication preview**: path, source commit, agent name, chosen type, and Issue Triage block. This is informational; continue without asking for confirmation.
-12. **Validate the notes repository** against the Automatic Completion Contract. Re-run all mandatory checks after revision.
-13. **Commit only the issue file and push it**:
+## Review criteria
 
-    ```bash
-    issue_rel="issues/$(basename "$issue_file")"
-    git -C /home/vimkim/gh/my-cubrid-jira add -- "$issue_rel"
-    git -C /home/vimkim/gh/my-cubrid-jira commit \
-      -m "docs(CBRD-XXXXX): add <short-slug> issue report" -- "$issue_rel"
-    git -C /home/vimkim/gh/my-cubrid-jira push origin main
-    ```
+Review the saved file against the conversation, ticket, and evidence. The report is ready when:
 
-    If the intended file is already committed, skip the empty commit and still verify that `origin/main` contains it. Verify that the created commit contains only `issue_rel`; leave unrelated staged or untracked files untouched.
-14. **Publish through `cubrid-jira`**: for a keyed report, hand off the matching ticket key and absolute `issue_file` to the `cubrid-jira` skill's publish-description workflow with delegated authorization for the live `--yes` update. Skip this step only for an explicitly ticket-free draft.
-15. **Finish with verification**: report the Markdown commit and pushed branch; for a keyed report, also report the live JIRA URL and read-back result. Do not call a keyed workflow complete until both push and upload verification succeed. For a ticket-free draft, call out that no JIRA target existed.
-
-## Arguments
-
-- `/write-jira-issue CBRD-26583 OOS compact analysis` — write issue for a specific ticket
-- `/write-jira-issue` — interactive mode, ask for details
-
-## Document Review
-
-Review the saved issue file in the current session against the ticket, issue type, source material, and the following criteria. Correct defects in the same file before publication:
-
-- **Understanding**: the summary conveys why the issue matters, and Description establishes the background and causal explanation before technical changes. The reader can follow the situation, problem, impact, and proposed response without reconstructing them from code references.
-- **Team structure**: 목적, 이유, 영향, and 이슈 수행 방안 are all above the explicit AI-Generated Context divider. The detailed body may repeat and expand the summary.
-- **Evidence and scope**: claims match the sources; user observations and hypotheses are attributed; agreed changes and unresolved proposals are distinguishable. Reproduction commands include the necessary conditions and observed results are represented accurately.
-- **Writing and output**: the explanation is sufficient and natural, technical terms are explained where needed, and the Hard Constraints and Local-only Tooling requirements hold. Repetition earns its place by helping understanding.
-
-Ask a concise clarification only for a decision or required input that the conversation and sources cannot resolve. Use an independent reviewer only when the user requests one; provide the saved file, source material, and these criteria, and request concrete findings. A design interview is a separate user-requested activity, not a publication prerequisite.
-
-Once the criteria are satisfied, continue directly with the preview, validation, commit, push, and `cubrid-jira` upload steps under the Automatic Completion Contract.
+- **Problem:** The current condition, needed behavior, and gap are explicit. Observations, user reports, inferred explanations, and unknowns are distinguishable. The report does not require a proved root cause before triage.
+- **Impact:** The explanation connects the technical gap to affected work and concrete consequences. Scope, frequency, magnitude, and uncertainty match the evidence.
+- **Need and assignment:** The report explains the cost of deferral, expected benefit, and relevant workaround limitations. It requests confirmation and analysis ownership without inventing urgency, expertise, or an assignment.
+- **Stage:** Implementation is TBD unless an existing decision is cited. Acceptance describes outcomes. Any optional candidates receive criticism, pros and cons, and a direct comparison; none silently becomes the selected design.
+- **Consistency:** The title, four-field summary, detailed argument, expected result, and acceptance criteria describe the same problem and scope. Conflicting evidence is resolved or visibly open. Classification suggestions are distinguishable from live JIRA field values.
+- **Output:** The four fields and divider are present unless overridden, prose and character requirements hold, and evidence is portable. Apply the artifact and publication checks in the reference before publishing.

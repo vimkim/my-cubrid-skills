@@ -1,59 +1,85 @@
-# JIRA writing skill revision
+# JIRA 작성 스킬 개정 검토
 
-## Decision
+2026-10-21 기준으로 `cubrid-jira-issue-write`를 triage 승인과 분석 배정에 맞추어 개정한다. 판단 기준은 이번 사용자 요청, 기존 스킬, [회사 OPEN 가이드](https://dev.cubrid.org/dev-process/jira/open)와 사용자가 제공한 동일 내용의 `/tmp/issue-open.md`이다. 회사 가이드는 기본 참고 자료이며, 충돌하는 작성 지침에는 사용자의 현재 요청을 우선 적용한다.
 
-The user requested a design discussion before revising `cubrid-jira-issue-write`,
-starting from `/home/vimkim/tmp/handoff-jira-background-first-yeo6_h5p.md`.
-The final direction agreed on 2026-10-01 is:
+## 발견한 모순과 개선점
 
-- Simplify accumulated writing corrections, retaining essential workflow constraints
-  and a small set of useful writing principles.
-- Preserve the team's required opening fields: 목적, 이유, 영향, 이슈 수행 방안.
-- Preserve the explicit `AI-Generated Context` divider below those fields.
-- Keep a summary of 이유 above the divider. Below it, explain the background and
-  causes in detail; repeating and expanding the summary is allowed.
+기존 지침의 모든 문제가 논리적 모순인 것은 아니다. 작성 단계가 섞인 부분, 특정 이슈 유형에만 맞는 기본값, 근거가 빠진 분류를 나누어 검토했다.
 
-The initial suggestion to remove the fixed fields and divider was superseded by the
-user's clarification that the team leader requires them. Background-first writing
-therefore governs the detailed explanation, while the opening remains a summary.
+| 기존 지침 | 문제 | 이번 개선 |
+|---|---|---|
+| triage를 위한 이유와 영향을 설명하면서 개선 이슈에는 구현·알고리즘을 작성하도록 한다. | 승인 전 문제 제기와 승인 후 설계가 섞인다. 구현을 먼저 정해야 이슈를 작성할 수 있다는 압박이 생긴다. | 문제·영향·해결 필요성을 먼저 설명한다. `Implementation`과 이슈 수행 방안의 기본값은 ANALYSIS의 `TBD`로 둔다. |
+| 배경과 원인 설명을 요구한다. | 관찰된 현상, 현상이 초래하는 영향, 기술적 근본 원인을 구분하지 않으면 미확인 원인을 채우게 된다. | 영향으로 이어지는 관계는 설명하되, 근본 원인은 미확인으로 남길 수 있게 한다. 보고된 경험과 검증된 관찰도 구분한다. |
+| 목적·이유·영향이 있지만 해결 필요성의 판단 기준은 느슨하다. | 증상이 있다는 설명만으로는 우회책을 쓰거나 나중에 처리하면 안 되는 이유가 드러나지 않는다. | 방치 비용, 필요한 결과, 우회책의 한계, 착수 근거를 설명한다. 근거 없는 긴급성이나 손실 수치는 만들지 않는다. |
+| 상단 이슈 수행 방안은 합의된 접근을 적고, 미합의 시 여러 TBD 표현을 사용한다. | 현재 요청처럼 해결 방법을 분석 단계에 맡기는 경우에도 합의된 방안을 찾도록 유도한다. | 기본값을 분석 단계의 결정으로 통일한다. 이미 명시적으로 합의된 방향만 출처와 함께 요약한다. |
+| 개선 템플릿은 상세 A/C와 QA·매뉴얼 중심의 완료 조건을 제시한다. | 미정인 설계를 확정하거나 작업에 맞지 않는 완료 조건을 붙이기 쉽다. | 승인 시점에는 필요한 결과와 제약을 기술한다. 상세 임계값·검증 계획은 분석에서 확정할 수 있다. 조사 이슈의 결과는 근거와 판단일 수 있다. |
+| 네 가지 타입을 중심으로 설명하고, 내부 관리·Task는 Description만 둔다. | 조사·테스트·운영·개발 도구 등의 문제를 표현할 기준이 약하다. | 공식 기본 타입 일곱 가지를 설명하고, 모든 타입에 공통 문제 설명을 적용한다. 문제 성격을 나타내는 범주 14개와 신규 타입 후보 5개를 제안한다. |
+| 타입을 먼저 정하고 불명확하면 질문한다. | 되돌릴 수 있는 분류 선택 때문에 문제 정리가 멈춘다. | 추천 타입과 근거를 제시하고 초안을 진행한다. 문제·범위·게시 대상이 달라질 때만 질문한다. |
+| 제안과 합의를 구분하지만, 제안의 평가 방식은 없다. | 미리 제시한 후보가 충분한 검토 없이 사실상 구현 방향으로 굳을 수 있다. | 후보 제시는 선택 사항으로 둔다. 제시하면 장단점·실패 조건·비용·위험·판별 근거를 같은 기준으로 평가하고 직접 비교한다. |
+| 팀의 상단 네 필드와 공식 가이드의 타입별 템플릿을 함께 요구한다. | 각 요구의 출처와 현재 사용자 요청의 우선순위가 드러나지 않는다. | 팀 관행, 공식 기본 템플릿, 현재 사용자 요청을 구분한다. 기존 네 필드와 divider는 기본으로 보존한다. |
+| 개인 명령을 공개 명령으로 바꾸는 예시로 CTP를 제시한다. | 실제 native testkit 실행을 다른 실행기로 치환하면 재현 근거가 달라진다. 개인 CUBRID 정책도 focused run의 암묵적 CTP 대체를 허용하지 않는다. | 실제 증거를 만든 실행기와 프로젝트 명령을 유지하고, 설정·자산·실행 조건을 제공한다. |
+| 이모지를 금지하면서 BMP 안의 문자는 모두 허용한다고 한다. | BMP 안에도 이모지가 있어 두 문장을 그대로 적용할 수 없다. | 문자 규칙을 BMP 문자 사용과 이모지 제외로 정리한다. |
 
-The motivation for simplifying the skill is the user's experience that improved
-models need less corrective instruction. This is a design preference informed by
-experience, not a measured claim about model accuracy.
+## 개정한 글의 판단 흐름
 
-## Changes
+글은 세 질문에 각각 답한다. 첫째, 어떤 조건에서 현재 상태와 필요한 상태 사이에 어떤 차이가 생기는가. 둘째, 그 차이가 누구의 어떤 작업에 어떤 결과를 만드는가. 셋째, 문제를 남겨둘 때의 비용과 해결로 얻는 결과를 고려하면 왜 작업을 승인할 필요가 있는가.
 
-The revision removes the fixed 10-second reading target, absolute cross-layer
-fact-deduplication rule, and accumulated sentence-level correction lists. A concise
-set of writing principles replaces them. The structure, drafting steps,
-and review criteria all allow summary followed by detailed explanation.
-Worked issue examples and the reference-issue catalog are removed from the skill,
-following the user's request to rely on the model's existing writing capability.
-The local sample remains a verification artifact outside the skill.
+이유와 영향은 연결하되 같은 문장을 되풀이하는 것으로 끝내지 않는다. 상단에는 판단 요약을 두고, 아래에는 배경과 근거, 영향으로 이어지는 관계, 우회책의 한계를 설명한다. 중요도가 확인되지 않았으면 미확인으로 기록한다. 문제의 실재와 필요한 결과를 설득하는 데 필요한 상세함을 확보하며, 구체적인 구현을 상세함의 대용으로 채우지 않는다.
 
-The workflow still preserves artifact naming, storage, language and character
-constraints, target verification, and the existing publication procedure. Existing
-JIRA issues are reference material; this task does not publish or revise them.
+마지막에는 이슈 확인과 작성자 측의 ANALYSIS 배정을 요청한다. 기존 조사 경험 등 맡길 근거가 있으면 제시한다. 실제 담당 배정, 우선순위, 상태 변경을 이미 결정된 사실처럼 쓰지는 않는다.
 
-These are reversible editorial choices, so a separate architecture decision record
-and a project glossary are unnecessary.
+## 범주와 타입 제안
 
-## Verification
+[분류 참고 문서](../cubrid-jira-issue-write/references/issue-classification.md)는 프로젝트, JIRA 타입, 문제 범주, 컴포넌트를 서로 다른 축으로 다룬다. 예를 들어 성능 회귀는 문제 범주이며, 확립된 성능 요구를 위반하는 경우 `Correct Error`로 분류할 수 있다. 내부 개발자가 겪는 문제라는 이유만으로 모두 `Internal Management`가 되는 것은 아니다.
 
-The [local sample](jira-writing-sample.md) rewrites the opening and background of
-CBRD-27539 using the saved issue and the user's clarification. It is a review
-artifact, not a complete replacement report or publication target. It demonstrates
-four visible top fields, an explicit divider, and repeated reasons developed into
-an explanation below it. Historical details are attributed to the saved report;
-this task does not independently re-audit CUBRID source history.
+추가 범주는 정확성·데이터 무결성, 회귀, 성능·자원 효율, 신뢰성·복구, 보안·접근 제어, 호환성·마이그레이션, 운영·관측성, 사용성·접근성, 테스트 품질·범위, 빌드·CI·개발 도구, 문서·명세 일관성, 유지보수성·기술 부채, 조사·실현 가능성, 릴리스·의존성 수명주기이다.
 
-Validation covers skill frontmatter, whitespace, unchanged operational sections,
-and manual comparison of the revised guidance and sample. This supports the
-editorial change; it does not establish behavior across different models or future
-issues.
+신규 JIRA 타입 후보는 다음과 같다. 모두 관리자 검토용 제안이며 현재 선택 가능한 값으로 확인한 것은 아니다.
 
-Checks passed using the skill-creator validator in an isolated `uv` environment
-with PyYAML, `git diff --check`, and a comparison confirming that Hard Constraints,
-Automatic Completion Contract, Artifact Identity, Issue Types, and publication
-steps are unchanged. The sample passes the four-field, character, heading, and
-portable-command checks and was read against the revised criteria.
+| 후보 | 채택할 이유 | 주의점과 현재 대안 |
+|---|---|---|
+| Investigation / Spike | 코드 구현을 약속하지 않고 조사·판단 결과를 추적한다. | 질문과 종료 범위를 정해야 한다. 현재는 Task 또는 Sub-task로 표현할 수 있다. |
+| Test Improvement | QA 작업의 담당과 완료 근거를 명확히 한다. | 버그 수정에 필요한 회귀 테스트를 중복 이슈로 쪼갤 수 있다. 현재 타입과 범주로도 표현 가능하다. |
+| Documentation / Specification | 문서 수정과 명세 확정의 결과를 별도로 추적한다. | 하나의 동작 변경을 불필요하게 분리할 수 있다. 단순 구분에는 범주가 충분하다. |
+| Compatibility / Migration | 여러 소비자가 영향을 받는 전환 작업의 조정을 드러낸다. | 버그·기능·릴리스와 겹친다. 별도 담당과 완료 경계가 있을 때 가치가 크다. |
+| Reliability / Operability | 복구·진단·가용성이라는 운영 결과를 추적한다. | Correct Error 및 성능 개선과 겹칠 수 있다. 운영상 달성 결과를 먼저 정해야 한다. |
+
+모든 문제 성격을 새 타입으로 만들면 분류가 복잡해진다. 조사처럼 완료 산출물이 다른 경우에는 새 타입의 이점이 크고, 회귀·성능처럼 여러 작업 유형을 가로지르는 성격은 범주나 레이블로 표현하는 편이 일관적이다.
+
+## 범위와 보존 사항
+
+2026-10-01에 합의한 네 필드와 `AI-Generated Context` 구분은 유지한다. 그 합의를 설명하던 이전 검토 문서를 이번 결정으로 갱신한다. 이전의 상세 원인·제안 중심 작성 방향은 이번 triage 중심 지침으로 대체한다.
+
+저장 위치, 소스 커밋·에이전트 기반 파일명, 대상 키 일치, Markdown push 후 JIRA 설명 갱신, dry-run과 read-back은 [게시 참고 문서](../cubrid-jira-issue-write/references/publication.md)로 옮겨 유지한다. 이번 변경은 다른 프로젝트의 게시, 필드 변경, 상태 전환, 담당자 지정으로 권한을 넓히지 않는다. 사용자의 명시적인 로컬 초안 요청은 기본 게시 동작보다 우선한다.
+
+[작성 예시](jira-writing-sample.md)는 기존 로컬 발췌를 이번 설명 흐름으로 수정한 검토 자료다. 검토 단계에서는 실제 이슈와 설치본을 변경하지 않았고, 후속 사용자 승인에 따라 별도의 게시용 파일과 설치 절차를 사용한다. 스킬은 원본 저장소에서 수정한다.
+
+후속 검토에서는 [CBRD-27712 triage 예시](CBRD-27712-triage-example_15609d2_codex.md)를 추가했다. 현재 이슈와 기준 소스의 의존성 경로를 읽고, 구현 중심 문안을 승인 전 문제·영향·해결 필요성 중심으로 재구성했다. 사용자의 후속 설명에 따라 3rdparty 분리 빌드와 경로 지정 재사용이라는 기능 요구를 제목·목적에 명시하고, QA 팀 강태우님의 검토 요청과 cubridci 빌드 시간·네트워크 비용 개선 배경을 반영했다. 해당 요청은 사용자가 전달한 맥락으로 귀속하며, 실측 절감률로 표현하지 않는다.
+
+이 예시 검토에서 명시한 기능 요구까지 구현 미정으로 지워지는 문제를 확인했다. 스킬에 사용자가 지정한 기능을 제목과 목적에 남기고, 세부 설계와 통합 방식은 ANALYSIS에서 정하도록 보완했다. 기존 구현·검증 기록은 이전 보고서와 참고 문서에 보존한다.
+
+## 검증 범위
+
+스킬 frontmatter 검증, 공백 오류, 로컬 링크, 이관한 게시 계약·파일명 규칙의 비교, 작성 예시의 형식·문자·개인 명령 의존성 검사를 통과했다. 기본 Python에는 PyYAML이 없어 validator를 바로 실행할 수 없었고, 격리된 `uv` 환경에서 실행해 통과했다. 기존 자동 게시 계약과 파일명 규칙은 원문과 동일함을 비교했다.
+
+수동 검토에서는 다음 상황을 지침에 대입했다.
+
+| 상황 | 지침에 따른 처리 |
+|---|---|
+| 재현 절차와 근본 원인이 미확정인 버그 보고 | 관찰과 제보를 구분하고 미확인 항목을 TBD로 둔다. 원인 분석을 작성 선행 조건으로 요구하지 않는다. |
+| 측정값이 없는 성능 개선 요청 | 실제 작업과 필요한 결과를 설명한다. 수치·임계값을 만들지 않고 측정 과제를 분석에 남긴다. |
+| 개발 도구나 공통 지침의 문제 | 내부 사용자라는 이유로 Internal Management를 자동 선택하지 않는다. 실제 작업 비용에 따라 타입을 추천한다. |
+| 구현 없이 결론을 얻는 조사 | Task 또는 Sub-task로 표현하고, 근거와 판단을 완료 산출물로 삼을 수 있다. |
+| 후보가 없거나 하나뿐인 해결안 | 후보 없음은 완성된 결과로 인정한다. 하나라면 비판적으로 평가하며 비교용 후보를 억지로 추가하지 않는다. |
+| 사용자가 로컬 초안만 요청 | 기본 자동 게시보다 현재 요청을 우선해 로컬 작업으로 한정한다. |
+
+이 검토는 실제 모델을 이용한 독립 실행 평가를 대신하지 않는다. 설치본은 main 반영 후 `just sync`와 `just list`, 원본과 설치된 스킬의 파일 비교로 확인한다.
+
+## 승인 후 게시 결과
+
+사용자는 검토한 문안의 JIRA 게시와 스킬의 main 반영을 승인했다. 예시 안내와 Review Notes를 제외한 본문을 게시용 파일로 저장하고, 근거 링크를 추가했다. 예시의 본문과 게시용 본문이 동일함을 비교했다.
+
+- 게시용 Markdown: [CBRD-27712 triage 보고서](https://github.com/vimkim/my-cubrid-jira/blob/main/issues/CBRD-27712-thirdparty-build-reuse-triage_15609d2_codex.md).
+- 보고서 커밋: `f589130290f4a661af50102032885819d46125cc`, `vimkim/my-cubrid-jira:main`에 push하고 원격 tip 일치를 확인했다.
+- JIRA: [CBRD-27712](https://jira.cubrid.org/browse/CBRD-27712)의 description만 갱신했다. dry-run의 대상 키와 요청 필드를 확인한 뒤 게시했고, live read-back에서 검토 문안의 반영을 확인했다.
+- 동기화 사전 검사에서 발견한 cubrid-common 설치본 차이는 Python bytecode cache 한 파일이었다. 해당 실행 캐시를 정리한 뒤 사전 검사를 통과했으며, 갱신 대상은 cubrid-jira-issue-write 한 개다.

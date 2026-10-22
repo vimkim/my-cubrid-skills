@@ -29,7 +29,7 @@ Read [artifact and publication rules](references/publication.md) before choosing
 Develop these as connected explanations in `Description`. Use the Korean subheadings shown in the structure when they help distinguish the questions. Give enough detail for a reader unfamiliar with the subsystem to assess the case; a short opening summary does not replace the explanation.
 
 - **What is the problem? / 무엇이 문제인가:** Establish the relevant background and triggering conditions. State current behavior or the missing capability, what is needed instead, and the gap between them. Anchor the gap in a reproducible example, observed workflow, requirement, or attributed user report. Root-cause knowledge is not a prerequisite for reporting a problem.
-- **Why is it a problem? / 왜 문제인가:** Trace the gap to a concrete consequence: who encounters it, which work fails or becomes costly, under what conditions, and with what observed scope. Explain the connection between technical facts and practical harm. Distinguish measured impact from plausible risk; identify unknown frequency or magnitude instead of inventing numbers. A preference for cleaner code alone does not establish impact.
+- **Why is it a problem? / 왜 문제인가:** Start from the affected user's workflow: what they are trying to do, what result they expect, how the current behavior blocks or complicates that work, and the resulting cost or risk. Explain this chain so a reader unfamiliar with the implementation can understand why the issue matters. For internal improvements, use the developer's, QA engineer's, or operator's workflow as appropriate. State the triggering conditions and observed scope. Distinguish observed or measured impact from plausible risk; identify unknown frequency or magnitude instead of inventing numbers. When impact lacks evidence, record a specific ANALYSIS question. A preference for cleaner code alone does not establish impact.
 - **Why do we need to fix it? / 왜 해결해야 하는가:** Explain what remains unacceptable if the issue is deferred, what outcome resolving it enables, and why available workarounds are insufficient or costly. State the reason for starting work now when evidence supports one. When urgency is unknown, say so. Address known duplication, scope, compatibility, or workaround objections that could change the triage decision.
 
 Make the requested decision explicit: confirm the problem and assign ANALYSIS to the requesting author or team. Explain relevant expertise or continuity only when the context supports it. Assignment, priority, and confirmation remain triage decisions; proposed ownership is not an existing commitment.
@@ -61,7 +61,7 @@ Make the requested decision explicit: confirm the problem and assign ANALYSIS to
 <배경과 현재 상태, 필요한 상태, 확인 근거>
 
 ### 왜 문제인가
-<문제가 실제 작업과 사용자에게 미치는 영향과 그 연결 관계>
+<사용자의 작업과 기대 결과, 현재 동작으로 겪는 어려움, 그로 인한 비용이나 위험을 연결한다. 확인된 영향과 예상 위험을 구분한다.>
 
 ### 왜 해결해야 하는가
 <방치 비용, 우회책의 한계, 필요한 결과와 착수 근거>
@@ -110,7 +110,7 @@ The issue body must have zero matches for `rg -nP '\bjust\s+\w'`. This scan is a
 Review the saved file against the conversation, ticket, and evidence. The report is ready when:
 
 - **Problem:** The current condition, needed behavior, and gap are explicit. Observations, user reports, inferred explanations, and unknowns are distinguishable. The report does not require a proved root cause before triage.
-- **Impact:** The explanation connects the technical gap to affected work and concrete consequences. Scope, frequency, magnitude, and uncertainty match the evidence.
+- **Impact:** A reader unfamiliar with the implementation can follow the affected user's task and expected result through the current difficulty to concrete costs or risks; repeating the technical symptom alone does not pass. Scope, frequency, magnitude, and uncertainty match the evidence, with unsupported impact left as a specific ANALYSIS question.
 - **Need and assignment:** The report explains the cost of deferral, expected benefit, and relevant workaround limitations. It requests confirmation and analysis ownership without inventing urgency, expertise, or an assignment.
 - **Stage:** Implementation is TBD unless an existing decision is cited. Acceptance describes outcomes. Any optional candidates receive criticism, pros and cons, and a direct comparison; none silently becomes the selected design.
 - **Consistency:** The title, four-field summary, detailed argument, expected result, and acceptance criteria describe the same problem and scope. Conflicting evidence is resolved or visibly open. Classification suggestions are distinguishable from live JIRA field values.

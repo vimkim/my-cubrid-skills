@@ -50,6 +50,10 @@ alone never establishes a passing suite.
 The acquisition ledger describes the requested execution. A carried suite has
 no current shards; source raw evidence lives under its own run/attempt.
 Source acquisition failures can prevent a rerun summary from being published.
+An acquisition failure stops new shards only in the affected suite; independent
+suites continue under the shared concurrency ceiling. Validate and report their
+completed evidence separately, while keeping the overall incomplete observation
+in warning mode.
 
 For a FAIL-to-PASS comparison, match a source failure's full testcase path to a
 passing testcase in the rerun shard's recorded raw JUnit file. Record both

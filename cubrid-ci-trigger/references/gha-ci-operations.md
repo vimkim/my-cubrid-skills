@@ -37,7 +37,13 @@ GitHub's **Re-run all jobs** replays the original issue-comment event, whose gat
 | Check contexts are absent on a new head | `/run all` | PR pushes do not attach the gha-ci PR status set |
 | A run was cancelled or superseded | `/run all` after the prior run stops | Restores build and selected suite statuses together |
 
-`/run rerun` derives its suite set from non-successful shard jobs in the source run. Suites whose shards all passed remain untouched. The source internal run directory and failure list must still exist.
+`/run rerun` selects every suite identified by source shard/status jobs. It plans
+recorded failures, named cases from wholly dead shards, and cases affected by
+testcase changes. A suite with nothing selected has no shards; its status job
+still publishes a verdict from the new run, carrying forward the source verdict
+when no cases changed or remained unhandled. The source internal run directory
+and failure list must still exist. For collected source links and per-case
+comparisons, read [Rerun evidence](../../cubrid-common/references/ci-reruns.md).
 
 ## Concurrency and evidence safety
 

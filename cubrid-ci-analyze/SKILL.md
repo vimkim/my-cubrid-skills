@@ -73,13 +73,15 @@ For a terminal observation, validate the command result and `<output_dir>/manife
 - schema version `2`, repository `CUBRID/cubrid`, and the pinned status SHA;
 - manifest `.pr.head_sha` and `.commit` equal the pinned SHA;
 - each `completed` suite's run and attempt equal its summary's identity;
-- each completed summary validates against `suite-summary-v2.schema.json`;
+- each completed summary validates against `suite-summary-v2.schema.json` for an ordinary execution or `suite-summary-v3.schema.json` for a `/run rerun` execution;
 - its `raw/index.json` validates against `raw-evidence-index-v2.schema.json`;
 - when binary collection was requested, `binary-inventory.json` validates against `binary-inventory-v2.schema.json`, each downloaded file matches its declared length and digest, and the observation budget arithmetic and per-artifact consumption reconcile;
 - every summary failure has one matching `failures/<stable_id>/metadata.json` validated by `failure-v2.schema.json`, and its declared message and optional diff file exist beneath that suite directory;
 - counts reconcile: `.counts.tests = passed + failures + errors + skipped`, `.counts.planned = run + unrun + skipped`, and failure records total `failures + errors`.
 
 Treat path escape, identity disagreement, missing declared evidence, count disagreement, or schema failure as unvalidated raw evidence. Produce only a warning report when PR and commit identity remain established; otherwise stop without inventing report identity.
+
+For summary v3, follow [Rerun evidence](../cubrid-common/references/ci-reruns.md) before marking requested summaries validated. Validate the linked source summaries recursively. Keep newly executed counts, carried-forward verdicts, and source failures distinct in the report.
 
 After these validations, write a temporary assessment JSON with `identity`, `observation`, `manifest`, `requested_summaries`, `result_matches_observation`, `requested_suites_reconciled`, and `baseline`, using the closed values accepted by this skill's `scripts/report_mode.py`. From the skill source directory, run `python3 scripts/report_mode.py <assessment.json>`. Set `baseline` to `not_assessed` initially, then rerun this local gate with the baseline assessment after section 3a. Its `mode` is the strongest permitted head output: `full` permits the complete report, `warning` permits only the bounded warning report, and `stop` permits no report. Never upgrade its decision. `comparison_scope: validated_cases_only` permits bounded comparative claims only for the cases validated under the shared comparison contract; it never proves a regression by itself. The fixture-backed script is the executable safety boundary; the evidence checks above remain the source of its inputs.
 

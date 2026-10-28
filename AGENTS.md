@@ -12,6 +12,7 @@ Each top-level directory with a `SKILL.md` is a skill:
 
 - `cubrid-jira/` — CUBRID JIRA issue lookup
 - `cubrid-build/` — prepare, build, and test local CUBRID worktrees
+- `cubrid-performance/` — diagnose and optimize performance with optional baseline comparisons
 - `cubrid-test-sql-run/` — run focused SQL cases locally
 - `cubrid-test-medium-run/` — run complete focused medium directories locally
 - `cubrid-ci-analyze/` — exact-commit GitHub Actions evidence analysis with `cubrid-ci`

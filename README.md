@@ -12,6 +12,7 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | `cubrid-test-shell-run` | Run focused shell cases with contained native testkit and verify artifact verdicts |
 | `cubrid-ci-analyze` | Collect exact-commit GitHub Actions evidence with `cubrid-ci` and write failure-analysis reports |
 | `cubrid-ci-trigger` | Trigger or rerun GitHub Actions gha-ci on supported CUBRID pull requests |
+| `cubrid-performance` | Diagnose and optimize CUBRID performance, with optional baseline comparisons |
 | `cubrid-pr-create` | Save Korean PR drafts for review, then create or update GitHub PRs after confirmation |
 | `cubrid-jira-issue-write` | Write structured JIRA issue reports in Korean |
 | `cubrid-manual-search` | Answer CUBRID questions from the local English/Korean RST manual with file-and-line citations |
@@ -89,6 +90,7 @@ Once installed, invoke skills as slash commands in Claude Code:
 /cubrid-pr-create CBRD-26583
 /cubrid-ci-analyze https://github.com/CUBRID/cubrid/pull/6864
 /cubrid-manual-search What is the default value of max_clients?
+/cubrid-performance Make this workload faster; no historical baseline is available
 /create-testcases CBRD-26609
 ```
 

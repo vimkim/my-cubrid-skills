@@ -1,0 +1,3 @@
+interface:
+  display_name: "CUBRID Performance"
+  short_description: "Optimize CUBRID with optional baseline comparisons"

@@ -14,6 +14,7 @@ Rules:
       ## Remarks
   - Generated material must not contain local absolute paths or file:// URLs.
   - Generated material must not contain task-runner shortcut commands beginning with "just".
+  - Shared links must pass the common Python personal-host check.
 EOF
 }
 
@@ -102,6 +103,11 @@ for file in "${files[@]}"; do
   check_pattern "local path or file URL" "$local_path_re" "$file"
   check_pattern "just task-runner command" "$just_command_re" "$file"
 done
+
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+if ! python3 "$script_dir/../../cubrid-common/scripts/check-shared-links.py" "${files[@]}"; then
+  fail=1
+fi
 
 mapfile -t body_headers < <(grep -E '^##[[:space:]]+' "$body_file" | sed -E 's/^##[[:space:]]+//; s/[[:space:]]+$//')
 expected_headers=("Purpose" "Implementation" "Remarks")

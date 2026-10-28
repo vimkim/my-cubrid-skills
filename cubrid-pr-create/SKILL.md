@@ -156,6 +156,10 @@ continuing after confirmation.
 
 ## Writing Conventions
 
+Apply [Links in shared material](../cubrid-common/references/shared-links.md) to
+the body and any explanation. Use verified URLs accessible to the intended readers;
+personal viewing links belong only in the chat handoff.
+
 During preparation, use `$asd-ste100` if available for English titles and
 explanatory prose. Use its STE-flavored mode. Preserve required headings,
 identifiers, quotations, uncertainty, and the required Korean prose.
@@ -203,7 +207,9 @@ https://jira.cubrid.org/browse/CBRD-XXXXX
 
 Resolve `checker` to this skill's `scripts/check-pr-material.sh`. It checks the
 body's three-section contract and known local-path/task-runner patterns; it does
-not establish factual accuracy, review approval, or source/PR freshness.
+not establish factual accuracy, review approval, or source/PR freshness. It also
+runs the shared Python link checker on every supplied file; passing the known-host
+check does not establish access to other URLs.
 
 Run it before the review handoff, before committing body/explanation changes, and
 immediately before creating or updating a PR:

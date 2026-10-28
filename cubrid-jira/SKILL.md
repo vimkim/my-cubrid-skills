@@ -32,7 +32,13 @@ Present the output as-is. Search contacts JIRA by default and refreshes the loca
 
 Use this mode only when the user explicitly asks to upload the specified issue report, or when a calling skill states that its triggering request pre-authorizes publication. Do not request another confirmation in the pre-authorized case.
 
-1. Require an existing Markdown file and verify that its basename starts with the same issue key. Reject a mismatch rather than risking an update to the wrong issue.
+Read [Links in shared material](../cubrid-common/references/shared-links.md),
+including for direct uploads that did not use the issue writer. Resolve
+`link_checker` to `../cubrid-common/scripts/check-shared-links.py` relative to this
+skill. Validation is read-only; report failures and return necessary changes to
+review rather than rewriting an approved file.
+
+1. Require an existing Markdown file and verify that its basename starts with the same issue key. Reject a mismatch rather than risking an update to the wrong issue. Run `python3 "$link_checker" ISSUE_FILE` on that exact file and stop on failure.
 2. Fetch the current issue with `cubrid-jira search TICKET_ID` to verify that the target exists and to record what will be replaced.
 3. Run the default dry-run and inspect its resolved target:
 
@@ -43,7 +49,7 @@ Use this mode only when the user explicitly asks to upload the specified issue r
      --output json
    ```
 
-4. If publication is authorized and the dry-run target is correct, perform the live update without pausing:
+4. If publication is authorized and the dry-run target is correct, rerun `python3 "$link_checker" ISSUE_FILE` immediately before the live update and stop on failure. If it passes, perform the live update without pausing:
 
    ```bash
    cubrid-jira update TICKET_ID \

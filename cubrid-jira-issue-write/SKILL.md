@@ -101,6 +101,13 @@ Compare the candidates explicitly after the table: what tradeoff each makes, whi
 
 ## Portable evidence
 
+Apply [Links in shared material](../cubrid-common/references/shared-links.md) to
+the report and any shared supporting documents. Resolve `link_checker` to
+`../cubrid-common/scripts/check-shared-links.py` relative to this skill, then run
+`python3 "$link_checker" "$issue_file"` on the saved report before review. Pass
+any shared supporting files as additional arguments. Correct preparation failures;
+personal viewing links belong only in the chat handoff.
+
 Use project-provided commands, CMake, ctest, or the relevant suite's actual runner. Translate personal `just` recipes, aliases, and local-only helpers into their underlying commands. Supply required configuration, assets, and paths so another engineer can reproduce the reported result. Match the runner to the evidence; do not replace a native testkit run with a CTP command. Mark missing prerequisites explicitly.
 
 The issue body must have zero matches for `rg -nP '\bjust\s+\w'`. This scan is a guard against one common local dependency; also review the commands and referenced assets for portability.

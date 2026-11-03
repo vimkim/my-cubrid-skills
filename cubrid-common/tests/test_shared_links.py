@@ -109,9 +109,9 @@ class SharedLinksTests(unittest.TestCase):
 
 
 class PrMaterialIntegrationTests(unittest.TestCase):
-    def run_checker(self, root: Path, body: Path, *files: Path):
+    def run_checker(self, root: Path, body: Path, *files: Path, existing=False):
         return subprocess.run(
-            ["bash", str(PR_CHECKER), "--body", str(body), *map(str, files)],
+            ["bash", str(PR_CHECKER), *(["--existing-body"] if existing else []), "--body", str(body), *map(str, files)],
             cwd=root,
             text=True,
             capture_output=True,
@@ -145,6 +145,51 @@ class PrMaterialIntegrationTests(unittest.TestCase):
             result = self.run_checker(root, body, detail)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("PR material check passed", result.stdout)
+
+    def test_fenced_headings_and_existing_sections(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            body = root / "body.md"
+            fences = (
+                ("```", "~~~", "```"),
+                ("~~~~", "~~~", "~~~~"),
+                ("   ````", "```", "````"),
+            )
+            for opener, false_closer, closer in fences:
+                with self.subTest(opener=opener):
+                    content = self.body(
+                        f"{opener}text\n## Example\n{false_closer}\n## Still code\n{closer}\n"
+                    )
+                    body.write_bytes(content.replace("\n", "\r\n").encode())
+                    before = body.read_bytes()
+                    result = self.run_checker(root, body)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    self.assertEqual(body.read_bytes(), before)
+            body.write_text(self.body("```\n## Example\n``` trailing\n## Still code\n```\n") + "## Extra\nmanual content\n")
+            self.assertEqual(self.run_checker(root, body).returncode, 1)
+            self.assertEqual(self.run_checker(root, body, existing=True).returncode, 0)
+            body.write_text(self.body("```\n## Code through EOF\n"))
+            self.assertEqual(self.run_checker(root, body).returncode, 0)
+            body.write_text(self.body("```invalid`info\n## Extra\n"))
+            self.assertEqual(self.run_checker(root, body).returncode, 1)
+
+    def test_safety_checks_apply_to_all_files_in_both_modes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            body, detail = root / "body.md", root / "detail.md"
+            for existing in (False, True):
+                for bad, message in ((PRIVATE_URL, "personal viewing URL"),
+                                     ("/home/author/report.md", "local path or file URL"),
+                                     ("`just build`", "just task-runner command")):
+                    for target in (body, detail):
+                        with self.subTest(existing=existing, bad=bad, target=target):
+                            body.write_text(self.body(bad if target == body else "safe"))
+                            detail.write_text(bad if target == detail else "safe")
+                            before = {p: p.read_bytes() for p in (body, detail)}
+                            result = self.run_checker(root, body, detail, existing=existing)
+                            self.assertEqual(result.returncode, 1, result)
+                            self.assertIn(message, result.stderr)
+                            self.assertEqual({p: p.read_bytes() for p in before}, before)
 
     def test_preserves_existing_pr_checks(self):
         with tempfile.TemporaryDirectory() as directory:

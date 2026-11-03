@@ -105,7 +105,8 @@ commit recorded in the context. Use a short discriminator only when needed.
 
 Create a detailed explanation only when technical context exceeds the short body's
 scope. Use English `## Purpose`, `## Implementation`, and `## Remarks` headings with
-Korean prose; place structured test details under `### Test Plan` in Remarks.
+Korean prose in the explanation; place structured test details under `### Test Plan`
+in Remarks.
 Choose its final public URL before review, normally
 `https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-XXXXX/<filename>`.
 A new explanation linked by the body must be published before the PR write.
@@ -169,7 +170,8 @@ identifiers, quotations, uncertainty, and the required Korean prose.
 Titles use `[CBRD-XXXXX] Short English description`, with an imperative verb such
 as `Fix`, `Add`, or `Refactor` and fewer than 60 characters after the ticket tag.
 
-The body starts with the JIRA URL and uses exactly these `##` sections in order:
+For updates, preserve the existing structure and manual content. A new body starts
+with the JIRA URL and uses exactly these `##` sections in order:
 
 ```markdown
 https://jira.cubrid.org/browse/CBRD-XXXXX
@@ -190,7 +192,7 @@ https://jira.cubrid.org/browse/CBRD-XXXXX
 ```
 
 - Keep the whole body to one screen, roughly 25–35 lines or fewer for small changes.
-  Keep all three sections even for trivial fixes; use `### Test Plan` under Remarks
+  For new bodies, keep all three sections even for trivial fixes; use `### Test Plan` under Remarks
   if needed rather than a fourth `##` section.
 - Use short, plain Korean sentences understandable by an 11th-grade Korean reader
   without CUBRID-internal knowledge. Gloss unfamiliar database terms once. Keep
@@ -208,20 +210,26 @@ https://jira.cubrid.org/browse/CBRD-XXXXX
 ## Material Checker
 
 Resolve `checker` to this skill's `scripts/check-pr-material.sh`. It checks the
-body's three-section contract and known local-path/task-runner patterns; it does
-not establish factual accuracy, review approval, or source/PR freshness. It also
+new body's three-section contract and all files for known local-path/task-runner
+patterns. It does not establish factual accuracy, review approval, or source/PR freshness. It also
 runs the shared Python link checker on every supplied file; passing the known-host
 check does not establish access to other URLs.
 
 Run it before the review handoff, before committing body/explanation changes, and
-immediately before creating or updating a PR:
+immediately before creating or updating a PR. Set `operation` from the recorded
+create/update operation. Use the flag for updates, including retries, and keep the
+default for new drafts:
 
 ```bash
 material_files=("$body_file")
 if [[ -n "${doc_file:-}" ]]; then
   material_files+=("$doc_file")
 fi
-bash "$checker" --body "${material_files[@]}"
+checker_args=()
+if [[ "$operation" == "update" ]]; then
+  checker_args+=(--existing-body)
+fi
+bash "$checker" "${checker_args[@]}" --body "${material_files[@]}"
 ```
 
 Check publication material only; the companion context is not the PR body. During

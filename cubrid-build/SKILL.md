@@ -72,7 +72,7 @@ If the preset is missing, invalid, or differs from the required mode, select the
 Always compile and install after modifying CUBRID code:
 
 ```bash
-direnv exec . just build
+direnv exec . just build-and-install
 ```
 
 This is the required verification step even for a small edit. The build is normally fast because the preset uses ccache. Do not invoke `cmake --build` directly.
@@ -81,7 +81,7 @@ If CMake files changed or a selected preset has not yet been configured:
 
 ```bash
 direnv exec . just configure
-direnv exec . just build
+direnv exec . just build-and-install
 ```
 
 ## 6. Run tests appropriate to the change

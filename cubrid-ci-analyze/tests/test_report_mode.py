@@ -1,6 +1,7 @@
 import json
 import subprocess
 import sys
+import tempfile
 import importlib.util
 import unittest
 from pathlib import Path
@@ -43,6 +44,22 @@ class ReportModeFixtures(unittest.TestCase):
                 result = module.decide(dict(full, baseline=baseline, observation="incomplete"))
                 self.assertEqual(result["mode"], "warning")
                 self.assertEqual(result["comparison_scope"], "none")
+
+    def test_invalid_enum_containers_fail_cleanly(self) -> None:
+        valid = dict(identity="established", observation="complete", manifest="validated",
+                     requested_summaries="validated", result_matches_observation=True,
+                     requested_suites_reconciled=True)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "assessment.json"
+            for field in ("identity", "observation", "manifest", "requested_summaries", "baseline"):
+                for invalid in ([], {}):
+                    with self.subTest(field=field, invalid=invalid):
+                        path.write_text(json.dumps(dict(valid, **{field: invalid})))
+                        result = subprocess.run([sys.executable, str(SCRIPT), str(path)], capture_output=True, text=True)
+                        self.assertEqual(result.returncode, 2, result.stderr)
+                        self.assertEqual(result.stdout, "")
+                        self.assertTrue(result.stderr.startswith("report_mode:"), result.stderr)
+                        self.assertNotIn("Traceback", result.stderr)
 
     def test_invalid_assessments_are_rejected(self) -> None:
         invalid = FIXTURES / "invalid"

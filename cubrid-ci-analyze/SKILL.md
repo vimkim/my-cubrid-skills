@@ -74,7 +74,9 @@ For a terminal observation, validate the command result and `<output_dir>/manife
 - manifest `.pr.head_sha` and `.commit` equal the pinned SHA;
 - each `completed` suite's run and attempt equal its summary's identity;
 - each completed summary validates against `suite-summary-v2.schema.json` for an ordinary execution or `suite-summary-v3.schema.json` for a `/run rerun` execution;
-- its `raw/index.json` validates against `raw-evidence-index-v2.schema.json`;
+- its `raw/index.json` validates against `raw-evidence-index-v2.schema.json` and matches the suite and run/attempt identity;
+- raw-index paths are unique, safe relative paths beneath the suite's `raw/` directory; resolve them from that directory and reject escapes, including through symlinks;
+- each indexed raw file matches its declared byte length and SHA-256 digest, and `.summary_sha256` matches the summary file's digest;
 - when binary collection was requested, `binary-inventory.json` validates against `binary-inventory-v2.schema.json`, each downloaded file matches its declared length and digest, and the observation budget arithmetic and per-artifact consumption reconcile;
 - every summary failure has one matching `failures/<stable_id>/metadata.json` validated by `failure-v2.schema.json`, and its declared message and optional diff file exist beneath that suite directory;
 - counts reconcile: `.counts.tests = passed + failures + errors + skipped`, `.counts.planned = run + unrun + skipped`, and failure records total `failures + errors`.
@@ -83,7 +85,7 @@ Treat path escape, identity disagreement, missing declared evidence, count disag
 
 For summary v3, follow [Rerun evidence](../cubrid-common/references/ci-reruns.md) before marking requested summaries validated. Validate the linked source summaries recursively. Keep newly executed counts, carried-forward verdicts, and source failures distinct in the report.
 
-After these validations, write a temporary assessment JSON with `identity`, `observation`, `manifest`, `requested_summaries`, `result_matches_observation`, `requested_suites_reconciled`, and `baseline`, using the closed values accepted by this skill's `scripts/report_mode.py`. From the skill source directory, run `python3 scripts/report_mode.py <assessment.json>`. Set `baseline` to `not_assessed` initially, then rerun this local gate with the baseline assessment after section 3a. Its `mode` is the strongest permitted head output: `full` permits the complete report, `warning` permits only the bounded warning report, and `stop` permits no report. Never upgrade its decision. `comparison_scope: validated_cases_only` permits bounded comparative claims only for the cases validated under the shared comparison contract; it never proves a regression by itself. The fixture-backed script is the executable safety boundary; the evidence checks above remain the source of its inputs.
+After these validations, write a temporary assessment JSON with `identity`, `observation`, `manifest`, `requested_summaries`, `result_matches_observation`, `requested_suites_reconciled`, and `baseline`, using the closed values accepted by this skill's `scripts/report_mode.py`. From the skill source directory, run `python3 scripts/report_mode.py <assessment.json>`. Set `baseline` to `not_assessed` initially, then rerun this local gate with the baseline assessment after section 3a. Its `mode` is the strongest permitted head output: `full` permits the complete report, `warning` permits only the bounded warning report, and `stop` permits no report. Never upgrade its decision. `comparison_scope: validated_cases_only` permits bounded comparative claims only for the cases validated under the shared comparison contract; it never proves a regression by itself. The fixture-backed script applies a decision table to these established assessment inputs; it does not independently validate the evidence bundle.
 
 `running`, `not_observed`, `job_level_failure`, and `collection_failed` are distinct states. Do not infer a test verdict for a suite without a validated complete summary.
 
@@ -127,7 +129,7 @@ and the strength of causal claims. Keep the report's requested language.
 Select `ARTIFACT_WORKTREE` using the Document Git workflow before creating report files or directories. Derive the directory identity from a `CBRD-<number>` in the validated PR title, otherwise use `PR-<number>`. Apply the shared naming and reuse rules, reusing existing directory spelling as required by the report repository. A new report can use:
 
 ```text
-<lowercase-identity>/ci-analysis.md
+<existing-or-new-identity-directory>/ci-analysis.md
 ```
 
 Before updating a report, compare its PR, full commit, requested suites, runs/attempts, observation time, and completeness. Extend a matching ongoing report without losing earlier observations. Keep a separately cited snapshot or distinct scope in its own file, using a meaningful discriminator only when needed. Record exact identities inside the report and relevant scope in the index.

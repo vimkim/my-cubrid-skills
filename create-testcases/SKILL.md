@@ -72,7 +72,7 @@ Resolve `CUBRID_TESTCASES_PRIVATE_EX_DIR`, validate the Git root, and inspect ne
 
 **Files to create**:
 - `$CUBRID_TESTCASES_PRIVATE_EX_DIR/shell/<category>/<test_name>/cases/<test_name>.sh`
-- `$CUBRID_TESTCASES_PRIVATE_EX_DIR/shell/<category>/<test_name>/cases/<test_name>.result`
+- `$CUBRID_TESTCASES_PRIVATE_EX_DIR/shell/<category>/<test_name>/cases/<test_name>.result` only when the neighboring harness uses it
 
 ## Step 5: Summary
 
@@ -81,7 +81,7 @@ After creating all test files, present a summary table:
 | Type | Path | Description |
 |------|------|-------------|
 | Unit | `unit_tests/...` | ... |
-| SQL  | `~/gh/tc/...` | ... |
+| SQL  | `$CUBRID_TESTCASES_DIR/...` | ... |
 | Shell | `$CUBRID_TESTCASES_PRIVATE_EX_DIR/...` | ... |
 
 Ask the user if they want to adjust any of the test cases.

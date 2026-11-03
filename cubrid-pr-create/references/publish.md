@@ -20,6 +20,9 @@ rules below before classifying remote differences as outside changes.
 3. Reread the body and any explanation. A user's edits made before their confirmation
    are authoritative. Run the material checker without rewriting anything, verify
    the other writing conventions, and record content fingerprints for this attempt.
+   Follow the Material Checker instructions in `SKILL.md`, using `--existing-body`
+   for the recorded update operation and the default for a create. Use the same
+   operation on every publication and retry recheck.
    On retry, compare with that attempt's fingerprints; do not replace them with
    hashes of changed files under the earlier confirmation.
    Recheck these before each remote write; if files change during publication,

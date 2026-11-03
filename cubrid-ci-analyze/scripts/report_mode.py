@@ -41,7 +41,7 @@ def load_assessment(path: Path) -> dict[str, object]:
         "requested_summaries": {"validated", "partial", "none", "invalid"},
     }
     for field, choices in allowed.items():
-        if value[field] not in choices:
+        if not isinstance(value[field], str) or value[field] not in choices:
             fail(f"{field} must be one of {', '.join(sorted(choices))}")
     for field in ("result_matches_observation", "requested_suites_reconciled"):
         if not isinstance(value[field], bool):

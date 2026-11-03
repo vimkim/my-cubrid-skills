@@ -20,7 +20,11 @@ Take one status snapshot and one exact-head collection, then attempt exact merge
 
 ## 1. Snapshot and collect once
 
-Require `cubrid-ci`, `jq`, `gh`, and `cubrid-pr-status`. Run `cubrid-ci doctor --json`; stop with its diagnostics if setup is not healthy. Record `cubrid-ci --version` for the report. Run `cubrid-ci verify --help >/dev/null 2>&1` once; a nonzero exit means the installed collector predates retained-evidence verification and section 2's fallback applies.
+Require `cubrid-ci`, `jq`, `gh`, and `cubrid-pr-status`. Run `cubrid-ci doctor --json`; stop with its diagnostics if setup is not healthy. Record `cubrid-ci --version` for the report. Probe once for retained-evidence verification; `VERIFY_AVAILABLE=0` means the installed collector predates it and section 2's fallback applies:
+
+```bash
+if cubrid-ci verify --help >/dev/null 2>&1; then VERIFY_AVAILABLE=1; else VERIFY_AVAILABLE=0; fi
+```
 
 Run exactly one delegated status command. Pass the supplied PR number or URL; when none was supplied, run it from the user's CUBRID worktree without a PR argument.
 
@@ -66,7 +70,7 @@ Run each head command exactly once. Section 2 verifies the bundle this invocatio
 
 ## 2. Verify the observation and bundle
 
-`cubrid-ci verify` establishes offline whether `RESULT_JSON` came from one unique collection observation and whether its retained evidence is intact. It owns observation selection (including an interrupted or failed run that printed no result), schema, identity, manifest, path, digest, count, failure-file, binary-budget, and rerun-lineage checks. When the section 1 probe failed, use the fallback at the end of this section instead. Otherwise pass the pins, the same suite filters, and the collection start time:
+`cubrid-ci verify` establishes offline whether `RESULT_JSON` came from one unique collection observation and whether its retained evidence is intact. It owns observation selection (including an interrupted or failed run that printed no result), schema, identity, manifest, path, digest, count, failure-file, binary-budget, and rerun-lineage checks. When `VERIFY_AVAILABLE` is `0`, use the fallback at the end of this section instead. Otherwise pass the pins, the same suite filters, and the collection start time:
 
 ```bash
 VERIFY_JSON="$CI_ANALYSIS_TMP/verify.json"
@@ -78,10 +82,11 @@ then
 else
   VERIFY_EXIT=$?
 fi
-jq '.assessment + {baseline: "not_assessed"}' "$VERIFY_JSON" >"$ASSESSMENT_JSON"
+jq -e '(.assessment // error("no verification assessment")) + {baseline: "not_assessed"}' \
+    "$VERIFY_JSON" >"$ASSESSMENT_JSON"
 ```
 
-Exit `0` means fully verified evidence. Exit `3` means unfinished, interrupted, failed, unselected, partial, or superseded evidence. Exit `4` means the retained evidence contradicts itself or the pins. Exit `2` is an invocation error without `.assessment`: correct the arguments and run `verify` again; it only reads local files.
+Exit `0` means fully verified evidence. Exit `3` means unfinished, interrupted, failed, unselected, partial, or superseded evidence. Exit `4` means the retained evidence contradicts itself or the pins. Exit `6` means a local read failure, such as a permission error. Each of these writes an `.assessment`. Exit `2` is an invocation error without one, and `jq` then fails: correct the arguments and run `verify` again, since it only reads local files. If `verify` cannot produce an assessment at all, use the fallback.
 
 `verify` establishes the facts; `report_mode.py` applies its decision table to them. From the skill source directory, run `python3 scripts/report_mode.py "$ASSESSMENT_JSON"`. Rerun it with the baseline state after section 3a. Its `mode` is the strongest permitted head output: `full` permits the complete report, `warning` permits only the bounded warning report, and `stop` permits no report. Never upgrade its decision. `comparison_scope: validated_cases_only` permits bounded comparative claims only for the cases validated under the shared comparison contract; it never proves a regression by itself.
 
@@ -93,7 +98,7 @@ Use the verification report as the evidence index:
 
 An `interrupted` observation records a stopped local collector process. It does not establish a provider, workflow, suite, or testcase failure. Write a warning report from its request and retained files, without assigning CI causality.
 
-**Collector without `verify`.** When the section 1 probe failed, record the missing capability and collector version as a limitation, and treat the bundle as unvalidated raw evidence. Write the assessment with `observation: unvalidated`, `manifest: missing`, `requested_summaries: none`, both booleans `false`, and `baseline: unavailable`. Set `identity` to `established` only when `RESULT_JSON` is a command result whose `.pr.number` and `.commit` equal the pinned PR and head, and to `unknown` otherwise. `report_mode.py` then permits at most a warning report. Name installing a collector that provides `verify` as the next action.
+**Collector without `verify`.** When `VERIFY_AVAILABLE` is `0`, record the missing capability and collector version as a limitation, and treat the bundle as unvalidated raw evidence. Write `ASSESSMENT_JSON` with `observation: unvalidated`, `manifest: missing`, `requested_summaries: none`, both booleans `false`, and `baseline: unavailable`. Set `identity` to `established` only when `RESULT_JSON` is a command result whose `.pr.number` and `.commit` equal `STATUS_JSON`'s `.pr.number` and `.pr.head_sha`, and to `unknown` otherwise. `report_mode.py` then permits at most a warning report. Name installing a collector that provides `verify` as the next action.
 
 `running`, `not_observed`, `job_level_failure`, and `collection_failed` are distinct states. Do not infer a test verdict for a suite without a validated complete summary.
 

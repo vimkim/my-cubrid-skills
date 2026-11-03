@@ -11,7 +11,7 @@ Write an evidence-based issue that a colleague can understand without prior know
 
 Apply the user's current instructions over this skill's writing defaults and the [company OPEN guideline](https://dev.cubrid.org/dev-process/jira/open). The guideline is a legacy baseline for JIRA terminology and templates; it is not a requirement to finish a design before triage. Look up its current contents when field details matter; do not depend on a temporary local copy.
 
-Preserve the team's four opening fields and explicit `AI-Generated Context` divider by default. These come from the team's writing convention, rather than the official OPEN template. Keep the issue in concise, natural Korean 한다체, with English `##` headings and Korean `###` headings when needed. Explain unfamiliar terms once and retain identifiers as written. Follow an explicit user request to change the format.
+Add a one-line summary below the title. Preserve the team's four opening fields and explicit `AI-Generated Context` divider by default. These come from the user's request and the team's writing convention, rather than the official OPEN template. Keep the issue in concise, natural Korean 한다체, with English `##` headings and Korean `###` headings when needed. Explain unfamiliar terms once and retain identifiers as written. Follow an explicit user request to change the format.
 
 Read [artifact and publication rules](references/publication.md) before choosing the output path. That reference defines the destination task checkout, naming, character constraints, review, and publication steps. A request to review or draft an issue, revise this skill, or discuss its guidance does not authorize external publication.
 
@@ -39,6 +39,8 @@ State the decision needed from triage when it is useful. Propose an analysis own
 ```markdown
 # [TAG] 문제 또는 필요한 결과를 나타내는 한국어 제목
 
+**한 줄 요약**: <이슈가 생긴 계기와 이번에 다룰 문제 또는 필요한 결과를 한 문장으로 설명한다.>
+
 ## Issue Triage
 
 **이슈 수행 목적**: <문제가 해결되었을 때 얻어야 할 결과>
@@ -58,7 +60,9 @@ State the decision needed from triage when it is useful. Propose an analysis own
 <어떤 작업에서 무슨 문제가 생기는지, 어떤 결과가 필요한지 설명한다. 확인한 근거와 중요한 미확인 사항을 덧붙인다.>
 ```
 
-The four fields summarize the issue. Below the divider, add context or evidence that the opening fields do not already explain. State each material unknown once, next to the conclusion or next analysis step it affects. Keep writing instructions and process boilerplate out of the issue body. Add `Triage Request` only when it clarifies a concrete request.
+Write the one-line summary so a team lead opening the issue can immediately answer "What is this issue about?" State the concrete problem or needed outcome and its origin when known. Internal context belongs here when it explains why the issue exists. For a PR follow-up, identify the PR, summarize the specific review concern, and explain what this issue will address. Link the originating comment when available. For example: `PR #<번호>에서 <구체적인 문제>를 지적한 리뷰 댓글에 대응하여, <필요한 결과>를 다루는 후속 이슈다.` Use only supported context. When the origin is unknown or irrelevant, summarize the problem and needed outcome without inventing a PR or discussion. A title repeated verbatim or a PR number alone does not explain the issue.
+
+The four fields summarize the triage argument. Below the divider, add context or evidence that the summary and opening fields do not already explain. State each material unknown once, next to the conclusion or next analysis step it affects. Keep writing instructions and process boilerplate out of the issue body. Add `Triage Request` only when it clarifies a concrete request.
 
 The local heading is a proposed title or description heading. For an existing issue, show the live JIRA summary separately in the handoff. Uploading the description does not change that summary; a summary change needs separate explicit authorization and an update workflow that changes the summary field.
 
@@ -106,9 +110,10 @@ The issue body must have zero matches for `rg -nP '\bjust\s+\w'`. This scan is a
 
 Review the saved file against the conversation, ticket, and evidence. The report is ready when:
 
+- **One-line summary:** A team lead can explain what the issue addresses and, when known, why it was raised from this sentence alone. A PR follow-up names the PR and the specific review concern, with a comment link when available. Internal context is explained rather than assumed.
 - **Problem:** The current condition, needed behavior, and gap are explicit. Observations, user reports, inferred explanations, and unknowns are distinguishable. The report does not require a proved root cause before triage.
 - **Impact:** A reader unfamiliar with the implementation can follow the affected user's task and expected result through the current difficulty to concrete costs or risks; repeating the technical symptom alone does not pass. Scope, frequency, magnitude, and uncertainty match the evidence, with unsupported impact left as a specific ANALYSIS question.
 - **Need:** The report explains why the outcome matters and any relevant workaround limitations, without inventing urgency or impact. Any ownership proposal is supported and attributed.
 - **Stage:** The opening method field uses the default text unless an existing decision is cited. Acceptance describes outcomes. Any optional candidates receive criticism, pros and cons, and a direct comparison; none silently becomes the selected design.
-- **Consistency:** The title, four-field summary, detailed argument, expected result, and acceptance criteria describe the same problem and scope. Conflicting evidence is resolved or visibly open. Classification suggestions are distinguishable from live JIRA field values.
-- **Output:** The four fields and divider are present unless overridden. The Korean prose is understandable without internal knowledge, sections add useful content, character requirements hold, and evidence is portable. Apply the artifact and publication checks in the reference before publishing.
+- **Consistency:** The title, one-line summary, four-field summary, detailed argument, expected result, and acceptance criteria describe the same problem and scope. Conflicting evidence is resolved or visibly open. Classification suggestions are distinguishable from live JIRA field values.
+- **Output:** The one-line summary, four fields, and divider are present unless overridden. The Korean prose is understandable without internal knowledge, sections add useful content, character requirements hold, and evidence is portable. Apply the artifact and publication checks in the reference before publishing.

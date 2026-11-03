@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "ok": false,
+  "output_dir": null,
+  "observation_dir": null,
+  "assessment": {
+    "identity": "unknown",
+    "observation": "unvalidated",
+    "manifest": "missing",
+    "requested_summaries": "none",
+    "result_matches_observation": false,
+    "requested_suites_reconciled": false
+  },
+  "baseline": null,
+  "suites": {},
+  "issues": [
+    {
+      "scope": "observation",
+      "kind": "unavailable",
+      "message": "the collector result has no command result; --pr, --pr-head, and --since are required to locate an interrupted or failed observation"
+    }
+  ]
+}

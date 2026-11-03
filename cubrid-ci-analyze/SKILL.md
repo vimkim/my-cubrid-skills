@@ -11,16 +11,16 @@ Take one status snapshot and one exact-head collection, then attempt exact merge
 
 - Analyze all three suites unless the user requests a subset: `test_medium`, `test_sql`, and `test_shell`.
 - Use the snapshot available now. Add `--wait` only when the user explicitly asks to wait.
-- Keep exact-head and baseline collection mechanics in `cubrid-ci`: accept its run selection, provenance checks, failure inventory, and durable paths. Use `cubrid-tcc` for testcase history under section 3b.
+- Keep exact-head and baseline collection mechanics in `cubrid-ci`: accept its run selection, provenance checks, failure inventory, durable paths, and retained-evidence verification. Use `cubrid-tcc` for testcase history under section 3b.
 - Read testcase source at the recorded Git revision from the local testcase repositories. Preserve source and testcase worktrees and indexes unchanged.
 - Separate observations, inferences, and unknowns. Every causal claim needs a PR relation, confidence, falsifier, and concrete next action.
-- Write a full head analysis only when the head manifest and matching terminal observation say the requested head collection is complete. Missing baseline evidence limits comparison without downgrading a validated head inventory. For any incomplete, interrupted, or unvalidated collection, write a bounded warning report and make no regression or root-cause conclusion.
+- Write a full head analysis only when `report_mode.py` permits `full` for the verified head evidence (section 2). Missing baseline evidence limits comparison without downgrading a validated head inventory. For any incomplete, interrupted, or unvalidated collection, write a bounded warning report and make no regression or root-cause conclusion.
 - Locate the report repository at `/home/vimkim/gh/my-cubrid-docs`. Before writing, follow [Document Git workflow](../cubrid-common/references/document-git-workflow.md) to select its task checkout, commit the reviewed report locally, and handle approved integration and publication.
 - This workflow writes collector-owned evidence and Git cache data, Chronicle-owned history evidence and index data, plus documents in the report repository. Keep provider acquisition in the respective CLI; trigger, cancellation, comments, testcase/source edits, reproduction, repairs, and source/testcase merges require their own authorized workflow. For unsupported evidence sources, follow the separately labeled fallback boundary in [CI evidence](../cubrid-common/references/ci-evidence.md); integrity failures never authorize bypass.
 
 ## 1. Snapshot and collect once
 
-Require `cubrid-ci`, `jq`, `jsonschema`, `gh`, and `cubrid-pr-status`. Run `cubrid-ci doctor --json`; stop with its diagnostics if setup is not healthy. Record `cubrid-ci --version` for the report.
+Require `cubrid-ci`, `jq`, `gh`, and `cubrid-pr-status`. Run `cubrid-ci doctor --json`; stop with its diagnostics if setup is not healthy. Record `cubrid-ci --version` for the report. Run `cubrid-ci verify --help >/dev/null 2>&1` once; a nonzero exit means the installed collector predates retained-evidence verification and section 2's fallback applies.
 
 Run exactly one delegated status command. Pass the supplied PR number or URL; when none was supplied, run it from the user's CUBRID worktree without a PR argument.
 
@@ -44,12 +44,14 @@ Set `PR_REF` to the supplied PR number or URL before running the block; leave it
 Require a CUBRID PR identity and a 40-character `.pr.head_sha`. Pin that SHA and run exactly one collection command, passing the resolved PR explicitly so collection is independent of the report process's directory:
 
 ```bash
+PINNED_PR_URL=$(jq -er '.pr.url' "$STATUS_JSON")
+PINNED_HEAD=$(jq -er '.pr.head_sha' "$STATUS_JSON")
 SUITE_ARGS=()
 # For a user-requested subset, append concrete pairs such as:
 # SUITE_ARGS+=(--suite test_sql)
 
-if cubrid-ci collect "$(jq -er '.pr.url' "$STATUS_JSON")" \
-    --commit "$(jq -er '.pr.head_sha' "$STATUS_JSON")" \
+COLLECT_STARTED=$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)
+if cubrid-ci collect "$PINNED_PR_URL" --commit "$PINNED_HEAD" \
     "${SUITE_ARGS[@]}" --json >"$RESULT_JSON"
 then
   COLLECT_EXIT=0
@@ -58,42 +60,48 @@ else
 fi
 ```
 
-Capture the collection exit without discarding JSON. Exit `0` means all requested suites are complete, including terminal red suites. Exit `3` means evidence is unfinished or unavailable and requires a warning report. Exits `2`, `4`, `5`, or `6` are input, trust, remote, or storage failures: report the structured diagnostic and stop unless the result establishes both PR and commit identity and a manifest exists; in that case write only a warning report.
+Capture the collection exit and keep `RESULT_JSON` even when it is empty or a structured error. Exit `0` means all requested suites are complete, including terminal red suites. Exit `3` means evidence is unfinished or unavailable. Exits `2`, `4`, `5`, or `6` are input, trust, remote, or storage failures; keep their structured diagnostic for the report. Section 2 decides which report the evidence permits.
 
-Do not repeat either head command to improve the snapshot. Use the returned `.output_dir`; never select an older bundle as the current result.
+Run each head command exactly once. Section 2 verifies the bundle this invocation produced; never select an older bundle as the current result.
 
-## 2. Validate the observation and bundle
+## 2. Verify the observation and bundle
 
-Use `/home/vimkim/gh/cubrid-ci/schema` as the schema root. Under the returned `<output_dir>/observations`, select the observation whose terminal `result.json.command` equals the saved collector result, including `collected_at`. Validate its `request.json` and `result.json` with `collection-observation-request-v1.schema.json` and `collection-observation-result-v1.schema.json`. Require matching observation IDs; require the request to match the pinned repository, PR, commit, canonical requested suite set, and collection options; and require the result command to equal the saved collector result. If no unique matching observation exists, treat the collection as unvalidated raw evidence.
+`cubrid-ci verify` establishes offline whether `RESULT_JSON` came from one unique collection observation and whether its retained evidence is intact. It owns observation selection (including an interrupted or failed run that printed no result), schema, identity, manifest, path, digest, count, failure-file, binary-budget, and rerun-lineage checks. When the section 1 probe failed, use the fallback at the end of this section instead. Otherwise pass the pins, the same suite filters, and the collection start time:
 
-An observation with `request.json` but no `result.json` records an interrupted local collector process. It does not establish a provider, workflow, suite, or testcase failure. Select such an observation only when its identity, requested suites, and invocation time uniquely match this invocation; ambiguity leaves unvalidated raw evidence. Write a warning report from its validated request and retained files, without assigning CI causality.
+```bash
+VERIFY_JSON="$CI_ANALYSIS_TMP/verify.json"
+ASSESSMENT_JSON="$CI_ANALYSIS_TMP/assessment.json"
+if cubrid-ci verify "$RESULT_JSON" --pr "$PINNED_PR_URL" --pr-head "$PINNED_HEAD" \
+    "${SUITE_ARGS[@]}" --since "$COLLECT_STARTED" --json >"$VERIFY_JSON"
+then
+  VERIFY_EXIT=0
+else
+  VERIFY_EXIT=$?
+fi
+jq '.assessment + {baseline: "not_assessed"}' "$VERIFY_JSON" >"$ASSESSMENT_JSON"
+```
 
-For a terminal observation, validate the command result and `<output_dir>/manifest.json` with `command-result-v2.schema.json` and `manifest-v2.schema.json`. Require them to agree on repository, PR number and URL, full commit, output directory, requested suite set, suite states, and errors. Also require:
+Exit `0` means fully verified evidence. Exit `3` means unfinished, interrupted, failed, unselected, partial, or superseded evidence. Exit `4` means the retained evidence contradicts itself or the pins. Exit `2` is an invocation error without `.assessment`: correct the arguments and run `verify` again; it only reads local files.
 
-- schema version `2`, repository `CUBRID/cubrid`, and the pinned status SHA;
-- manifest `.pr.head_sha` and `.commit` equal the pinned SHA;
-- each `completed` suite's run and attempt equal its summary's identity;
-- each completed summary validates against `suite-summary-v2.schema.json` for an ordinary execution or `suite-summary-v3.schema.json` for a `/run rerun` execution;
-- its `raw/index.json` validates against `raw-evidence-index-v2.schema.json` and matches the suite and run/attempt identity;
-- raw-index paths are unique, safe relative paths beneath the suite's `raw/` directory; resolve them from that directory and reject escapes, including through symlinks;
-- each indexed raw file matches its declared byte length and SHA-256 digest, and `.summary_sha256` matches the summary file's digest;
-- when binary collection was requested, `binary-inventory.json` validates against `binary-inventory-v2.schema.json`, each downloaded file matches its declared length and digest, and the observation budget arithmetic and per-artifact consumption reconcile;
-- every summary failure has one matching `failures/<stable_id>/metadata.json` validated by `failure-v2.schema.json`, and its declared message and optional diff file exist beneath that suite directory;
-- counts reconcile: `.counts.tests = passed + failures + errors + skipped`, `.counts.planned = run + unrun + skipped`, and failure records total `failures + errors`.
+`verify` establishes the facts; `report_mode.py` applies its decision table to them. From the skill source directory, run `python3 scripts/report_mode.py "$ASSESSMENT_JSON"`. Rerun it with the baseline state after section 3a. Its `mode` is the strongest permitted head output: `full` permits the complete report, `warning` permits only the bounded warning report, and `stop` permits no report. Never upgrade its decision. `comparison_scope: validated_cases_only` permits bounded comparative claims only for the cases validated under the shared comparison contract; it never proves a regression by itself.
 
-Treat path escape, identity disagreement, missing declared evidence, count disagreement, or schema failure as unvalidated raw evidence. Produce only a warning report when PR and commit identity remain established; otherwise stop without inventing report identity.
+Use the verification report as the evidence index:
 
-For summary v3, follow [Rerun evidence](../cubrid-common/references/ci-reruns.md) before marking requested summaries validated. Validate the linked source summaries recursively. Keep newly executed counts, carried-forward verdicts, and source failures distinct in the report.
+- Read testcase verdicts only from suites whose `summary` is `validated`, at `<output_dir>/<path>`.
+- For a suite with `rerun_sources`, follow [Rerun evidence](../cubrid-common/references/ci-reruns.md) to keep newly executed counts, carried-forward verdicts, and source failures distinct.
+- Read the acquisition ledger and binary budget from `<observation_dir>/result.json`. Cite each `.issues[]` entry as a diagnostic.
 
-After these validations, write a temporary assessment JSON with `identity`, `observation`, `manifest`, `requested_summaries`, `result_matches_observation`, `requested_suites_reconciled`, and `baseline`, using the closed values accepted by this skill's `scripts/report_mode.py`. From the skill source directory, run `python3 scripts/report_mode.py <assessment.json>`. Set `baseline` to `not_assessed` initially, then rerun this local gate with the baseline assessment after section 3a. Its `mode` is the strongest permitted head output: `full` permits the complete report, `warning` permits only the bounded warning report, and `stop` permits no report. Never upgrade its decision. `comparison_scope: validated_cases_only` permits bounded comparative claims only for the cases validated under the shared comparison contract; it never proves a regression by itself. The fixture-backed script applies a decision table to these established assessment inputs; it does not independently validate the evidence bundle.
+An `interrupted` observation records a stopped local collector process. It does not establish a provider, workflow, suite, or testcase failure. Write a warning report from its request and retained files, without assigning CI causality.
+
+**Collector without `verify`.** When the section 1 probe failed, record the missing capability and collector version as a limitation, and treat the bundle as unvalidated raw evidence. Write the assessment with `observation: unvalidated`, `manifest: missing`, `requested_summaries: none`, both booleans `false`, and `baseline: unavailable`. Set `identity` to `established` only when `RESULT_JSON` is a command result whose `.pr.number` and `.commit` equal the pinned PR and head, and to `unknown` otherwise. `report_mode.py` then permits at most a warning report. Name installing a collector that provides `verify` as the next action.
 
 `running`, `not_observed`, `job_level_failure`, and `collection_failed` are distinct states. Do not infer a test verdict for a suite without a validated complete summary.
 
-For incomplete terminal observations, report each requested shard as `retained`, `failed`, or `not_attempted` from the validated acquisition ledger. A retained shard means its raw response set was durably acquired; it is not a suite verdict and does not support regression attribution without a validated suite summary. Report suite-level and shard-level acquisition failures with their precise stage, sanitized endpoint, consumed response bytes, and diagnostic. Report `not_attempted` as unknown, not failed. Treat binary bytes consumed by excluded or interrupted transfers as spent budget, and describe absent later binaries as budget-limited rather than provider-absent when the observation says the total budget was exhausted.
+For incomplete terminal observations, report each requested shard as `retained`, `failed`, or `not_attempted` from the verified observation's acquisition ledger. A retained shard means its raw response set was durably acquired; it is not a suite verdict and does not support regression attribution without a validated suite summary. Report suite-level and shard-level acquisition failures with their precise stage, sanitized endpoint, consumed response bytes, and diagnostic. Report `not_attempted` as unknown, not failed. Treat binary bytes consumed by excluded or interrupted transfers as spent budget, and describe absent later binaries as budget-limited rather than provider-absent when the observation says the total budget was exhausted.
 
 ## 3. Inspect exact evidence and source
 
-For a complete bundle, read the manifest, each completed summary, failure metadata, `message.txt`, optional `diff.txt`, and only the targeted raw text named in `raw/index.json` that bears on a failure. An absent diff with `diff_extraction: not_available` is an observed limitation, not missing-message evidence and not proof that outputs matched.
+For a complete bundle, read the manifest, each validated summary, failure metadata, `message.txt`, optional `diff.txt`, and only the targeted raw text named in `raw/index.json` that bears on a failure. An absent diff with `diff_extraction: not_available` is an observed limitation, not missing-message evidence and not proof that outputs matched.
 
 For each failure, select the testcase SHA from the matching summary shard and choose the local repository:
 
@@ -108,11 +116,28 @@ Inspect CUBRID code only from a local checkout proven to contain the manifest co
 
 ## 3a. Acquire and compare the exact merge-base baseline
 
-For PR failure attribution, read [Merge-base comparison](../cubrid-common/references/ci-baseline.md). Run one `cubrid-ci collect-base <resolved-pr-url> --json` with the same suite filters, retain its exit and JSON, and validate the resulting schema-v3 bundle and observation-v2 pair independently. If the installed CLI lacks the command, record the missing capability and an unknown baseline; source changes in another checkout do not establish installed support.
+For PR failure attribution, read [Merge-base comparison](../cubrid-common/references/ci-baseline.md). Run one baseline collection with the same suite filters, then verify it against the head pins:
 
-Require the baseline relationship's PR number and head SHA to match the pinned head snapshot. Its target tip, exact merge base, and observation time establish the comparison identity. A changed head, ambiguous merge base, missing artifacts, or unavailable history constrains comparison; preserve the independently validated head report.
+```bash
+BASE_RESULT_JSON="$CI_ANALYSIS_TMP/base-result.json"
+BASE_VERIFY_JSON="$CI_ANALYSIS_TMP/base-verify.json"
+if cubrid-ci collect-base "$PINNED_PR_URL" "${SUITE_ARGS[@]}" --json >"$BASE_RESULT_JSON"
+then
+  BASE_EXIT=0
+else
+  BASE_EXIT=$?
+fi
+cubrid-ci verify "$BASE_RESULT_JSON" --pr "$PINNED_PR_URL" --pr-head "$PINNED_HEAD" \
+    "${SUITE_ARGS[@]}" --json >"$BASE_VERIFY_JSON"
+BASELINE=$(jq -r '.baseline // "unavailable"' "$BASE_VERIFY_JSON" 2>/dev/null)
+BASELINE=${BASELINE:-unavailable}
+jq --arg baseline "$BASELINE" '.baseline = $baseline' "$ASSESSMENT_JSON" >"$ASSESSMENT_JSON.next"
+mv "$ASSESSMENT_JSON.next" "$ASSESSMENT_JSON"
+```
 
-Compare each exact testcase path and observed signature with the validated baseline evidence, preserving test revisions and configuration differences. Classify head failures as `also_observed_on_base`, `additional_on_head`, or `uncomparable`, and record `base_only` separately. Set the report-mode assessment's `baseline` to `validated_exact`, `partial_exact`, `unavailable`, or `invalid`. Partial comparison permits conclusions only for independently validated matching suites/cases. Neither a valid baseline nor the gate's permission establishes causality.
+`BASELINE` is `validated_exact`, `partial_exact`, `unavailable`, or `invalid`. It is `unavailable` when the installed CLI lacks `collect-base` or `verify`; source changes in another checkout do not establish installed support. The pins make `verify` reject a baseline resolved from another PR or head. The saved result's `.selection.baseline` target tip, exact merge base, and observation time establish the comparison identity. A malformed, partial, or missing baseline constrains comparison; preserve the independently verified head report.
+
+Compare each exact testcase path and observed signature with the validated baseline evidence, preserving test revisions and configuration differences. Classify head failures as `also_observed_on_base`, `additional_on_head`, or `uncomparable`, and record `base_only` separately. Partial comparison permits conclusions only for suites whose baseline `summary` is `validated`, and for matching cases within them. Neither a valid baseline nor the gate's permission establishes causality.
 
 ## 3b. Check testcase failure history
 

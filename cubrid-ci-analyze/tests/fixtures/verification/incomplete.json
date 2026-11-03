@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "ok": false,
+  "output_dir": "/evidence/github-actions/CUBRID-cubrid/pr-7925/925232529e5406c0fe595fd8fd5123636069ea9b",
+  "observation_dir": "/evidence/github-actions/CUBRID-cubrid/pr-7925/925232529e5406c0fe595fd8fd5123636069ea9b/observations/20261022T094600.247646027Z-4162547-0",
+  "assessment": {
+    "identity": "established",
+    "observation": "incomplete",
+    "manifest": "validated",
+    "requested_summaries": "partial",
+    "result_matches_observation": true,
+    "requested_suites_reconciled": true
+  },
+  "baseline": null,
+  "suites": {
+    "test_medium": {
+      "state": "completed",
+      "summary": "validated",
+      "path": "providers/github-actions/runs/39744814589/attempts/1/test_medium/summary.json",
+      "rerun_sources": []
+    },
+    "test_shell": {
+      "state": "completed",
+      "summary": "validated",
+      "path": "providers/github-actions/runs/39744814589/attempts/1/test_shell/summary.json",
+      "rerun_sources": []
+    },
+    "test_sql": {
+      "state": "collection_failed",
+      "summary": "absent",
+      "rerun_sources": []
+    }
+  },
+  "issues": []
+}

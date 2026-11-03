@@ -61,6 +61,30 @@ class ReportModeFixtures(unittest.TestCase):
                         self.assertTrue(result.stderr.startswith("report_mode:"), result.stderr)
                         self.assertNotIn("Traceback", result.stderr)
 
+    def test_collector_verification_reports_project_into_assessments(self) -> None:
+        verification = FIXTURES / "verification"
+        baseline = json.loads((verification / "baseline-exact.json").read_text())["baseline"]
+        cases = {
+            ("complete.json", "not_assessed"): ("full", "none"),
+            ("complete.json", baseline): ("full", "validated_cases_only"),
+            ("incomplete.json", baseline): ("warning", "none"),
+            ("unlocated.json", "not_assessed"): ("stop", "none"),
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "assessment.json"
+            for (report, baseline_state), (mode, scope) in cases.items():
+                with self.subTest(report=report, baseline=baseline_state):
+                    assessment = json.loads((verification / report).read_text())["assessment"]
+                    path.write_text(json.dumps(dict(assessment, baseline=baseline_state)))
+                    completed = subprocess.run(
+                        [sys.executable, str(SCRIPT), str(path)],
+                        check=True,
+                        capture_output=True,
+                        text=True,
+                    )
+                    result = json.loads(completed.stdout)
+                    self.assertEqual((result["mode"], result["comparison_scope"]), (mode, scope))
+
     def test_invalid_assessments_are_rejected(self) -> None:
         invalid = FIXTURES / "invalid"
         for assessment in sorted(invalid.glob("*.json")):

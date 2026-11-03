@@ -12,8 +12,8 @@ Use one verdict:
 
 | Verdict | Meaning |
 |---|---|
-| `changes-required` | At least one confirmed defect requires a change. |
-| `no-confirmed-findings` | No confirmed defect remains, and all applicable planned coverage is complete. |
+| `changes-required` | At least one defect requires a change, with a retained reproduction and coordinator replay that demonstrates the failure. |
+| `no-confirmed-findings` | No confirmed defect remains, all applicable planned coverage is complete, and no material unverified risk remains. |
 | `incomplete` | Required analysis or evidence remains. |
 | `needs-budget` | The budget gate prevented reviewer execution. |
 
@@ -28,19 +28,27 @@ Order findings by impact. Use the following priorities:
 - `P2` covers other demonstrated correctness or material performance defects.
 - `P3` covers low-impact defects that still have a concrete consequence.
 
-For each finding, include the reviewer contract's candidate fields after adjudication. Give the shortest source location that shows the defect. State whether verification was dynamic or static. Describe the missing test as missing evidence, not as proof of a defect.
+For each finding, include the reviewer contract's candidate fields after adjudication. Give the shortest source location that shows the defect. Include the retained probe, exact command, expected behavior, actual output, and coordinator replay result. Source-only arguments belong in unverified risks. Describe a missing test as missing evidence, not as proof of a defect.
+
+### Safety facts and effects outside the diff
+
+State what behavior changed and which unchanged consumers depend on it. For each material effect, record the fact that makes it safe. Include the owner, pinned source locations, evidence level, probe result, tested conditions, and remaining uncertainty.
+
+Separate risks cleared by evidence from unproven safety facts. Avoid assigning a numeric probability without supporting data. State reachability, required conditions, and consequences instead. Include the cheapest check required before merge for each material unresolved risk.
 
 ### Coverage and verification
 
-Link `coverage.md`. Include every changed path or a clearly enumerated path group. Each row records its reviewer, invariant, evidence, result, and remaining action. Record not-applicable domains with their reasons.
+Link `coverage.md`. Include every changed path or a clearly enumerated path group. Each row records its reviewer, invariant, evidence, result, and remaining action. Include shared challenge questions, both reviewers' models, and their independent results. Record missing second checks and not-applicable domains with their reasons.
 
 List checks actually run, with their exact commands, revisions, configuration, exit status, and artifact paths. Distinguish passed, failed, inconclusive, and not-run checks. A build failure from missing dependencies does not establish a defect in the PR.
 
 State unavailable source, missing specifications, untested configurations, reviewer dropouts, and unexamined interleavings. Record PR movement separately from the snapshot findings. Avoid a numeric completeness percentage unless its denominator is defined.
 
-### Open questions and rejected candidates
+### Unverified risks and dropped candidates
 
-Keep unproven risks separate from confirmed findings. Give each open question an owner and the check that would resolve it. Record significant rejected candidates with the source or experiment that disproved them. Summarize duplicate candidates under their accepted root cause.
+Keep unproven risks separate from confirmed findings. Include source-only concerns and reproduced candidates awaiting coordinator replay. Give each risk an owner and a decisive next check. A material unresolved risk makes coverage incomplete and requires a handoff.
+
+Record dropped counts by reviewer and a reason for each significant rejection. Distinguish a disproven hypothesis from an unverified one. Retain inconclusive replay attempts. Summarize duplicate candidates under their accepted root cause.
 
 Separate pre-existing defects from findings attributed to the reviewed change. Link them only when the evidence supports their relevance.
 
@@ -57,11 +65,11 @@ Create `handoff.md` when follow-up review is required. Write a self-contained br
 1. The user's goal and the exact reason this review stopped.
 2. Repository, PR URL when present, comparison mode, full base and head SHAs, merge-base SHA when used, and patch hash when applicable.
 3. Report, manifest, coverage, evidence, specification, and policy locations.
-4. Confirmed findings and unresolved questions with stable IDs. Include disagreements and failed reproduction attempts.
+4. Confirmed findings and unresolved questions with stable IDs. Include unproven safety facts, evidence levels, disagreements, and failed reproduction attempts.
 5. Inspected scope and the precise remaining paths, invariants, configurations, or delta revisions.
 6. Next commands and required environment. Include build and testcase identities, containment requirements, and existing runtime resource ownership.
 7. The remaining budget and its measurement status. State which new work requires a new allocation. Reuse of an assignment does not reset its ceiling.
-8. A proposed focused assignment for each unresolved question and its completion condition.
+8. A proposed focused assignment for each unresolved question and its completion condition. Include retained probes, missing coordinator replays, and missing independent challenges.
 9. Conditions for finishing the review, including revalidation of changed source and affected callers after a fix.
 
 For a changed PR, keep the old snapshot intact. Pin the new base and head before reviewing the delta. Revisit affected invariants beyond the new hunks. Preserve stable finding IDs when their root causes remain the same.

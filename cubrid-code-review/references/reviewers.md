@@ -6,11 +6,43 @@ Read the pinned patch and assigned source. Verify the revision before analysis. 
 
 For each changed path, identify the relevant invariant and its owners. Trace callers, callees, shared state, error paths, and cleanup. Follow unchanged code when it determines whether the change is correct. Report an unrelated old defect separately.
 
-List concrete failure hypotheses. Try to disprove each hypothesis before reporting it. Prefer the smallest executable reproduction when practical. A complete source argument can establish a defect without a runtime reproduction. State which form of evidence you obtained.
+Read the shared method, your role, and the candidate record below. Read another role when a dependency crosses that boundary.
+
+### Trace the impact beyond the diff
+
+Identify the changed behavior, including consequences that the patch does not state. Trace consumers outside the changed functions. Follow stored bytes, recovery records, replication streams, callbacks, configuration, and library contracts where relevant. Inspect the actual dependency version and local patches. A caller list alone does not establish impact.
+
+For each material affected behavior, state the one or two facts that make the change safe. Examples include exclusive slot ownership until undo ends, or WAL persistence before a data-page flush. Name the source paths that establish the dependency. Do not invent consumers or unsupported compatibility requirements.
+
+Select the smallest check that could refute each safety fact. Run production code or a test that exercises production code. Record the tested conditions. A passing probe supports those conditions. It does not prove every possible execution safe.
+
+Record how far the evidence reaches:
+
+| Level | Evidence |
+|---|---|
+| 1 | An assertion without supporting evidence. |
+| 2 | Pinned source locations that show the relevant behavior. |
+| 3 | A complete path argument that excludes or permits the failure under stated conditions. |
+| 4 | An executed probe or test against the actual implementation. |
+| 5 | A reproduction in the running database or affected utility. |
+
+State `unproven` when the required safety fact lacks execution evidence. Retain the strongest source argument and the next check. A material unproven safety fact requires follow-up. Report risks cleared by evidence separately, with the limits of that evidence.
+
+### Challenge the change
+
+List concrete failure hypotheses and try to break the intended behavior. Include the applicable error, interleaving, crash, restart, and replay boundaries. Try to disprove each hypothesis before asking for verification resources.
+
+For a shared question, investigate independently before reading the other reviewer's answer. Different models provide independent attempts, not a vote. Keep every independently verified root cause. Do not choose one reviewer's entire report as the winner.
+
+For a candidate defect, create the smallest practical reproduction against the pinned implementation. Capture its command, working directory, inputs, expected behavior, actual output, exit status, and environment identity. Retain the probe and raw output for coordinator replay. Copied pseudocode or a stand-in implementation does not reproduce a production defect.
+
+Prove that the reviewed change introduces or exposes the failure. Run the same check against the base when useful. Record any difference in prerequisites. Distinguish a source-induced compiler error from an unavailable dependency or broken test setup.
+
+If execution is unavailable, retain the hypothesis and source argument as an unverified risk. Specify the missing environment and the cheapest decisive check. Do not fabricate output or classify an unrun check as passed.
 
 For concurrency, give a feasible actor schedule and identify synchronization at each step. For recovery, give the durable state before and after the crash point. For performance, identify the workload and limiting resource. Do not claim a measured regression from source inspection.
 
-Each reviewer returns the pinned identity, assigned and inspected paths, checked invariants, commands, results, candidate findings, unresolved questions, and budget status. Use `complete`, `partial`, or `blocked` for coverage. Use `findings` or `no-confirmed-findings` for the finding result. These are separate dimensions.
+Each reviewer returns the pinned identity, assigned and inspected paths, checked invariants, safety facts, commands, results, candidate findings, unresolved questions, and budget status. Include cleared risks and rejected hypotheses with their evidence. Use `complete`, `partial`, or `blocked` for coverage. Report reproduced candidates separately from source-only risks. The coordinator owns confirmation.
 
 Stop when assigned invariants have sufficient evidence or when the budget requires termination. Report all supported findings. Do not spend the remaining allowance on unrelated cleanup.
 
@@ -88,9 +120,15 @@ For each candidate, provide these fields:
 - Pinned file and line location, changed hunk, and relevant symbol.
 - Reachable preconditions, affected configuration, actors, and input.
 - Violated invariant and its authoritative source when one exists.
-- Complete failure argument or reproduction command and observed result.
+- Source argument, reproduction command, expected result, actual output, exit status, and probe path. Identify missing execution explicitly.
 - How the reviewed change introduces or exposes the failure.
 - User impact, scope, and a suggested fix direction.
-- Evidence type, evidence paths, disproof attempts, and unresolved assumptions.
+- Evidence level, evidence paths, disproof attempts, unresolved safety facts, and coordinator replay status.
 
 Keep stylistic preferences outside defect findings. Report a documented-standard violation separately when it materially affects this review.
+
+## Method sources
+
+This method adapts [interrogate](/home/vimkim/temp/pstack/skills/interrogate/SKILL.md) and [blast-radius](/home/vimkim/temp/pstack/skills/blast-radius/SKILL.md) from pstack revision `25abb38559ddbabec563646224d09eff9a250eca`. The shared-question, execution, replay, and safety-evidence rules come from those workflows. CUBRID roles and budget controls remain specific to this skill.
+
+These source paths provide provenance. They are not runtime dependencies. The integrated instructions above work without the pstack checkout. The [pstack license](pstack-license.txt) accompanies this adaptation.

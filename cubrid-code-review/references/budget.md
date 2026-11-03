@@ -43,6 +43,8 @@ Agree a finite total envelope before parallel review. Include the coordinator an
 
 Reserve part of the envelope for the coordinator to verify and consolidate findings. State the allocation before launching reviewers. Never allocate the whole envelope to initial exploration.
 
+Include real-code probes and coordinator replay in that reservation. Assign shared adversarial questions to existing seats. Calling a helper skill does not grant another model panel or reset an assignment's ceiling. Prefer a narrow replay over another full review.
+
 Use up to five initial reviewers. For irrelevant roles, save usage by combining assignments or marking them not applicable. Use concise context pointers and per-role source slices. Read a shared specification once and pass its path and relevant requirements.
 
 Before adding reviewers beyond five, name the uncovered invariant and check both the assignment ceiling and the remaining total envelope. If no expansion fits, create a handoff. A broad PR does not authorize more spending.

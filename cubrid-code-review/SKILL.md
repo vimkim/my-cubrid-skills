@@ -9,6 +9,8 @@ Review the supplied change at fixed revisions. Use about five specialist agents 
 
 The coordinator owns scope, budget, verification resources, and the final verdict. Reviewers investigate code. They do not fix the submitted change.
 
+Use pstack's adversarial and blast-radius methods inside these assignments. The reviewer contract defines the adapted procedure. Running separate `interrogate`, `blast-radius`, or `arena` panels is unnecessary.
+
 ## 1. Pin the review scope
 
 Read `/home/vimkim/my-cubrid/CUBRID.md` when available. Read the target repository's applicable `AGENTS.md` and contribution rules. Preserve unrelated changes.
@@ -48,6 +50,8 @@ Create a run directory outside the submitted source tree. Use separate paths for
 
 Use the user's configured models when available. Otherwise use available models suited to the assigned work. Avoid a fixed vendor or model dependency. Record actual choices. Preserve enough reasoning capacity for concurrency and recovery analysis by narrowing scope first.
 
+If pstack model settings exist, use the `interrogate reviewers` list as the specialist model pool. Read the harness's configured settings file. For Codex, check `~/.agents/pstack-models.md`. For Claude Code, check `~/.claude/rules/pstack-models.md`. For Cursor, check `~/.cursor/rules/pstack-models.mdc`. Assign distinct available models to a shared challenge when possible. Report unavailable models or reduced diversity. Model selection does not increase the agent count or override the budget.
+
 When work uses parallel agents or crosses sessions, use `track-work` if available. Keep the pinned identity and next action in the work item.
 
 Completion requires a budget decision that the available harness can actually honor. A prompt that asks an agent to limit itself is not hard enforcement.
@@ -70,9 +74,11 @@ For a small change, combine roles into fewer agents. Mark irrelevant roles with 
 
 Assign each hunk a primary owner. Assign callers and affected invariants too. Give cross-domain boundaries a named owner, such as vacuum slot reuse across concurrency and recovery. Reviewers may trace unchanged code to establish a defect introduced or exposed by this change.
 
+For the one or two most consequential boundary risks, assign the same question to two existing reviewers. Give both identical pinned scope, intent, and safety conditions. Keep their initial answers independent. Record the shared question and both owners in the coverage table. If a second seat cannot fit, record the missing independent challenge.
+
 The coordinator covers documented standards and specification conformance across the assignments. Avoid launching a separate generic style-review panel.
 
-Each brief contains the user's goal, pinned identity, role, assigned paths, invariants, relevant context pointers, budget, output path, and completion conditions. Point to this skill and the reviewer contract. Do not copy the entire conversation into every brief.
+Each brief contains the user's goal, pinned identity, role, assigned paths, invariants, relevant context pointers, budget, output path, and completion conditions. Include any shared challenge question and the safety fact to test. Point to this skill and the reviewer contract. Do not copy the entire conversation into every brief.
 
 Completion requires an owner for every changed path and every identified cross-domain risk, or an explicit coverage gap.
 
@@ -83,6 +89,8 @@ Launch the planned agents with fresh, bounded context. In Codex, use `spawn_agen
 Keep submitted source read-only. Each reviewer writes only its own report and isolated evidence. The coordinator schedules builds and runtime checks. Concurrent source readers may share a pinned checkout. Tests that alter databases, services, install prefixes, or resource pressure run in separate environments or serially.
 
 Reviewers read their assigned code before reading other reviewers' conclusions. They trace success, failure, cleanup, and relevant concurrent or crash paths. Require evidence for every claimed violated invariant.
+
+Each reviewer follows the contract's impact-tracing and adversarial steps. Trace a material dependency beyond direct callers. Test the fact that makes the affected behavior safe. Produce a reproducible failure or a bounded safety check against real code. Keep source-only concerns visible as unverified risks.
 
 Use the narrowest suitable verification workflow when available:
 
@@ -109,13 +117,17 @@ Read each saved reviewer report. Reject a report that uses the wrong revision or
 
 Recheck each candidate against the actual diff, relevant callers, and applicable contracts. Search for guards, ownership transfers, and recovery behavior that could disprove it. Compare the base behavior when needed to establish change attribution.
 
-Accept a finding when a reproducible check or a complete source argument proves the failure. A source argument identifies reachable conditions and follows the relevant paths. Label the evidence as static or dynamic. Do not invent a reproduction.
+Accept a confirmed finding only after a run against real code demonstrates the wrong behavior and breaks the stated intent. Rerun the reviewer's command against the pinned implementation. Check the expected result, actual result, and change attribution. Record the coordinator's independent replay evidence. An exit code alone does not establish the defect.
+
+A reproducible compiler failure in a supported build also provides execution evidence. Distinguish a source defect from missing build prerequisites.
+
+If replay is unavailable or inconclusive, retain the candidate as an unverified risk. A complete source argument remains useful evidence there. Preserve its feasible schedule or crash sequence. A passing stress run does not disprove a race. Do not silently drop a material concern because its reproduction is expensive.
 
 Deduplicate findings by root cause. Preserve the highest supported impact and all affected paths. Keep unproven concerns in open questions. Reviewer agreement alone does not prove a finding. A credible unresolved data-loss or concurrency concern requires follow-up.
 
 Use an extra specialist only for a named unresolved question and an allowed budget allocation. Avoid automatic second full reviews. Classify pre-existing defects separately from defects introduced or exposed by the reviewed change.
 
-Completion requires a disposition for every candidate and a completed coverage table. Document the reason for rejecting a significant candidate.
+Completion requires a disposition for every candidate and a completed coverage table. Distinguish disproven candidates from candidates awaiting execution. Record dropped counts and reasons by reviewer. Carry material unproven safety facts and missing independent checks into the handoff.
 
 ## 6. Save the report and handoff
 

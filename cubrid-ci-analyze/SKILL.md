@@ -32,6 +32,7 @@ Run exactly one delegated status command. Pass the supplied PR number or URL; wh
 CI_ANALYSIS_TMP=$(mktemp -d -t cubrid-ci-analysis.XXXXXX)
 STATUS_JSON="$CI_ANALYSIS_TMP/status.json"
 RESULT_JSON="$CI_ANALYSIS_TMP/result.json"
+ASSESSMENT_JSON="$CI_ANALYSIS_TMP/assessment.json"
 COLLECTOR_VERSION=$(cubrid-ci --version)
 PR_REF=${PR_REF:-}
 
@@ -74,7 +75,6 @@ Run each head command exactly once. Section 2 verifies the bundle this invocatio
 
 ```bash
 VERIFY_JSON="$CI_ANALYSIS_TMP/verify.json"
-ASSESSMENT_JSON="$CI_ANALYSIS_TMP/assessment.json"
 if cubrid-ci verify "$RESULT_JSON" --pr "$PINNED_PR_URL" --pr-head "$PINNED_HEAD" \
     "${SUITE_ARGS[@]}" --since "$COLLECT_STARTED" --json >"$VERIFY_JSON"
 then

@@ -18,6 +18,13 @@ an actual pull request on GitHub.
   available. One confirmation covers the exact listed operations, including any
   necessary docs integration/push and source push. Skill invocation, saved context,
   or an approval flag in a file does not establish permission.
+- A **standing instruction** replaces per-draft review when the user says they are
+  going to sleep or tells you to keep going. It confirms the PR operations it names
+  or the task in progress already includes, within the limits it states, such as
+  one draft PR per hour. Quote the user's words and when they said them in the draft
+  context. Run every publication check as usual. When a check fails or a change would
+  return material to review, skip the remaining writes of that publication, including
+  its source push, and record the reason for the user.
 - When the user edits the draft and says to publish, reread and validate its current
   contents, then upload them unchanged. An agent rewrite requires another review.
   Explain validation failures instead of silently repairing approved material.

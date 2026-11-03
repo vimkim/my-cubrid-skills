@@ -14,7 +14,8 @@ rules below before classifying remote differences as outside changes.
    context against the selected docs checkout. Preserve existing draft filenames;
    do not reconstruct paths from a filename suffix. If several drafts match a
    ticket and the reviewed one is unclear, ask which one the user reviewed.
-2. Establish the user's confirmation from the conversation. If it cannot be
+2. Establish the user's confirmation, or a standing instruction under the contract
+   in `SKILL.md`, from the conversation. If it cannot be
    established in a resumed session, present the saved material and operations for
    confirmation. If it already applies, continue without asking again.
 3. Reread the body and any explanation. A user's edits made before their confirmation
@@ -30,6 +31,9 @@ rules below before classifying remote differences as outside changes.
 4. Require local source `HEAD` to equal `SOURCE_COMMIT`. Read the live remote head
    and compare it with the preparation snapshot (or a verified result of an approved
    source push). A source change requires reconciliation and another review.
+   A remote head that already equals `SOURCE_COMMIT` is not a source change, even
+   when nothing records who pushed it. Record that observation in the context,
+   treat any listed source push as complete, and continue without another review.
 5. For updates, fetch the exact PR's metadata and body again. Require the same
    repository, head/base branches, open/closed state, and draft/ready status.
    Compare the source revision with the recorded remote head before an approved

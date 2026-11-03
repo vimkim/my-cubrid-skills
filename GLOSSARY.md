@@ -23,7 +23,7 @@ _Avoid_: PR body draft, when referring to the GitHub pull request
 An optional companion document for technical context that exceeds the short PR body's scope.
 
 **Publication confirmation**:
-The user's explicit approval of the reviewed PR material and the listed operations needed to publish it.
+The user's explicit approval of the reviewed PR material and the listed operations needed to publish it, or a standing instruction the user gives when they go to sleep or tell the agent to keep going.
 _Avoid_: Skill invocation, as a synonym for approval
 
 **Draft context**:

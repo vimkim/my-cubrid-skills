@@ -132,7 +132,12 @@ module. Two checks found no evidence that one would earn its place:
 | F4 | Create. A new session finds a matching PR created seconds after this attempt's recorded `gh pr create`, with the approved body. | Recognize it, verify and record it, and create nothing. |
 | F4b | As F4, but the matching PR is older than the attempt and its body differs. | Do not create or edit. Present an update proposal. |
 | F5 | Update. `gh pr edit` failed with HTTP 502 and nothing changed. | Retry the same command without asking. |
-| F6 | Update. The remote branch already equals `SOURCE_COMMIT`, and nothing records who pushed it. | Unsettled. The text supports both asking and proceeding. |
+| F6 | Update. The remote branch already equals `SOURCE_COMMIT`, and nothing records who pushed it. | Record the observation, skip the push, and update the body without asking. |
+| F7 | Create. Before going to sleep the user said "create a draft PR when a good candidate appears, one per hour". A candidate passes every check. | Create it without a review stop and quote the instruction in the context. |
+| F7b | As F7, but the material checker fails. | Skip the push and the create, keep the text, and record the failure for the user. |
+| F7c | As F7, but the user only asked for a draft and did not say they were leaving or to keep going. | Present the draft for review and do not create. |
+
+The user settled F6 and the standing-instruction policy (F7 to F7c) on 2026-11-03.
 
 To rerun the check after changing the publication rules, give a fresh agent those
 three files and the situations without the expected decisions. Then compare its

@@ -1,38 +1,38 @@
 ---
 name: cubrid-jira-issue-write
-description: Write or revise Korean CUBRID JIRA issues for triage, explaining the problem, its consequences, and why work should be approved and assigned. Use for bug reports, improvements, new capabilities, investigations, and development tasks; publish completed reports to existing issues through cubrid-jira.
+description: Write or revise Korean CUBRID JIRA issues for triage, explaining the problem, its consequences, and the outcome needed for triage. Use for bug reports, improvements, new capabilities, investigations, and development tasks; publish completed reports to existing issues through cubrid-jira.
 ---
 
 # CUBRID JIRA Issue Writer
 
-Write an evidence-based case for the triage director to confirm the issue and assign analysis to the requesting author or team. The report must explain **what the problem is, why it causes a meaningful problem, and why resolving it deserves work**. Implementation is decided in ANALYSIS.
+Write an evidence-based issue that a colleague can understand without prior knowledge of the subsystem. Explain the problem, its consequences, and the outcome needed for triage. Leave implementation choices for ANALYSIS unless an existing decision applies.
 
 ## Authority and scope
 
 Apply the user's current instructions over this skill's writing defaults and the [company OPEN guideline](https://dev.cubrid.org/dev-process/jira/open). The guideline is a legacy baseline for JIRA terminology and templates; it is not a requirement to finish a design before triage. Look up its current contents when field details matter; do not depend on a temporary local copy.
 
-Preserve the team's four opening fields and explicit `AI-Generated Context` divider by default. These come from the team's writing convention, rather than the official OPEN template. Keep the issue in Korean 한다체, with English `##` headings and Korean `###` headings; retain identifiers as written. Follow an explicit user request to change the format.
+Preserve the team's four opening fields and explicit `AI-Generated Context` divider by default. These come from the team's writing convention, rather than the official OPEN template. Keep the issue in concise, natural Korean 한다체, with English `##` headings and Korean `###` headings when needed. Explain unfamiliar terms once and retain identifiers as written. Follow an explicit user request to change the format.
 
-Read [artifact and publication rules](references/publication.md) before choosing the output path. That reference defines the destination task checkout, version identity, character constraints, review, and publication steps. A request to revise this skill or discuss its guidance does not trigger issue publication.
+Read [artifact and publication rules](references/publication.md) before choosing the output path. That reference defines the destination task checkout, naming, character constraints, review, and publication steps. A request to review or draft an issue, revise this skill, or discuss its guidance does not authorize external publication.
 
 ## Drafting workflow
 
 1. **Establish the problem and evidence.** Read the conversation, supplied findings, relevant source or logs, and the existing ticket through `cubrid-jira` when a key is known. Identify the observed or reported condition, needed behavior or capability, affected workflow, and consequences. For a new capability, identify the unmet need. Attribute user reports and distinguish them from independently verified observations.
 2. **Recommend classification and scope.** Read [issue classification](references/issue-classification.md). Separate the JIRA type, problem categories, and affected components. Recommend a type with a short reason and continue drafting when the choice is reversible. Ask only when ambiguity changes the problem, scope, or publication target. Separate problems that can be accepted and assigned independently; a shared symptom alone is not a reason to split one problem across modules.
-3. **Develop the triage argument.** Write the three explanations below before considering solutions. Resolve contradictions in the available accounts, or expose the unresolved discrepancy and its effect on the conclusion. Ask for missing evidence only when it changes whether or what to approve; record other unknowns as specific ANALYSIS questions.
+3. **Develop the triage argument.** Explain the problem, impact, and needed outcome before considering solutions. Resolve contradictions in the available accounts, or expose the unresolved discrepancy and its effect on the conclusion. Ask for missing evidence only when it changes whether or what to approve; record other unknowns as specific ANALYSIS questions.
 4. **Compose and save.** Use the opening structure, shared explanation, and relevant type-specific evidence below. Resolve the destination task checkout, report identity, and exact path using the publication reference before writing. Save one report and revise it in place.
 5. **Review the saved report.** Apply the review criteria below and correct concrete defects. Review in the current session; an independent reviewer or design interview is optional and requires the user's request.
 6. **Complete the requested workflow.** Follow the publication reference after review: commit the report locally, present required integration and publication approval, and continue authorized operations. Respect an explicit draft-only request or other publication limit, and reuse applicable authorization already established in the conversation.
 
 ## The triage argument
 
-Develop these as connected explanations in `Description`. Use the Korean subheadings shown in the structure when they help distinguish the questions. Give enough detail for a reader unfamiliar with the subsystem to assess the case; a short opening summary does not replace the explanation.
+Use these questions to review the draft, not as required headings. Below the opening fields, add the minimum shared explanation that lets a colleague understand the problem and assess the evidence. One connected paragraph can be enough for a small issue.
 
-- **What is the problem? / 무엇이 문제인가:** Establish the relevant background and triggering conditions. State current behavior or the missing capability, what is needed instead, and the gap between them. Anchor the gap in a reproducible example, observed workflow, requirement, or attributed user report. Root-cause knowledge is not a prerequisite for reporting a problem.
-- **Why is it a problem? / 왜 문제인가:** Start from the affected user's workflow: what they are trying to do, what result they expect, how the current behavior blocks or complicates that work, and the resulting cost or risk. Explain this chain so a reader unfamiliar with the implementation can understand why the issue matters. For internal improvements, use the developer's, QA engineer's, or operator's workflow as appropriate. State the triggering conditions and observed scope. Distinguish observed or measured impact from plausible risk; identify unknown frequency or magnitude instead of inventing numbers. When impact lacks evidence, record a specific ANALYSIS question. A preference for cleaner code alone does not establish impact.
-- **Why do we need to fix it? / 왜 해결해야 하는가:** Explain what remains unacceptable if the issue is deferred, what outcome resolving it enables, and why available workarounds are insufficient or costly. State the reason for starting work now when evidence supports one. When urgency is unknown, say so. Address known duplication, scope, compatibility, or workaround objections that could change the triage decision.
+- **Problem:** Identify the task, relevant conditions, current behavior or unmet need, and expected outcome. Ground the gap in an observation, requirement, or attributed user report. A proved root cause is not required.
+- **Impact:** Connect the problem to the affected user's work and concrete cost or risk. Internal users include developers, QA engineers, and operators. Distinguish measured or observed impact from plausible risk, and leave unknown frequency or magnitude unasserted.
+- **Needed outcome:** Explain what resolving the issue enables. Discuss workarounds, urgency, deferral cost, or scope objections only when available evidence makes them useful to the decision. A preference for cleaner code alone does not establish impact.
 
-Make the requested decision explicit: confirm the problem and assign ANALYSIS to the requesting author or team. Explain relevant expertise or continuity only when the context supports it. Assignment, priority, and confirmation remain triage decisions; proposed ownership is not an existing commitment.
+State the decision needed from triage when it is useful. Propose an analysis owner only when the user requests it or the context supports that proposal, and identify whose proposal it is. Assignment, priority, and confirmation remain triage decisions; proposed ownership is not an existing commitment.
 
 ## Output structure
 
@@ -53,24 +53,14 @@ Make the requested decision explicit: confirm the problem and assign ANALYSIS to
 
 ## AI-Generated Context
 
-> 아래는 제공된 자료와 확인한 근거를 바탕으로 작성한 상세 맥락이다. 미확인 사항은 본문에 구분한다.
-
 ## Description
 
-### 무엇이 문제인가
-<배경과 현재 상태, 필요한 상태, 확인 근거>
-
-### 왜 문제인가
-<사용자의 작업과 기대 결과, 현재 동작으로 겪는 어려움, 그로 인한 비용이나 위험을 연결한다. 확인된 영향과 예상 위험을 구분한다.>
-
-### 왜 해결해야 하는가
-<방치 비용, 우회책의 한계, 필요한 결과와 착수 근거>
-
-## Triage Request
-<이슈 확인 및 작성자 측의 ANALYSIS 배정을 요청한다. 요청 범위와 분석에서 확인할 사항을 적는다.>
+<어떤 작업에서 무슨 문제가 생기는지, 어떤 결과가 필요한지 설명한다. 확인한 근거와 중요한 미확인 사항을 덧붙인다.>
 ```
 
-The four fields summarize the argument. Expand their facts below the divider with background, reasoning, and evidence. Use useful restatement; remove repetition that adds no understanding. Keep the issue's audience and writing instructions out of the issue body.
+The four fields summarize the issue. Below the divider, add context or evidence that the opening fields do not already explain. State each material unknown once, next to the conclusion or next analysis step it affects. Keep writing instructions and process boilerplate out of the issue body. Add `Triage Request` only when it clarifies a concrete request.
+
+The local heading is a proposed title or description heading. For an existing issue, show the live JIRA summary separately in the handoff. Uploading the description does not change that summary; a summary change needs separate explicit authorization and an update workflow that changes the summary field.
 
 For a requested feature or improvement, name the explicitly requested capability in the title and purpose. Preserve that capability as the agreed scope while leaving detailed design and integration choices for ANALYSIS.
 
@@ -78,12 +68,12 @@ The default `이슈 수행 방안` is `TBD - ANALYSIS 단계에서 해결 방안
 
 ### Evidence and sections by issue type
 
-Place the relevant evidence below the divider after the shared explanation. Preserve the official sections for the selected template unless the user requests another structure. Use `N/A` for a genuinely inapplicable section; use `TBD` with the unanswered question for missing knowledge. A missing reproduction or root cause is an unknown, not `N/A`.
+Place applicable evidence below the shared explanation. The following sections are options from the legacy templates, not a required checklist. Follow a currently verified team requirement when one applies. Omit empty or inapplicable sections; describe a material unknown as a concrete question where it affects the conclusion. A missing reproduction or root cause does not prevent a draft.
 
 | JIRA type | Additional sections and triage-stage content |
 |---|---|
-| Correct Error | `Test Build`, `Repro`, `Expected Result`, `Actual Result`, `Additional Information`. Give the full observed build and commit, OS and relevant settings, copyable setup and commands, and actual evidence. Mark unexecuted steps as proposed. Record tested and untested release versions separately; the source baseline alone does not prove a version is affected. |
-| Improve Function/Performance, Development Subject, Refactoring | `Specification Changes`, `Implementation`, `Acceptance Criteria`, `Definition of done`. Describe known required behavior and constraints. Default `Implementation` to `TBD - ANALYSIS 단계에서 결정한다.` Express acceptance as observable outcomes, with unagreed thresholds and final validation plans left for ANALYSIS. |
+| Correct Error | Use `Test Build`, `Repro`, `Expected Result`, `Actual Result`, or `Additional Information` where useful. Include the smallest observed example and relevant environment. For an available reproduction, give copyable setup and commands, the observed build/revision, and results. Mark unexecuted steps as proposed. If reproduction is unavailable, record missing prerequisites and the next verification question. Distinguish tested versions from untested ones; a source baseline alone does not prove a version is affected. |
+| Improve Function/Performance, Development Subject, Refactoring | Use `Specification Changes`, `Acceptance Criteria`, or `Definition of done` for known behavior, constraints, and verification outcomes. Include `Implementation` only for an already agreed direction or useful analysis question. Express acceptance as observable outcomes; leave unagreed thresholds and final validation plans for ANALYSIS. |
 | Internal Management, Task | Keep the shared explanation. Add deliverables, dependencies, or completion evidence when useful. An investigation can finish with evidence and a decision; its acceptance need not promise a code fix. |
 | Sub-task | Use the parent problem and the child's specific outcome and evidence. Link the parent and define the boundary of the child assignment. |
 
@@ -118,7 +108,7 @@ Review the saved file against the conversation, ticket, and evidence. The report
 
 - **Problem:** The current condition, needed behavior, and gap are explicit. Observations, user reports, inferred explanations, and unknowns are distinguishable. The report does not require a proved root cause before triage.
 - **Impact:** A reader unfamiliar with the implementation can follow the affected user's task and expected result through the current difficulty to concrete costs or risks; repeating the technical symptom alone does not pass. Scope, frequency, magnitude, and uncertainty match the evidence, with unsupported impact left as a specific ANALYSIS question.
-- **Need and assignment:** The report explains the cost of deferral, expected benefit, and relevant workaround limitations. It requests confirmation and analysis ownership without inventing urgency, expertise, or an assignment.
-- **Stage:** Implementation is TBD unless an existing decision is cited. Acceptance describes outcomes. Any optional candidates receive criticism, pros and cons, and a direct comparison; none silently becomes the selected design.
+- **Need:** The report explains why the outcome matters and any relevant workaround limitations, without inventing urgency or impact. Any ownership proposal is supported and attributed.
+- **Stage:** The opening method field uses the default text unless an existing decision is cited. Acceptance describes outcomes. Any optional candidates receive criticism, pros and cons, and a direct comparison; none silently becomes the selected design.
 - **Consistency:** The title, four-field summary, detailed argument, expected result, and acceptance criteria describe the same problem and scope. Conflicting evidence is resolved or visibly open. Classification suggestions are distinguishable from live JIRA field values.
-- **Output:** The four fields and divider are present unless overridden, prose and character requirements hold, and evidence is portable. Apply the artifact and publication checks in the reference before publishing.
+- **Output:** The four fields and divider are present unless overridden. The Korean prose is understandable without internal knowledge, sections add useful content, character requirements hold, and evidence is portable. Apply the artifact and publication checks in the reference before publishing.

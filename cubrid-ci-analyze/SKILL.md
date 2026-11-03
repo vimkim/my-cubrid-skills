@@ -124,23 +124,23 @@ If `$asd-ste100` is available, use its STE-flavored mode for English report pros
 Use Strict mode for procedures. Preserve evidence labels, identifiers, uncertainty,
 and the strength of causal claims. Keep the report's requested language.
 
-Select `ARTIFACT_WORKTREE` using the Document Git workflow before creating report files or directories. Derive the directory identity from a `CBRD-<number>` in the validated PR title, otherwise use `PR-<number>`. Write this path relative to `ARTIFACT_WORKTREE`, reusing existing directory spelling as required by the report repository:
+Select `ARTIFACT_WORKTREE` using the Document Git workflow before creating report files or directories. Derive the directory identity from a `CBRD-<number>` in the validated PR title, otherwise use `PR-<number>`. Apply the shared naming and reuse rules, reusing existing directory spelling as required by the report repository. A new report can use:
 
 ```text
-<lowercase-identity>/ci_analysis_report_<short-sha>_<agent>.md
+<lowercase-identity>/ci-analysis.md
 ```
 
-If that path already identifies another PR or full commit, stop rather than overwrite it.
+Before updating a report, compare its PR, full commit, requested suites, runs/attempts, observation time, and completeness. Extend a matching ongoing report without losing earlier observations. Keep a separately cited snapshot or distinct scope in its own file, using a meaningful discriminator only when needed. Record exact identities inside the report and relevant scope in the index.
 
-For a complete manifest, include:
+Lead with the result, analyzed scope, limitations, and next action. Put detailed evidence in later sections or tables. Use sections only when they carry relevant content. For a complete manifest, cover:
 
-1. Executive summary and decision boundary.
+1. Summary and limits of the conclusion.
 2. CI snapshot with each suite's state, run/attempt link, verdict, and reconciled counts.
 3. Evidence scope: exact commit, collection time, collector version, evidence directory, testcase revisions, and limitations.
 4. Failure inventory: suite, full testcase path, result, observed signature, baseline classification, category, PR relation, and confidence. Reconcile head, shared, additional, uncomparable, and baseline-only counts separately.
 5. Root-cause analysis grouped by cause. For every group, label observed evidence, inference, unknowns, falsifier, and next action.
 6. Baseline comparison: pinned head/target/merge-base identities, discovery coverage, selected runs/attempts, exact input revisions, affected-file equality evidence, configuration differences, and comparison limitations. Include an explicit unavailable-baseline statement when applicable.
-7. Testcase history: selected occurrence, earlier failures and their Engine/testcase revisions, symptom comparison, flakiness assessment, query scope, freshness and coverage limitations, and retained evidence references. State when history or correspondence with the selected failure is unavailable. If there are no testcase failures or errors, mark this section as not applicable.
+7. Testcase history: selected occurrence, earlier failures and their Engine/testcase revisions, symptom comparison, flakiness assessment, query scope, freshness and coverage limitations, and retained evidence references. State when history or correspondence with the selected failure is unavailable. If there are no testcase failures or errors, omit the history section.
 8. Prioritized actions and an evidence-file inventory. Keep pre-existing signatures visible as separate follow-up work; they do not waive CI requirements.
 
 Classify PR relation as `direct`, `plausible`, `unlikely`, or `unknown`; classify confidence explicitly. A terminal red job with no testcase records is a job-level failure, not an empty passing suite. If complete evidence contains no failures or errors, say so and do not manufacture analysis.

@@ -8,7 +8,17 @@ Apply the user's Git workflow separately to every repository that receives persi
 2. Select the checkout using the user's Git workflow. From `main`, `develop`, or `feature/*`, create or reuse a sibling task worktree on a separate topic branch and record the starting branch as the merge destination. From another named branch, use that checkout and its documented or agreed integration destination.
 3. Set `ARTIFACT_WORKTREE` to the selected checkout. Record its task branch and destination checkout/branch. Resolve every document path relative to `ARTIFACT_WORKTREE`. The calling skill's discovery path identifies which repository to use; checkout selection determines where to write. Read any additional instructions in the selected checkout before writing.
 
-Keep source revision identity separate from the document repository's commits. Preserve each skill's filename and revision conventions. Keep tool-owned raw evidence, caches, and disposable outputs in their designated locations.
+## Name and reuse human documents
+
+Resolve the directory before choosing a basename. Match an existing ticket directory by its complete key regardless of case, then reuse its exact on-disk spelling, even when it is empty or has no README. Create a new directory only when no matching directory exists. Inspect the destination's README index and matching documents before choosing a document path.
+
+For new human-authored documents, use short descriptive basenames such as `ci-analysis.md`, `pr-body.md`, `pr-context.md`, or `qa-analysis.md`, regardless of the authoring agent. Add a meaningful discriminator only to distinguish retained scopes, PRs, or snapshots. Source SHA and agent suffixes are not required.
+
+Check scope, evidence identity, user edits, and review state before updating an existing file. Extend a matching ongoing report while keeping earlier observations distinguishable. Preserve existing names, links, and separately cited historical snapshots. When a distinct report or reviewed revision must be retained, choose a separate path and explain its scope in the index when the destination's indexing rules require it.
+
+Record exact relevant identities, such as the issue key, PR, source revision, run/attempt, and observation date, in the report or companion context. Keep uploaded bodies free of bookkeeping that does not belong in the published text. Index important documents with their purpose and relevant identity under the destination's rules; supporting files need an index entry only when those rules require one. Keep the chosen repository-relative paths through review, integration, and upload.
+
+Keep source revision identity separate from the document repository's commits. Record it when the evidence depends on a revision; an unrelated local `HEAD` does not establish that identity. Keep tool-owned raw evidence, caches, and disposable outputs in their designated locations and retain their filenames.
 
 ## Prepare a reviewable result
 

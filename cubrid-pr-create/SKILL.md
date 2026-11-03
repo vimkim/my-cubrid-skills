@@ -61,7 +61,7 @@ historical OOS integration branch still applies. Select source push routing usin
 publication permission.
 
 Set `SOURCE_COMMIT` to the full hexadecimal source commit from
-`git rev-parse --verify 'HEAD^{commit}'` and `SHORT_SHA` to its first seven characters.
+`git rev-parse --verify 'HEAD^{commit}'`.
 For an update, compare it with the remote PR head and resolve discrepancies before
 writing: the draft must explain the revision intended for publication. Record the
 observed remote head commit, or that the branch does not yet exist for a new PR.
@@ -79,20 +79,19 @@ Require a Git worktree whose `origin` fetch and push URLs resolve to
 `github.com/vimkim/my-cubrid-docs` (SSH or HTTPS). Resolve canonical source and docs
 paths; keep all draft files outside the CUBRID source worktree.
 
-Inspect docs status, branches, worktrees, and instructions. Create or reuse a task
-worktree from its integration branch, normally `main`, following the user's Git
-workflow. Save the draft files in that task worktree. Keep meaningful draft files
-tracked; local task commits are separate from remote publication.
+Follow [Document Git workflow](../cubrid-common/references/document-git-workflow.md)
+to select `ARTIFACT_WORKTREE`, name the files, and prepare a local task commit.
+Apply the destination's important-document rule to README indexes. Local task
+commits remain separate from remote publication under the contract above.
 
-Use `cbrd-XXXXX/` and a short kebab-case change slug. Set `AGENT` from the active
-runtime (`codex` or `claude`), not installed binaries. Ask if the runtime identity
-is unclear. Use the source commit for identity, never the docs commit:
+Reuse the existing ticket directory spelling, or use `cbrd-XXXXX/` for a new
+directory. Apply the shared naming rules. For a new draft:
 
 | Artifact | Filename inside `cbrd-XXXXX/` |
 | --- | --- |
-| Required PR body | `CBRD-XXXXX-<slug>-pr-body_<SHORT_SHA>_<AGENT>.md` |
-| Required draft context | `CBRD-XXXXX-<slug>-pr-context_<SHORT_SHA>_<AGENT>.md` |
-| Optional detailed explanation | `CBRD-XXXXX-<slug>_<SHORT_SHA>_<AGENT>.md` |
+| Required PR body | `pr-body.md` |
+| Required draft context | `pr-context.md` |
+| Optional detailed explanation | A short descriptive name such as `design.md` |
 
 Set `body_file` and `context_file` to these saved files. Set `doc_file` only when
 an explanation is warranted. The body file contains exactly the text to upload:
@@ -101,7 +100,8 @@ no frontmatter, proposed title, approval notes, or publication checklist.
 Inspect matching drafts before writing. Resume the selected draft and preserve
 user edits; create a distinct revision if a new draft would overwrite unrelated or
 previously reviewed material. When the source revision changes, retain the old
-files, reconcile their content, and prepare files identified by the new commit.
+files, reconcile their content, and prepare a distinct revision with its full source
+commit recorded in the context. Use a short discriminator only when needed.
 
 Create a detailed explanation only when technical context exceeds the short body's
 scope. Use English `## Purpose`, `## Implementation`, and `## Remarks` headings with
@@ -114,7 +114,7 @@ A new explanation linked by the body must be published before the PR write.
 
 Keep resume metadata in `context_file`, separate from the uploaded body:
 
-- Ticket, full `SOURCE_COMMIT`, agent identity, source repository/branch, base, and
+- Ticket, full `SOURCE_COMMIT`, source repository/branch, base, and
   observed remote head commit or absence.
 - Target repository, operation (`create` or `update`), and existing PR URL/number.
 - Proposed title for creation; existing title and optional proposed replacement for
@@ -124,7 +124,9 @@ Keep resume metadata in `context_file`, separate from the uploaded body:
   hash the `body` string from `gh pr view ... --json body` after JSON decoding.
 - Docs task branch, integration branch, and repo-relative body/context/detail paths.
   Include any public explanation URL. Rediscover worktree locations with Git when
-  resuming; keep machine-local paths out of tracked context.
+  resuming. Resolve the recorded paths directly, including for older drafts; never
+  infer companion paths from SHA/agent suffixes. Keep machine-local paths out of
+  tracked context.
 - Exact proposed operations and destinations: docs commits to integrate/push (and
   files included), source push if needed, new draft PR creation or existing body
   update, and title change only when proposed. Include docs rebase/fast-forward

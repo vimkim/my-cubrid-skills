@@ -106,3 +106,40 @@ manual contract checks, not live end-to-end GitHub tests:
 | New PR appears during review | Present the changed operation for review instead of creating a duplicate. |
 | Source or GitHub write times out after success | Inspect and recognize the completed result; retry only unfinished approved operations. |
 | Docs task worktree publishes an explanation | Integrate the reviewed content before pushing the destination branch, retain the body through the PR write, and clean up only merged work. |
+
+### Decision check and module deferral, 2026-11-03
+
+Work 724 asked whether the freshness and retry rules need an executable decision
+module. Two checks found no evidence that one would earn its place:
+
+- The 45 draft contexts in `my-cubrid-docs` from 2026-10-07 to 2026-11-03 record
+  41 publications. None records a duplicate PR, an overwritten GitHub edit, or an
+  update without its original body fingerprint. None records an interrupted write
+  or a retry, so those rules have not run in practice. The deviations found concern
+  authorization and record keeping, which a decision module cannot own.
+- Two fresh agents read only `SKILL.md`, `references/publish.md`, `GLOSSARY.md`,
+  and the situations below. Both reached the expected decision in all eight settled
+  cases. In F6 both asked the user, while the one real agent in that situation
+  proceeded without a recorded second review.
+
+| Case | Situation | Expected decision |
+| --- | --- | --- |
+| F1 | Update. The user edits the body file, then confirms. | Upload the edited file unchanged without asking again. |
+| F1b | As F1, but the file changes after the attempt fingerprint is recorded. | Stop before the write and return the file to review. |
+| F1c | As F1, but the user's text fails the material checker. | Explain the failure, keep the text, and do not write. |
+| F2 | Update. The GitHub body changed after preparation. | Reconcile with the live body and return to review. |
+| F3 | Update. This attempt recorded verified docs and source pushes, then its shell crashed. | Skip both pushes and update the body without asking. |
+| F4 | Create. A new session finds a matching PR created seconds after this attempt's recorded `gh pr create`, with the approved body. | Recognize it, verify and record it, and create nothing. |
+| F4b | As F4, but the matching PR is older than the attempt and its body differs. | Do not create or edit. Present an update proposal. |
+| F5 | Update. `gh pr edit` failed with HTTP 502 and nothing changed. | Retry the same command without asking. |
+| F6 | Update. The remote branch already equals `SOURCE_COMMIT`, and nothing records who pushed it. | Unsettled. The text supports both asking and proceeding. |
+
+To rerun the check after changing the publication rules, give a fresh agent those
+three files and the situations without the expected decisions. Then compare its
+decisions with the table.
+
+Reopen the module decision when a recorded interrupted write or retry goes wrong,
+or when unattended publication becomes routine. One session compared the published
+body with a method that dropped the final newline and recorded a difference that
+did not exist. If another session does the same, first add a script that hashes
+the decoded `gh pr view --json body` value and the body file.

@@ -13,6 +13,7 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | `cubrid-ci-analyze` | Collect exact-commit GitHub Actions evidence with `cubrid-ci` and write failure-analysis reports |
 | `cubrid-ci-trigger` | Trigger or rerun GitHub Actions gha-ci on supported CUBRID pull requests |
 | `cubrid-performance` | Diagnose and optimize CUBRID performance, with optional baseline comparisons |
+| `cubrid-code-review` | Review pinned PRs or diffs with budgeted specialists, verified findings, and follow-up handoffs |
 | `cubrid-pr-create` | Save Korean PR drafts for review, then create or update GitHub PRs after confirmation |
 | `cubrid-jira-issue-write` | Write structured JIRA issue reports in Korean |
 | `cubrid-manual-search` | Answer CUBRID questions from the local English/Korean RST manual with file-and-line citations |

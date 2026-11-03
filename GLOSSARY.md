@@ -4,6 +4,11 @@ Terms used by the CUBRID development skills.
 
 ## Language
 
+### Focused testing
+
+**Testcase selection**:
+A case or subtree chosen for a focused SQL or shell run, or a complete directory chosen for a medium run.
+
 ### Pull request publication
 
 **PR body draft**:

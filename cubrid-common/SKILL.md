@@ -14,9 +14,9 @@ common="<current-skill-dir>/../cubrid-common/scripts/cubrid-common.sh"
 source "$common"
 ```
 
-Keep skill-specific policy in the calling skill. This helper owns reusable checks only: git worktree detection, CUBRID source-tree detection, native testkit preflight/configuration/result verification, CMake preset validation, PR metadata validation, canonical CUBRID remote detection, and known personal viewing URLs in shared material.
+The calling skill chooses the intended test scope and interprets results. This helper owns reusable operations: git worktree detection, CUBRID source-tree detection, native testkit preflight/selection/configuration/result verification, CMake preset validation, PR metadata validation, canonical CUBRID remote detection, and known personal viewing URLs in shared material.
 
-Before executing focused SQL, medium, or shell tests, read [Native testkit focused-run contract](references/testkit-focused.md). Use `scripts/testkit-focused.py` for its source/install identity gate, attempt configuration, and artifact verdict. The specialized runner skills own case selection and suite-specific interpretation.
+Before executing focused SQL, medium, or shell tests, read [Native testkit focused-run contract](references/testkit-focused.md). Use `scripts/testkit-focused.py` for its source/install identity gate, selection and attempt configuration, and artifact verdict.
 
 For a focused replay of a CI failure, read [CI evidence and testcase identity](references/ci-evidence.md) to bind runtime evidence to the exact engine and testcase revisions before execution.
 

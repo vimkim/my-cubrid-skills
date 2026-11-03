@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 import hashlib
 import os
 import re
@@ -273,88 +274,170 @@ def replace_property_values(text: str, updates: dict[str, str]) -> str:
     return "\n".join(output) + "\n"
 
 
+@dataclass(frozen=True)
+class Selection:
+    scenario: Path
+    cases: tuple[Path, ...]
+
+
+def artifact_path(path: Path) -> Path:
+    path = Path(os.path.abspath(path))
+    value = str(path)
+    if any(c in value for c in "\r\n\x00") or value != value.strip() or "\\" in value:
+        fail(f"path cannot be represented in an artifact: {path!r}")
+    return path
+
+
+def select_cases(suite: str, scenario: Path, selected: Path) -> Selection:
+    scenario = artifact_path(scenario)
+    selected = artifact_path(selected)
+    if not scenario.is_dir():
+        fail(f"scenario must be a directory: {scenario}")
+    scenario_real = scenario.resolve(strict=True)
+    try:
+        selected_real = selected.resolve(strict=True)
+    except (OSError, RuntimeError) as error:
+        fail(f"selection cannot be resolved: {selected}: {error}")
+    if not selected_real.is_relative_to(scenario_real):
+        fail(f"selection is outside scenario: {selected}")
+    if suite == "shell":
+        if scenario.is_symlink():
+            fail(f"shell scenario must not be a symlink: {scenario}")
+        if not selected.is_relative_to(scenario):
+            fail(f"shell selection must be under the lexical scenario: {selected}")
+        path = scenario
+        for part in selected.relative_to(scenario).parts:
+            path = path / part
+            if path.is_symlink():
+                fail(f"shell selection contains a symlink: {path}")
+    relative_parts = selected_real.relative_to(scenario_real).parts
+    lexical_parts = selected.relative_to(scenario).parts if selected.is_relative_to(scenario) else ()
+    if suite in {"sql", "medium"} and any(
+        part in {"common", "answers"} for part in (*relative_parts, *lexical_parts)
+    ):
+        fail(f"selection is in an excluded directory: {selected}")
+    if suite == "medium":
+        if not selected.is_dir() or "cases" in relative_parts:
+            fail(f"medium selection must be a whole group directory: {selected}")
+        if not (selected / "cases").is_dir() or not (selected / "answers").is_dir():
+            fail(f"medium group must contain cases and answers: {selected}")
+
+    found: list[Path] = []
+
+    def walk(path: Path, ancestors: frozenset[Path]) -> None:
+        artifact_path(path)
+        if suite == "shell" and path.is_symlink():
+            return
+        try:
+            real = path.resolve(strict=True)
+            if not real.is_relative_to(scenario_real) or not real.is_relative_to(selected_real):
+                fail(f"discovered path escapes selected scope: {path}")
+            if path.is_dir():
+                if real in ancestors:
+                    fail(f"directory cycle: {path}")
+                entries = list(path.iterdir())
+                if suite == "shell":
+                    entries.sort(key=lambda entry: entry.name)
+                else:
+                    entries.sort(key=lambda entry: entry.name.encode("utf-16-be"))
+                for child in entries:
+                    if (
+                        suite != "shell"
+                        and child.name in {"common", "answers"}
+                        and child.is_dir()
+                    ):
+                        continue
+                    walk(child, ancestors | {real})
+            elif path.is_file():
+                if suite == "shell":
+                    if (
+                        path.parent.name == "cases"
+                        and path.suffix == ".sh"
+                        and path.name == path.parent.parent.name + ".sh"
+                    ):
+                        found.append(path)
+                elif path.name.endswith(".sql"):
+                    directory = str(path.parent)
+                    index = directory.rfind("cases")
+                    if index >= 0:
+                        directory = directory[:index] + "answers"
+                    answer = Path(directory) / (path.name.split(".")[0] + ".answer")
+                    artifact_path(answer)
+                    answer_real = answer.resolve(strict=True)
+                    if not answer_real.is_relative_to(scenario_real) or not answer.is_file():
+                        fail(f"missing or outside base answer for {path}: {answer}")
+                    found.append(path)
+        except (OSError, RuntimeError, UnicodeError) as error:
+            fail(f"cannot inspect {path}: {error}")
+
+    walk(selected, frozenset())
+    if not found:
+        fail(f"selection contains no cases: {selected}")
+    if suite == "shell":
+        found.sort(key=str)
+    return Selection(scenario if suite == "shell" else selected, tuple(found))
+
+
 def prepare_config(
     suite: str,
     base_conf: Path,
     output_conf: Path,
     scenario: Path,
-    expected_list: Path | None,
+    selection: Path,
+    output_expected_list: Path,
     data_file: Path | None,
 ) -> None:
+    base_conf = artifact_path(base_conf)
+    output_conf = artifact_path(output_conf)
+    output_expected_list = artifact_path(output_expected_list)
+    scenario = artifact_path(scenario)
+    selection = artifact_path(selection)
+    if data_file is not None:
+        data_file = artifact_path(data_file)
     base_text = read_required(base_conf, "base configuration")
-    scenario = scenario.resolve()
-    if not scenario.exists():
-        fail(f"scenario does not exist: {scenario}")
-    output_conf = output_conf.resolve()
-    if output_conf.exists():
-        fail(f"refusing to overwrite retained attempt configuration: {output_conf}")
-    if output_conf == base_conf.resolve():
-        fail("output configuration must differ from the base configuration")
-
+    selected = select_cases(suite, scenario, selection)
+    inputs = [base_conf, scenario, selection, *selected.cases]
+    if data_file is not None:
+        inputs.append(data_file)
+    outputs = [output_expected_list, output_conf]
+    if output_conf.resolve() == output_expected_list.resolve():
+        fail("output paths must differ")
+    for output in outputs:
+        if output.resolve().is_relative_to(scenario.resolve()):
+            fail(f"output is inside scenario: {output}")
+        if os.path.lexists(output):
+            fail(f"refusing to overwrite retained attempt output: {output}")
+        if any(output.resolve() == item.resolve() for item in inputs):
+            fail(f"output collides with input: {output}")
     if suite in {"sql", "medium"}:
-        if expected_list is None:
-            fail(f"{suite} requires --expected-list")
-        if suite == "medium" and not scenario.is_dir():
-            fail(f"medium scenario must be a directory: {scenario}")
-        expected_list = expected_list.resolve()
-        cases = expected_cases(expected_list)
-        if scenario.is_file():
-            discovered = [str(scenario)] if scenario.suffix == ".sql" else []
-        else:
-            discovered = []
-            for case in scenario.rglob("*.sql"):
-                relative = case.relative_to(scenario)
-                if any(part in {"answers", "common"} for part in relative.parts[:-1]):
-                    continue
-                discovered.append(str(case.resolve()))
-            discovered.sort()
-        normalized_cases = [str(Path(case).resolve()) for case in cases]
-        if normalized_cases != discovered:
-            fail(
-                f"expected case list does not match scenario discovery: "
-                f"expected={normalized_cases!r}, discovered={discovered!r}"
-            )
         sql_updates = {
             "parallel_slots": "1",
-            "scenario": str(scenario),
+            "scenario": str(selected.scenario),
             "enable_memory_leak": "no",
             "testcase_exclude_from_file": "",
             "test_category": suite,
         }
         updates = {"sql": sql_updates}
         if suite == "medium":
-            if data_file is None:
-                fail("medium requires --data-file")
-            data_file = data_file.resolve()
-            if not data_file.is_file():
-                fail(f"medium data archive does not exist: {data_file}")
+            if data_file is None or not data_file.is_file():
+                fail("medium requires an existing --data-file")
             sql_updates["data_file"] = str(data_file)
             updates["sql/cubrid.conf"] = {"create_table_reuseoid": "no"}
         elif data_file is not None:
             fail("--data-file applies only to medium")
         rendered = replace_ini_values(base_text, updates)
-    elif suite == "shell":
-        if expected_list is None:
-            fail("shell requires --expected-list")
-        expected_list = expected_list.resolve()
-        cases = expected_cases(expected_list)
-        for case_name in cases:
-            case = Path(case_name).resolve()
-            if not case.is_file():
-                fail(f"selected shell case does not exist: {case}")
-            if scenario != case and scenario not in case.parents:
-                fail(f"selected shell case is outside scenario {scenario}: {case}")
+    else:
         if data_file is not None:
             fail("--data-file applies only to medium")
         rendered = replace_property_values(
             base_text,
             {
-                "scenario": str(scenario),
+                "scenario": str(selected.scenario),
                 "parallel_slots": "1",
                 "scenario_disk": "on",
                 "scenario_ram_mb": "",
                 "testcase_workspace_dir": "",
-                "testcase_from_file": str(expected_list),
+                "testcase_from_file": str(output_expected_list),
                 "testcase_exclude_from_file": "",
                 "testcase_update_yn": "false",
                 "testcase_retry_num": "0",
@@ -363,14 +446,19 @@ def prepare_config(
                 "feedback_type": "file",
             },
         )
-    else:
-        fail(f"unsupported suite: {suite}")
-
-    output_conf.parent.mkdir(parents=True, exist_ok=True)
-    output_conf.write_text(rendered, encoding="utf-8")
+    expected_text = "".join(f"{case}\n" for case in selected.cases)
+    expected_text.encode("utf-8")
+    rendered.encode("utf-8")
+    for output, content in ((output_expected_list, expected_text), (output_conf, rendered)):
+        output.parent.mkdir(parents=True, exist_ok=True)
+        with output.open("x", encoding="utf-8") as stream:
+            stream.write(content)
     print(f"suite={suite}")
     print(f"config={output_conf}")
     print(f"config_sha256={sha256(output_conf)}")
+    print(f"expected_list={output_expected_list}")
+    print(f"expected_list_sha256={sha256(output_expected_list)}")
+    print(f"case_count={len(selected.cases)}")
     if data_file is not None:
         print(f"data_file={data_file}")
         print(f"data_file_sha256={sha256(data_file)}")
@@ -626,7 +714,8 @@ def parse_arguments() -> argparse.Namespace:
     config_parser.add_argument("--base-conf", required=True, type=Path)
     config_parser.add_argument("--output-conf", required=True, type=Path)
     config_parser.add_argument("--scenario", required=True, type=Path)
-    config_parser.add_argument("--expected-list", type=Path)
+    config_parser.add_argument("--selection", required=True, type=Path)
+    config_parser.add_argument("--output-expected-list", required=True, type=Path)
     config_parser.add_argument("--data-file", type=Path)
     return parser.parse_args()
 
@@ -650,12 +739,13 @@ def main() -> int:
                 arguments.base_conf,
                 arguments.output_conf,
                 arguments.scenario,
-                arguments.expected_list,
+                arguments.selection,
+                arguments.output_expected_list,
                 arguments.data_file,
             )
         else:
             fail(f"unsupported command: {arguments.command}")
-    except CheckError as error:
+    except (CheckError, OSError, UnicodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
     return 0

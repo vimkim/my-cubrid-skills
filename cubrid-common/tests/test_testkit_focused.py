@@ -614,183 +614,271 @@ class TestkitFocusedTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("skipped=1", result.stderr)
 
-    def test_prepare_config_writes_serial_sql_and_medium_settings(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            scenario = root / "corpus" / "medium" / "_01_fixed"
-            (scenario / "cases").mkdir(parents=True)
-            case = self.write(scenario / "cases" / "1001.sql", "select 1;\n")
-            expected = self.write(root / "expected.txt", f"{case}\n")
-            data_file = self.write(root / "corpus" / "medium" / "files" / "mdb.tar.gz", "data")
-            base = self.write(
-                root / "medium_dev.conf",
-                "[sql]\nparallel_slots=8\nscenario=/old\n"
-                "test_category=medium\ntestcase_exclude_from_file=/old/exclusions\n"
-                "data_file=/old/mdb.tar.gz\n\n"
-                "[sql/cubrid.conf]\ncreate_table_reuseoid=yes\n",
+    def prepare(
+        self,
+        root: Path,
+        suite: str,
+        scenario: Path,
+        selection: Path,
+        *,
+        output: Path | None = None,
+        expected: Path | None = None,
+    ) -> subprocess.CompletedProcess[str]:
+        base = root / "base.conf"
+        if not base.exists():
+            content = ("[sql]\n" if suite != "shell" else "") + (
+                "scenario=/old\nparallel_slots=8\ntestcase_exclude_from_file=/old\n"
             )
-            output = root / "attempt" / "medium.conf"
+            if suite == "medium":
+                content += "data_file=/old\n[sql/cubrid.conf]\ncreate_table_reuseoid=yes\n"
+            elif suite == "shell":
+                content += (
+                    "scenario_disk=off\nscenario_ram_mb=512\ntestcase_workspace_dir=/old\n"
+                    "testcase_update_yn=true\ntestcase_retry_num=2\n"
+                    "test_continue_yn=true\nfeedback_type=database\n"
+                )
+            self.write(base, content)
+        args = [
+            "prepare-config",
+            "--suite", suite,
+            "--base-conf", str(base),
+            "--scenario", str(scenario),
+            "--selection", str(selection),
+            "--output-conf", str(output or root / "out.conf"),
+            "--output-expected-list", str(expected or root / "expected.txt"),
+        ]
+        if suite == "medium":
+            data = root / "data.tar.gz"
+            if not data.exists():
+                self.write(data, "data")
+            args += ["--data-file", str(data)]
+        return self.run_cli(root, *args, env=os.environ.copy())
 
-            result = self.run_cli(
-                root,
-                "prepare-config",
-                "--suite",
-                "medium",
-                "--base-conf",
-                str(base),
-                "--output-conf",
-                str(output),
-                "--scenario",
-                str(scenario),
-                "--expected-list",
-                str(expected),
-                "--data-file",
-                str(data_file),
-                env=os.environ.copy(),
-            )
+    def sql_case(self, group: Path, name: str) -> Path:
+        case = self.write(group / "cases" / name, "select 1;\n")
+        self.write(group / "answers" / (Path(name).name.split(".")[0] + ".answer"), "1\n")
+        return case
 
+    def test_prepare_sql_discovers_depth_first_and_native_answers(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            group = root / "group"
+            first = self.sql_case(group, "a/multi.name.sql")
+            sibling = self.sql_case(group, "a.sql")
+            second = self.sql_case(group, "z.sql")
+            self.write(group / "cases" / "common" / "ignored.sql", "")
+            result = self.prepare(root, "sql", group, group / "cases")
             self.assertEqual(result.returncode, 0, result.stderr)
-            config = output.read_text(encoding="utf-8")
-            self.assertIn("parallel_slots=1", config)
-            self.assertIn(f"scenario={scenario.resolve()}", config)
-            self.assertIn("testcase_exclude_from_file=", config)
-            self.assertNotIn("testcase_exclude_from_file=/old", config)
-            self.assertIn(f"data_file={data_file.resolve()}", config)
-            self.assertIn("create_table_reuseoid=no", config)
+            self.assertEqual((root / "expected.txt").read_text(), f"{first}\n{sibling}\n{second}\n")
+            self.assertIn(f"scenario={group / 'cases'}", (root / "out.conf").read_text())
+            self.assertIn("case_count=3", result.stdout)
 
-            repeated = self.run_cli(
-                root,
-                "prepare-config",
-                "--suite",
-                "medium",
-                "--base-conf",
-                str(base),
-                "--output-conf",
-                str(output),
-                "--scenario",
-                str(scenario),
-                "--expected-list",
-                str(expected),
-                "--data-file",
-                str(data_file),
-                env=os.environ.copy(),
-            )
-            self.assertNotEqual(repeated.returncode, 0)
-            self.assertIn("refusing to overwrite", repeated.stderr)
-
-    def test_prepare_config_writes_contained_shell_overlay_and_case_list(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            scenario = root / "corpus" / "shell"
-            case = self.write(
-                scenario / "group" / "case1" / "cases" / "case1.sh",
-                "#!/bin/sh\n",
-            )
-            expected = self.write(root / "expected.txt", f"{case}\n")
-            base = self.write(
-                root / "shell_ci.conf",
-                "scenario=/old\nparallel_slots=9\nscenario_ram_mb=512\n"
-                "testcase_update_yn=true\ntestcase_retry_num=2\nfeedback_type=database\n",
-            )
-            output = root / "attempt" / "shell.conf"
-
-            result = self.run_cli(
-                root,
-                "prepare-config",
-                "--suite",
-                "shell",
-                "--base-conf",
-                str(base),
-                "--output-conf",
-                str(output),
-                "--scenario",
-                str(scenario),
-                "--expected-list",
-                str(expected),
-                env=os.environ.copy(),
-            )
-
+    def test_prepare_sql_native_utf16_order_and_single_case(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            group = root / "group"
+            supplementary = self.sql_case(group, "𐀀.sql")
+            bmp = self.sql_case(group, ".sql")
+            result = self.prepare(root, "sql", group, group / "cases")
             self.assertEqual(result.returncode, 0, result.stderr)
-            config = output.read_text(encoding="utf-8")
+            self.assertEqual((root / "expected.txt").read_text(), f"{supplementary}\n{bmp}\n")
+            result = self.prepare(
+                root, "sql", group, bmp,
+                output=root / "single.conf", expected=root / "single.txt",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual((root / "single.txt").read_text(), f"{bmp}\n")
+            self.assertIn(f"scenario={bmp}", (root / "single.conf").read_text())
+            self.assertIn("parallel_slots=1", (root / "single.conf").read_text())
+            self.assertIn("testcase_exclude_from_file=\n", (root / "single.conf").read_text())
+
+    def test_prepare_rejects_existing_and_equal_outputs_before_writing(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            group = root / "group"
+            case = self.sql_case(group, "one.sql")
+            existing = self.write(root / "existing", "keep")
+            for output, expected in (
+                (existing, root / "new"),
+                (root / "same", root / "same"),
+                (root / "base.conf", root / "new"),
+            ):
+                result = self.prepare(root, "sql", group, case, output=output, expected=expected)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertFalse(expected.exists())
+            self.assertEqual(existing.read_text(), "keep")
+            self.assertEqual(case.read_text(), "select 1;\n")
+
+    def test_prepare_sql_requires_base_answer_and_rejects_excluded_selection(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            group = root / "group"
+            case = self.write(group / "cases" / "one.sql", "")
+            self.write(group / "answers" / "one.answer_cs", "")
+            result = self.prepare(root, "sql", group, case)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse((root / "out.conf").exists())
+            excluded = self.write(group / "cases" / "common" / "x.sql", "")
+            self.assertNotEqual(self.prepare(root, "sql", group, excluded).returncode, 0)
+
+    def test_prepare_medium_requires_whole_group(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            group = root / "medium" / "group"
+            case = self.sql_case(group, "one.sql")
+            for selected in (case, group / "cases"):
+                self.assertNotEqual(self.prepare(root, "medium", root / "medium", selected).returncode, 0)
+            result = self.prepare(root, "medium", root / "medium", group)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual((root / "expected.txt").read_text(), f"{case}\n")
+            config = (root / "out.conf").read_text()
             for setting in (
-                f"scenario={scenario.resolve()}",
                 "parallel_slots=1",
-                "scenario_disk=on",
-                "scenario_ram_mb=",
-                f"testcase_from_file={expected.resolve()}",
-                "testcase_update_yn=false",
-                "testcase_retry_num=0",
-                "feedback_type=file",
+                "testcase_exclude_from_file=\n",
+                "create_table_reuseoid=no",
+                f"data_file={root / 'data.tar.gz'}",
             ):
                 self.assertIn(setting, config)
 
-    def test_prepare_medium_rejects_a_partial_directory_case_list(self) -> None:
+    def test_prepare_shell_subtree_and_file_filter_helpers(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            corpus = root / "shell"
+            group = corpus / "group"
+            case = self.write(group / "one" / "cases" / "one.sh", "")
+            helper = self.write(group / "one" / "cases" / "helper.sh", "")
+            self.assertNotEqual(self.prepare(root, "shell", corpus, helper).returncode, 0)
+            result = self.prepare(root, "shell", corpus, group)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual((root / "expected.txt").read_text(), f"{case}\n")
+            config = (root / "out.conf").read_text()
+            for setting in (
+                f"scenario={corpus}",
+                "parallel_slots=1",
+                "scenario_disk=on",
+                "scenario_ram_mb=",
+                "testcase_workspace_dir=",
+                f"testcase_from_file={root / 'expected.txt'}",
+                "testcase_exclude_from_file=\n",
+                "testcase_update_yn=false",
+                "testcase_retry_num=0",
+                "test_continue_yn=false",
+                "feedback_type=file",
+            ):
+                self.assertIn(setting, config)
+            result = self.prepare(
+                root, "shell", corpus, case,
+                output=root / "other.conf", expected=root / "other.txt",
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_shell_rejects_noncase_and_symlink_selections(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            scenario = root / "medium" / "group"
-            first = self.write(scenario / "cases" / "1001.sql", "select 1;\n")
-            self.write(scenario / "cases" / "1002.sql", "select 2;\n")
-            expected = self.write(root / "expected.txt", f"{first}\n")
-            data_file = self.write(root / "mdb.tar.gz", "data")
-            base = self.write(
-                root / "medium_dev.conf",
-                "[sql]\nscenario=/old\ntest_category=medium\n\n"
-                "[sql/cubrid.conf]\ncreate_table_reuseoid=no\n",
-            )
+            corpus = root / "shell"
+            case = self.write(corpus / "real" / "one" / "cases" / "one.sh", "")
+            noncase = self.write(corpus / "real" / "one" / "fixtures" / "one.sh", "")
+            alias = corpus / "alias"
+            alias.symlink_to(corpus / "real", target_is_directory=True)
+            link = corpus / "real" / "linked" / "cases" / "linked.sh"
+            link.parent.mkdir(parents=True)
+            link.symlink_to(case)
+            selections = (noncase, alias, alias / "one", alias / "one" / "cases" / "one.sh", link)
+            for index, selection in enumerate(selections):
+                with self.subTest(selection=selection):
+                    result = self.prepare(
+                        root, "shell", corpus, selection,
+                        output=root / f"out-{index}.conf", expected=root / f"expected-{index}.txt",
+                    )
+                    self.assertNotEqual(result.returncode, 0)
+            result = self.prepare(root, "shell", corpus, corpus)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual((root / "expected.txt").read_text(), f"{case}\n")
 
-            result = self.run_cli(
-                root,
-                "prepare-config",
-                "--suite",
-                "medium",
-                "--base-conf",
-                str(base),
-                "--output-conf",
-                str(root / "attempt.conf"),
-                "--scenario",
-                str(scenario),
-                "--expected-list",
-                str(expected),
-                "--data-file",
-                str(data_file),
-                env=os.environ.copy(),
-            )
-
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn("does not match scenario discovery", result.stderr)
-
-    def test_prepare_medium_rejects_a_single_file_scenario(self) -> None:
+    def test_prepare_rejects_outputs_inside_scenario_before_writes(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            scenario = self.write(root / "medium" / "group" / "cases" / "1001.sql", "select 1;\n")
-            expected = self.write(root / "expected.txt", f"{scenario}\n")
-            data_file = self.write(root / "mdb.tar.gz", "data")
-            base = self.write(
-                root / "medium_dev.conf",
-                "[sql]\nscenario=/old\ntest_category=medium\n\n"
-                "[sql/cubrid.conf]\ncreate_table_reuseoid=no\n",
-            )
+            group = root / "group"
+            case = self.sql_case(group, "one.sql")
+            alias = root / "alias"
+            alias.symlink_to(group, target_is_directory=True)
+            for output, expected in (
+                (group / "cases" / "generated.sql", root / "expected.txt"),
+                (root / "out.conf", alias / "generated.txt"),
+            ):
+                with self.subTest(output=output, expected=expected):
+                    result = self.prepare(root, "sql", group, case, output=output, expected=expected)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertFalse(output.exists())
+                    self.assertFalse(expected.exists())
 
-            result = self.run_cli(
-                root,
-                "prepare-config",
-                "--suite",
-                "medium",
-                "--base-conf",
-                str(base),
-                "--output-conf",
-                str(root / "attempt.conf"),
-                "--scenario",
-                str(scenario),
-                "--expected-list",
-                str(expected),
-                "--data-file",
-                str(data_file),
-                env=os.environ.copy(),
-            )
+    def test_shell_rejects_a_symlinked_scenario_root(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            corpus = root / "shell"
+            self.write(corpus / "one" / "cases" / "one.sh", "")
+            alias = root / "alias"
+            alias.symlink_to(corpus, target_is_directory=True)
+
+            result = self.prepare(root, "shell", alias, alias / "one" / "cases" / "one.sh")
 
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("medium scenario must be a directory", result.stderr)
+            self.assertFalse((root / "out.conf").exists())
+            self.assertFalse((root / "expected.txt").exists())
+
+    def test_prepare_retains_list_when_config_write_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            group = root / "group"
+            case = self.sql_case(group, "one.sql")
+            parent = self.write(root / "not-a-directory", "keep")
+            output = parent / "config"
+            result = self.prepare(root, "sql", group, case, output=output)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual((root / "expected.txt").read_text(), f"{case}\n")
+            self.assertFalse(output.exists())
+            retry = self.prepare(root, "sql", group, case, output=output)
+            self.assertNotEqual(retry.returncode, 0)
+            self.assertIn("refusing to overwrite", retry.stderr)
+            self.assertEqual((root / "expected.txt").read_text(), f"{case}\n")
+
+    def test_prepare_medium_missing_archive_writes_nothing(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            group = root / "group"
+            self.sql_case(group, "one.sql")
+            base = self.write(root / "base.conf", "[sql]\nscenario=/old\n")
+            result = self.run_cli(
+                root, "prepare-config", "--suite", "medium", "--base-conf", str(base),
+                "--scenario", str(group), "--selection", str(group),
+                "--output-conf", str(root / "out.conf"),
+                "--output-expected-list", str(root / "expected.txt"),
+                "--data-file", str(root / "missing.tar.gz"), env=os.environ.copy(),
+            )
+            self.assertNotEqual(result.returncode, 0)
+            self.assertFalse((root / "out.conf").exists())
+            self.assertFalse((root / "expected.txt").exists())
+
+    def test_prepare_rejects_empty_outside_cycles_escapes_and_output_collisions(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            group = root / "group"
+            group.mkdir()
+            self.assertNotEqual(self.prepare(root, "sql", group, group).returncode, 0)
+            case = self.sql_case(group, "one.sql")
+            outside = self.sql_case(root / "outside", "two.sql")
+            self.assertNotEqual(self.prepare(root, "sql", group, outside).returncode, 0)
+            (group / "cases" / "escape").symlink_to(root / "outside", target_is_directory=True)
+            self.assertNotEqual(self.prepare(root, "sql", group, group).returncode, 0)
+            (group / "cases" / "escape").unlink()
+            (group / "cases" / "cycle").symlink_to(group, target_is_directory=True)
+            self.assertNotEqual(self.prepare(root, "sql", group, group).returncode, 0)
+            (group / "cases" / "cycle").unlink()
+            self.assertNotEqual(self.prepare(root, "sql", group, case, output=case).returncode, 0)
+            self.assertEqual(case.read_text(), "select 1;\n")
+            (root / "expected.txt").symlink_to(root / "missing")
+            self.assertNotEqual(self.prepare(root, "sql", group, case).returncode, 0)
+            self.assertFalse((root / "out.conf").exists())
 
 
 if __name__ == "__main__":

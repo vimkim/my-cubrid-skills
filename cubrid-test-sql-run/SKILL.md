@@ -11,11 +11,11 @@ Follow the [native testkit focused-run contract](../cubrid-common/references/tes
 
 Resolve the selected test under the loaded environment's `CUBRID_TESTCASES_DIR/sql`; validate the testcase repository Git root, HEAD, dirty state, and tracked full path. Disambiguate duplicate basenames. For CI replay, use [CI evidence and testcase identity](../cubrid-common/references/ci-evidence.md).
 
-Select one `.sql` file or a narrow directory. Preserve its containing `cases`/`answers` pair and fixtures. Enumerate the expected `.sql` paths before running; a selected case without its answer is an error, not a skip to accept.
+Select one `.sql` file or a narrow directory. Preserve its containing `cases`/`answers` pair and fixtures. The helper rejects a selected case without its base answer.
 
 ## 2. Build an immutable attempt
 
-Within the shared attempt layout, copy the selected SQL case group so native `.result` files never modify the testcase checkout. Point the scenario at the copied `.sql` or copied narrow directory, and write `expected-cases.txt` with the copied absolute `.sql` paths in execution order.
+Within the shared attempt layout, copy the selected SQL case group so native `.result` files never modify the testcase checkout. Use the copied group as `--scenario` and the copied `.sql` or narrow directory as `--selection`. The helper creates the expected list in native execution order.
 
 Use `testkit-focused.py prepare-config --suite sql` with the copied `sql.conf`. Inspect its `[sql]` values and preserve the intended JDBC mode, charset, locale, server, and broker settings. The prepared config fixes `parallel_slots=1`, `enable_memory_leak=no`, and the explicit scenario. Native interactive and memory-leak modes delegate to CTP; stop rather than presenting either as a native run.
 

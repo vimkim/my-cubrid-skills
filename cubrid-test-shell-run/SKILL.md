@@ -11,13 +11,13 @@ This is the accepted personal focused workflow. It does not claim that cubrid-te
 
 Resolve the loaded environment's `CUBRID_TESTCASES_PRIVATE_EX_DIR`, then validate its Git root, HEAD, dirty state, and the requested tracked full path. Disambiguate duplicate basenames. For CI replay, use [CI evidence and testcase identity](../cubrid-common/references/ci-evidence.md).
 
-A shell case is exactly `<name>/cases/<name>.sh`; the repeated name is semantic. A selected ancestor denotes a subtree. Enumerate every matching case before execution, sort reproducibly, and write the absolute paths to `expected-cases.txt`. Reject an empty set.
+A shell case is exactly `<name>/cases/<name>.sh`; the repeated name is semantic. A selected ancestor denotes a subtree. The helper discovers matching cases and rejects an empty selection.
 
 ## 2. Build a contained immutable attempt
 
 Within the shared attempt layout, keep the shell testcase checkout in place and read-only; `scenario_disk=on` gives the contained slot a disposable overlay for all case writes.
 
-Use `testkit-focused.py prepare-config --suite shell` with copied `shell_ci.conf`, the full shell corpus as `scenario`, and the exact expected list as `testcase_from_file`. Inspect the effective config. It must use one slot, `scenario_disk=on`, file feedback, no testcase update, no continuation, no retry, and no writable workspace/ram overlay. Preserve relevant timeout, parameter, and macro policy from the CI reproduction.
+Use `testkit-focused.py prepare-config --suite shell` with copied `shell_ci.conf`, the full shell corpus as `--scenario`, and the intended case or subtree as `--selection`. The helper creates the exact expected list used by `testcase_from_file`. Inspect the effective config. It must use one slot, `scenario_disk=on`, file feedback, no testcase update, no continuation, no retry, and no writable workspace/ram overlay. Preserve relevant timeout, parameter, and macro policy from the CI reproduction.
 
 ## 3. Execute and prove
 

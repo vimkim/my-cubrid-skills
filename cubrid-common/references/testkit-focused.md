@@ -18,11 +18,11 @@ If `testkit` is absent, stop and ask the user to install their intended cubrid-t
 
 Create a new attempt directory for every invocation. Keep earlier setup failures, NOK runs, and inconclusive attempts when retrying. Record the engine and testcase revisions/patches, preflight output, expected case list, copied configuration, command, combined output, exit status, and result artifacts.
 
-Copy `$CUBRID` and `$CTP_HOME` into the attempt and use an attempt-local `$HOME`. Preserve any copied `$ATTEMPT_DIR/cubrid/databases` under another name within the attempt, then create a fresh empty `cubrid/databases`; never reuse its copied registry. Run only against those disposable trees: testkit requires `CUBRID_DATABASES` inside `$CUBRID`, and fixed CTP logs/results and shell FM state must not overwrite another attempt. For SQL and medium, also copy the selected testcase directory—including `cases`, `answers`, and fixtures—into the attempt; native sqlsuite writes `.result` files beside cases. Shell uses its source corpus read-only through `scenario_disk=on`.
+Copy `$CUBRID` and `$CTP_HOME` into the attempt and use an attempt-local `$HOME`. Preserve any copied `$ATTEMPT_DIR/cubrid/databases` under another name within the attempt, then create a fresh empty `cubrid/databases`; never reuse its copied registry. Run only against those disposable trees: testkit requires `CUBRID_DATABASES` inside `$CUBRID`, and fixed CTP logs/results and shell FM state must not overwrite another attempt. For SQL and medium, also copy the entire selected testcase group—including `cases`, `answers`, and fixtures—into the attempt; native sqlsuite writes `.result` files beside cases. Shell uses its source corpus read-only through `scenario_disk=on`.
 
 Rewrite every install-bound runtime variable for the attempt: at minimum `CUBRID`, `CUBRID_DATABASES`, `CUBRID_TMP`, `CTP_HOME`, `HOME`, the CUBRID/CTP entries in `PATH`, and the copied CUBRID `lib` entry in `LD_LIBRARY_PATH`. Confirm `command -v cubrid`, `cubrid_rel`, and printed paths resolve to the disposable install before starting testkit.
 
-Build `expected-cases.txt` before execution with one absolute case path per line in execution order. Reject an empty list. For CI reproduction, bind engine and testcase revisions using [CI evidence and testcase identity](ci-evidence.md).
+For CI reproduction, bind engine and testcase revisions using [CI evidence and testcase identity](ci-evidence.md). The helper cannot prove the copied group is complete against its source.
 
 Prepare the copied configuration with the shared helper:
 
@@ -31,11 +31,12 @@ python3 "$TESTKIT_FOCUSED" prepare-config \
   --suite sql \
   --base-conf "$ATTEMPT_DIR/CTP/conf/sql.conf" \
   --output-conf "$ATTEMPT_DIR/conf/sql.conf" \
-  --scenario "$COPIED_SCENARIO" \
-  --expected-list "$ATTEMPT_DIR/expected-cases.txt"
+  --scenario "$COPIED_GROUP" \
+  --selection "$COPIED_SELECTION" \
+  --output-expected-list "$ATTEMPT_DIR/expected-cases.txt"
 ```
 
-Use `--suite medium --base-conf .../medium_dev.conf --expected-list ... --data-file "$COPIED_MDB_ARCHIVE"` for medium. Use `--suite shell --base-conf .../shell_ci.conf --scenario "$SHELL_CORPUS" --expected-list "$ATTEMPT_DIR/expected-cases.txt"` for shell. The helper refuses an empty or partial SQL/medium scenario list, refuses to overwrite an existing attempt configuration, and prints its SHA-256.
+For SQL, select a copied case or narrow directory within the copied group. For medium, use `--suite medium --base-conf .../medium_dev.conf --data-file "$COPIED_MDB_ARCHIVE"` and select the whole copied group containing `cases` and `answers`. For shell, use `--suite shell --base-conf .../shell_ci.conf --scenario "$SHELL_CORPUS"` and select a case or subtree within that corpus. The helper discovers and validates the cases, creates the expected list and configuration exclusively, and prints both hashes and the case count. Retain a failed attempt if either output write fails; do not run testkit.
 
 Inspect the effective configuration before running. SQL and medium are serial (`parallel_slots=1`) with exclusions cleared for the explicit selection. Medium additionally requires `create_table_reuseoid=no` and the recorded data archive. Shell is serial, disables updates/retries/continuation, selects cases through `testcase_from_file`, records file feedback, and requires `scenario_disk=on`; do not replace it with an uncontained or writable-corpus run.
 

@@ -11,11 +11,11 @@ Medium is stateful: execute one complete selected directory in its original orde
 
 Resolve the requested directory under the loaded environment's `CUBRID_TESTCASES_DIR/medium`; validate the testcase repository Git root, HEAD, dirty state, and tracked full path. Require its complete `cases`, `answers`, and fixtures. For CI replay, use [CI evidence and testcase identity](../cubrid-common/references/ci-evidence.md).
 
-Enumerate every `.sql` case in the directory in original lexical execution order and write that positive set to `expected-cases.txt`. Reject a file-only selection, a partial hand-picked subset, missing answers, or an empty directory.
+Select the whole group containing `cases` and `answers`. The helper rejects file-only or partial selections, missing base answers, and empty groups.
 
 ## 2. Build a serial immutable attempt
 
-Within the shared attempt layout, copy the entire selected medium directory and required `mdb.tar.gz`; record the data archive SHA-256. Point the scenario and expected list at the copied case tree so generated `.result` files cannot modify the testcase checkout.
+Within the shared attempt layout, copy the entire selected medium directory and required `mdb.tar.gz`; record the data archive SHA-256. Use the copied group or its containing tree as `--scenario` and the whole copied group as `--selection`. The generated configuration and expected list refer to the copied tree, where testkit writes `.result` files.
 
 Use `testkit-focused.py prepare-config --suite medium` with copied `medium_dev.conf` and the copied data archive. Inspect the effective config. It must keep `parallel_slots=1`, `test_category=medium`, `create_table_reuseoid=no`, the complete copied scenario, and the recorded `data_file`. Do not substitute `medium.conf`, parallel slots, or a reused prepared database without a separately validated contract.
 

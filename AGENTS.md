@@ -27,7 +27,7 @@ Each top-level directory with a `SKILL.md` is a skill:
 - `my-cubrid-skills-create/` — create new skills in this collection
 - `cubrid-common/` — shared helper scripts used by CUBRID skills; an internal dependency rather than a user-facing workflow
 
-For `gh-pr-comments-all`, `resolve-greptile-comments`, `markdown-write`, `question-socratically`, and `track-work`, edit the `skills/<name>/` source in `vimkim/my-skills`. `daily-schedule` and `my-cubrid-skills-create` remain here. See `docs/general-skills-migration.md` for the coordinated transfer.
+For `gh-pr-comments-all`, `resolve-greptile-comments`, `markdown-write`, and `track-work`, edit the `skills/<name>/` source in `vimkim/my-skills`. `question-socratically` also moved there and is now disabled under `disabled-skills/`. `daily-schedule` and `my-cubrid-skills-create` remain here. See `docs/general-skills-migration.md` for the coordinated transfer.
 
 The `.agents/`, `.claude/`, and other generated directories created by `npx skills` are not editable sources.
 

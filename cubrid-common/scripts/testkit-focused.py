@@ -55,14 +55,26 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def preflight(suite: str, allow_commit_mismatch: bool) -> None:
+def resolve_testkit() -> Path:
     testkit_name = shutil.which("testkit")
     if testkit_name is None:
         fail(
             "testkit is not on PATH. Install the intended cubrid-testkit revision "
             "manually with go install, then rerun this preflight."
         )
-    testkit = Path(testkit_name).resolve()
+    target = Path(testkit_name).resolve()
+    if target.name != "mise":
+        return target
+    # A mise shim is a symlink to mise itself. Report the binary the shim runs
+    # here, not mise; an inactive tool fails instead of falling through PATH.
+    real = Path(command_output([str(target), "which", "testkit"])).resolve()
+    if not real.is_file():
+        fail(f"mise reports a testkit binary that does not exist: {real}")
+    return real
+
+
+def preflight(suite: str, allow_commit_mismatch: bool) -> None:
+    testkit = resolve_testkit()
     version = command_output([str(testkit), "--version"])
 
     try:

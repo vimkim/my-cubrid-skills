@@ -138,6 +138,58 @@ class TestkitFocusedTests(unittest.TestCase):
             self.assertIn("testkit_version=cubrid-testkit test", result.stdout)
             self.assertRegex(result.stdout, r"testkit_sha256=[0-9a-f]{64}")
 
+    def test_preflight_reports_the_binary_behind_a_mise_shim(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            env, head = self.preflight_fixture(root, installed_commit="placeholder")
+            self.write(
+                Path(env["CUBRID"]) / "bin" / "cubrid_rel",
+                "#!/bin/sh\n"
+                f"echo 'CUBRID 11.5.0 (11.5.0.2602-{head[:7]}) "
+                "(64bit debug build for Linux)'\n",
+                executable=True,
+            )
+            tool_bin = root / "tools"
+            real = root / "installs" / "testkit" / "bin" / "testkit"
+            real.parent.mkdir(parents=True)
+            (tool_bin / "testkit").rename(real)
+            shims = root / "shims"
+            mise = self.write(
+                root / "brew" / "mise",
+                "#!/bin/sh\n"
+                f"if [ \"$1 $2\" = 'which testkit' ]; then echo '{real}'; exit 0; fi\n"
+                "echo 'mise 2026.9.12'\n",
+                executable=True,
+            )
+            shims.mkdir()
+            (shims / "testkit").symlink_to(mise)
+            env["PATH"] = f"{shims}:{env['PATH']}"
+
+            result = self.run_cli(root, "preflight", "--suite", "sql", env=env)
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn(f"testkit={real}", result.stdout)
+            self.assertIn("testkit_version=cubrid-testkit test", result.stdout)
+
+    def test_preflight_stops_when_the_mise_shim_has_no_active_testkit(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            env, _ = self.preflight_fixture(root, installed_commit="placeholder")
+            shims = root / "shims"
+            mise = self.write(
+                root / "brew" / "mise",
+                "#!/bin/sh\necho 'testkit is not currently active' >&2\nexit 1\n",
+                executable=True,
+            )
+            shims.mkdir()
+            (shims / "testkit").symlink_to(mise)
+            env["PATH"] = f"{shims}:{env['PATH']}"
+
+            result = self.run_cli(root, "preflight", "--suite", "sql", env=env)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("not currently active", result.stderr)
+
     def test_preflight_stops_on_confirmed_commit_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

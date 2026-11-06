@@ -1,6 +1,6 @@
 ---
 name: cubrid-code-review
-description: "Review CUBRID pull requests, commit pairs, or supplied diffs with budgeted specialist agents. Verify code defects across C/C++, concurrency, storage I/O, recovery, and HA. Produce an evidence-backed report and a handoff for unfinished review. Use when reviewing CUBRID engine changes. Triggers on phrases like 'review this CUBRID PR', 'review diff A B', 'cubrid-code-review'."
+description: "Review CUBRID pull requests, commit pairs, or supplied diffs with budgeted specialist agents. Verify code defects across C/C++, concurrency, storage I/O, recovery, and HA. Produce an evidence-backed report and a handoff for unfinished review. For requested PR reviews, publish the report to my-cubrid-docs main and post a Korean summary with its link. Use when reviewing CUBRID engine changes. Triggers on phrases like 'review this CUBRID PR', 'review diff A B', 'cubrid-code-review'."
 ---
 
 # Review CUBRID code
@@ -33,7 +33,7 @@ Save the complete changed-file list, diff statistics, and patch. Inspect renames
 
 Read source with `git show <sha>:<path>` or a detached review worktree at the pinned head. A dirty working copy does not establish the snapshot's behavior.
 
-If the comparison is empty, report that result and stop without reviewers. If a required input is ambiguous, resolve it before reviewing that scope.
+If the comparison is empty, record that result and continue with section 6 without reviewers. If a required input is ambiguous, resolve it before reviewing that scope.
 
 Completion requires an immutable patch identity and an inventory of every changed path, including paths that cannot be inspected.
 
@@ -137,6 +137,8 @@ Always state whether follow-up review is required. Create `handoff.md` when a re
 
 Before finalizing a PR review, recheck the remote base and head SHAs. If either changed, keep the report tied to its original snapshot. Add the required delta review to the handoff. Do not restart automatically.
 
-End with the highest-impact findings, coverage limits, budget status, follow-up decision, and artifact locations. A zero-finding result means no confirmed defect within the inspected scope. It does not certify the PR as safe to merge.
+For an explicit PR-review request, continue with [PR publication](references/pr-publication.md) unless the user requests local-only results. The user's standing workflow authorizes integrating the review documents into `my-cubrid-docs/main`, pushing that branch, and posting a Korean PR summary with the report's `main` link. Reuse that authorization without another confirmation. Commit-pair, patch, and working-change reviews stay local unless publication is separately requested; discovering a related PR does not change their mode.
 
-Keep results local unless the user authorizes publication. A review request alone does not authorize GitHub comments, review submissions, fixes, CI triggers, merges, or pushes.
+This publication scope covers review documents and a PR-page comment. Formal GitHub review submissions, source fixes, CI triggers, and source-branch merges or pushes require their own authorization.
+
+End with the highest-impact findings, coverage limits, budget status, follow-up decision, and artifact locations. For published PR reviews, include the report and comment URLs. Report any unfinished publication step explicitly. A zero-finding result means no confirmed defect within the inspected scope. It does not certify the PR as safe to merge.

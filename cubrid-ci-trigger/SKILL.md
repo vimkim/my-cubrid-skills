@@ -1,6 +1,6 @@
 ---
 name: cubrid-ci-trigger
-description: Trigger or rerun GitHub Actions gha-ci for a CUBRID pull request targeting develop or feature/**, choose a full, subset, or failure-only run, prevent same-PR cancellation, and verify pickup. Use when the user asks to run, trigger, or rerun CI on a supported CUBRID PR; release/11.x CircleCI operation is outside this skill.
+description: Trigger or rerun GitHub Actions gha-ci for a CUBRID pull request targeting develop or feature/**, choose a full, subset, or failure-only run, prevent same-PR cancellation, verify pickup, and arrange bounded background monitoring. Use when the user asks to run, trigger, or rerun CI on a supported CUBRID PR; release/11.x CircleCI operation is outside this skill.
 ---
 
 # Operate CUBRID gha-ci on a PR
@@ -101,9 +101,9 @@ Post one bare chatops line for comment-triggered operations:
 gh pr comment "$PR_URL" --body "/run all"
 ```
 
-Use the selected body verbatim. Preserve an explicitly requested trailing `testtools=<branch>` value; never invent one. Save the returned comment URL, body, time, PR URL, and head SHA. If the response is lost, reconcile comments before retrying.
+Use the selected body verbatim. Preserve an explicitly requested trailing `testtools=<branch>` value; never invent one. Save the returned comment URL, body, original trigger time, PR URL, and head SHA for CLI registration. If the response is lost, reconcile comments before retrying.
 
-For an explicitly selected GitHub failed-job rerun, execute only:
+For an explicitly selected GitHub failed-job rerun, record its trigger time and intended next attempt before the mutation. Retain a stable operation receipt such as `github-rerun:<run-id>:<target-attempt>`. Then execute only:
 
 ```bash
 gh run rerun "$RUN_ID" --failed --repo CUBRID/cubrid
@@ -113,7 +113,7 @@ Never combine the two mechanisms or start another `/run` while either is active.
 
 ## 5. Verify pickup and report
 
-Re-read the PR head and poll checks for up to two minutes. For a new `/run`, require both build contexts and every selected suite context to point to one new gha-ci run; they should first become pending. For a GitHub failed-job rerun, require the same run ID to show a higher attempt or active rerun state. If pickup is still absent at the deadline, inspect the matching issue-comment workflow once, report the unresolved state, and preserve the original receipt; never post again to test pickup.
+Re-read the PR head and poll checks for up to two minutes. For a new `/run`, require both build contexts and every selected suite context to point to one new gha-ci run; they should first become pending. For a GitHub failed-job rerun, require the same run ID to show a higher attempt or active rerun state. If pickup is still absent at the deadline, inspect the matching issue-comment workflow once and report pickup as unresolved. Preserve the original receipt for background monitoring even when no run has appeared. Never post again to test pickup.
 
 `gh pr checks` includes these commit statuses; the raw check-runs endpoint alone does not. Report:
 
@@ -123,4 +123,10 @@ Re-read the PR head and poll checks for up to two minutes. For a new `/run`, req
 - any still-missing stable required gha-ci context;
 - the live `gh pr checks --required` result without replacing it with a hard-coded total.
 
-Do not wait for terminal results unless the user asks. Use `cubrid-ci status` for a later status-only request and `cubrid-ci-analyze` for failure analysis, including its read-only exact merge-base comparison. Finding or lacking baseline evidence does not authorize another run or waive required CI contexts.
+## 6. Arrange background monitoring
+
+By default, register the request with `cubrid-ci-watch`, including one whose pickup remains unresolved. The CLI owns the shared registry, 15-minute polling, the 24-hour delay event, and the 48-hour monitoring deadline. Read [references/ci-monitoring.md](references/ci-monitoring.md) for registration, run binding, and event consumption.
+
+Return the triggering session after reporting the receipt and monitoring setup. Reuse one persistent `cubrid-ci-watch poll` process for all registered requests. Invoke AI for meaningful events rather than each poll. Honor an explicit request to skip monitoring. Report registration, poller execution, and event delivery separately. If persistent execution or event delivery is unavailable, retain the registration and report the missing part instead of claiming automatic monitoring and notification.
+
+Use `cubrid-ci status` for a later status-only request and `cubrid-ci-analyze` for failure analysis, including its read-only exact merge-base comparison. Finding or lacking baseline evidence does not authorize another run or waive required CI contexts.

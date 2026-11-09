@@ -1,6 +1,6 @@
 # Publish a PR review
 
-Use this workflow for an explicit PR-review request after saving and adjudicating the pinned review. The authorization and local-only exception are defined in `SKILL.md`. Publish partial or budget-blocked results with their actual verdict and remaining work.
+Use this workflow for an explicit PR-review request after saving and adjudicating the pinned review. The authorization and local-only exception are defined in `SKILL.md`. Publish partial or budget-limited results with their actual verdict and remaining work.
 
 ## Publish the documents first
 
@@ -24,7 +24,6 @@ Use the report's verdict with these Korean labels:
 | `changes-required` | 수정 필요 |
 | `no-confirmed-findings` | 확인된 결함 없음 |
 | `incomplete` | 검토 미완료 |
-| `needs-budget` | 예산 설정 필요 |
 
 Use this format, replacing all placeholders and omitting inapplicable finding rows:
 

@@ -39,13 +39,13 @@ Completion requires an immutable patch identity and an inventory of every change
 
 ## 2. Establish the budget
 
-Read [the budget policy](references/budget.md) before any agent launch. The requested per-agent ceilings are 5% of a weekly allowance or 10% of a daily allowance. The policy defines their interpretation and the strict execution gate.
+Read [the budget policy](references/budget.md) before any agent launch. It defines the default bounded mode and how to honor an explicit absolute budget from the user. The budget never delays launching the planned reviewers.
 
 Create a run directory outside the submitted source tree. Use separate paths for each reviewer. Save a manifest with these fields:
 
 - Repository, request, comparison mode, full revision SHAs or patch hash, and snapshot time.
 - Applicable policy and specification paths. Record missing specifications without blocking code-correctness review.
-- Budget mode, allowance units and windows, limits, enforcement mechanism, available telemetry, and the total review envelope.
+- Budget mode, per-reviewer scope and targets, any explicit user limits, available telemetry, enforcement mechanism or `none`, and the total review envelope with its coordinator reservation.
 - Planned agents, model and reasoning settings, assignments, output paths, and verification resource ownership.
 
 Use the user's configured models when available. Otherwise use available models suited to the assigned work. Avoid a fixed vendor or model dependency. Record actual choices. Preserve enough reasoning capacity for concurrency and recovery analysis by narrowing scope first.
@@ -54,7 +54,7 @@ If pstack model settings exist, use the `interrogate reviewers` list as the spec
 
 When work uses parallel agents or crosses sessions, use `track-work` if available. Keep the pinned identity and next action in the work item.
 
-Completion requires a budget decision that the available harness can actually honor. A prompt that asks an agent to limit itself is not hard enforcement.
+Completion requires a recorded budget mode, a finite scope and target for each planned reviewer, and a total envelope that reserves coordinator verification. A prompt that asks an agent to limit itself is a target, not hard enforcement; the report discloses this.
 
 ## 3. Assign coverage
 
@@ -107,7 +107,7 @@ Read a helper skill only when that branch applies. If it is unavailable, use an 
 
 Keep test harness changes in a disposable workspace. Record source, testcase, build, and configuration identities. A failed reproduction remains inconclusive when prerequisites are missing. Existing CI success does not establish an untested recovery or interleaving invariant.
 
-At the budget checkpoint, collect completed evidence and unresolved checks. Stop affected work at its enforced limit. Do not restart an agent to evade its ceiling. Preserve partial findings and create a handoff.
+At the budget checkpoint, collect completed evidence and unresolved checks. Stop affected work at its target or explicit limit. Do not restart an agent to evade its budget. Preserve partial findings and create a handoff.
 
 Completion requires a terminal result or an explicit gap for every assignment. An interrupted agent does not count as a pass.
 

@@ -15,7 +15,6 @@ Use one verdict:
 | `changes-required` | At least one defect requires a change, with a retained reproduction and coordinator replay that demonstrates the failure. |
 | `no-confirmed-findings` | No confirmed defect remains, all applicable planned coverage is complete, and no material unverified risk remains. |
 | `incomplete` | Required analysis or evidence remains. |
-| `needs-budget` | The budget gate prevented reviewer execution. |
 
 Confirmed defects take precedence over `incomplete`. Keep coverage status separate, so `changes-required` can also have incomplete coverage. State `Follow-up review required` as `yes` or `no`. Explain the reason. Identify whether unresolved work must precede merge or is optional evidence.
 
@@ -54,7 +53,7 @@ Separate pre-existing defects from findings attributed to the reviewed change. L
 
 ### Budget accounting
 
-Record the budget mode, requested limits, enforcement mechanism, actual agent count, and allocation by assignment. Separate measured usage, estimates, and unknown usage. Include coordinator usage and continuation work. State whether percentage compliance is verified, unverified, or violated.
+Record the budget mode, per-assignment targets, any explicit limits, actual agent count, and allocation by assignment. State that no hard cap was enforced, or name the mechanism that enforced an explicit limit. Separate measured usage, estimates, and unknown usage. Include coordinator usage and continuation work. State whether each explicit limit or optional target was met, exceeded, or unverifiable.
 
 Do not claim compliance merely because all reviewers returned short reports. Do not omit incomplete coverage to make a budget-limited review appear complete.
 
@@ -68,7 +67,7 @@ Create `handoff.md` when follow-up review is required. Write a self-contained br
 4. Confirmed findings and unresolved questions with stable IDs. Include unproven safety facts, evidence levels, disagreements, and failed reproduction attempts.
 5. Inspected scope and the precise remaining paths, invariants, configurations, or delta revisions.
 6. Next commands and required environment. Include build and testcase identities, containment requirements, and existing runtime resource ownership.
-7. The remaining budget and its measurement status. State which new work requires a new allocation. Reuse of an assignment does not reset its ceiling.
+7. The remaining budget and its measurement status. State which new work requires a new allocation. Reuse of an assignment does not reset its budget.
 8. A proposed focused assignment for each unresolved question and its completion condition. Include retained probes, missing coordinator replays, and missing independent challenges.
 9. Conditions for finishing the review, including revalidation of changed source and affected callers after a fix.
 

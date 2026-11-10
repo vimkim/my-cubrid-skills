@@ -20,6 +20,8 @@ Before executing focused SQL, medium, or shell tests, read [Native testkit focus
 
 For a focused replay of a CI failure, read [CI evidence and testcase identity](references/ci-evidence.md) to bind runtime evidence to the exact engine and testcase revisions before execution.
 
+Before attributing or reporting a CI failure, read [Known CI issues](references/known-ci-issues.md). It lists temporary failures that are not caused by the PR, each with an expiry date.
+
 For PR failure attribution or historical Engine CI lookup, read [Merge-base comparison](references/ci-baseline.md). It defines the shared collector, validation, comparison, and missing-baseline contract.
 
 For earlier testcase failures, recurring symptoms, or suspected flakiness, read [Testcase history with Chronicle](references/ci-evidence.md#testcase-history-with-chronicle). It defines `cubrid-tcc` lookup, bounded refresh, and the limits of historical conclusions.

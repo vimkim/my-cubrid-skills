@@ -114,6 +114,8 @@ For incomplete terminal observations, report each requested shard as `retained`,
 
 ## 3. Inspect exact evidence and source
 
+First read [Known CI issues](../cubrid-common/references/known-ci-issues.md) and apply its rules to each failure.
+
 For a complete bundle, read the manifest, each validated summary, failure metadata, `message.txt`, optional `diff.txt`, and only the targeted raw text named in `raw/index.json` that bears on a failure. An absent diff with `diff_extraction: not_available` is an observed limitation, not missing-message evidence and not proof that outputs matched.
 
 For each failure, select the testcase SHA from the matching summary shard and choose the local repository:

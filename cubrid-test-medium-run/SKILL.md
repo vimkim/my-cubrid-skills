@@ -24,7 +24,7 @@ Use `testkit-focused.py prepare-config --suite medium` with copied `medium_dev.c
 Medium uses the native SQL family switch with the medium task:
 
 ```bash
-TESTKIT_NATIVE=sql TESTKIT_CONTAIN=1 testkit medium -c "$CONF"
+TESTKIT_NATIVE=sql TESTKIT_CONTAIN=1 "$TESTKIT" medium -c "$CONF"
 ```
 
 Capture combined output and process status. Extract this attempt's result root from `Result Root Dir:`, then run `testkit-focused.py verify --suite medium`. A pass requires the complete expected ordered case set, positive matching total, complete summaries/XML, every generated `.result`, all successes, and zero failures. Exit status alone is never a verdict.

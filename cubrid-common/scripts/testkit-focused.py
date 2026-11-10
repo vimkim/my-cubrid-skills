@@ -73,6 +73,11 @@ def resolve_testkit() -> Path:
     return real
 
 
+KEPT_CUBRID_ENV = {"CUBRID_DATABASES", "CUBRID_TMP", "CUBRID_JAVA_HOME"}
+# CUBRID exits when $CUBRID_TMP is longer: socket paths go there (environment_variable.c: 108-byte sun_path minus 12).
+CUBRID_TMP_MAX_LENGTH = 108 - 12
+
+
 def preflight(suite: str, allow_commit_mismatch: bool) -> None:
     testkit = resolve_testkit()
     version = command_output([str(testkit), "--version"])
@@ -113,6 +118,9 @@ def preflight(suite: str, allow_commit_mismatch: bool) -> None:
             r"\bjavac\s+(?:1\.8(?:\.|\b)|8(?:\.|\b))", java_version
         ):
             fail(f"native {suite} requires JDK 8; selected javac reports {java_version!r}")
+
+    if suite in {"sql", "medium"} and not (cubrid / "jdbc" / "cubrid_jdbc.jar").is_file():
+        fail(f"native {suite} needs the JDBC driver, but the install has no jdbc/cubrid_jdbc.jar: {cubrid}")
 
     cubrid_rel = cubrid / "bin" / "cubrid_rel"
     if not cubrid_rel.is_file() or not os.access(cubrid_rel, os.X_OK):
@@ -173,6 +181,8 @@ def preflight(suite: str, allow_commit_mismatch: bool) -> None:
         "testkit_version": version,
         "testkit_sha256": sha256(testkit),
         "containment": "available",
+        # CUBRID_CONF_FILE, CUBRID_BROKER_CONF_FILE and CUBRID_<PARAM> point the binaries away from the attempt's conf.
+        "env_unset": " ".join(sorted(name for name in os.environ if name.startswith("CUBRID_") and name not in KEPT_CUBRID_ENV)),
     }
     if java_home is not None:
         facts["java_home"] = str(java_home)
@@ -414,6 +424,12 @@ def prepare_config(
     outputs = [output_expected_list, output_conf]
     if output_conf.resolve() == output_expected_list.resolve():
         fail("output paths must differ")
+    attempt_tmp = output_conf.resolve().parent.parent / "cubrid" / "tmp"
+    if len(str(attempt_tmp)) > CUBRID_TMP_MAX_LENGTH:
+        fail(
+            f"attempt CUBRID_TMP would be {len(str(attempt_tmp))} characters ({attempt_tmp}); "
+            f"CUBRID accepts at most {CUBRID_TMP_MAX_LENGTH}. Use a shorter attempt root."
+        )
     for output in outputs:
         if output.resolve().is_relative_to(scenario.resolve()):
             fail(f"output is inside scenario: {output}")

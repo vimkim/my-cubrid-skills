@@ -69,6 +69,7 @@ class TestkitFocusedTests(unittest.TestCase):
             executable=True,
         )
         (cubrid / "databases").mkdir(parents=True)
+        self.write(cubrid / "jdbc" / "cubrid_jdbc.jar", "jar")
         ctp_home = root / "CTP"
         (ctp_home / "conf").mkdir(parents=True)
         java_home = root / "jdk8"
@@ -189,6 +190,43 @@ class TestkitFocusedTests(unittest.TestCase):
 
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("not currently active", result.stderr)
+
+    def matching_install(self, env: dict[str, str], head: str) -> None:
+        self.write(
+            Path(env["CUBRID"]) / "bin" / "cubrid_rel",
+            "#!/bin/sh\n"
+            f"echo 'CUBRID 11.5.0 (11.5.0.2602-{head[:7]}) (64bit debug build for Linux)'\n",
+            executable=True,
+        )
+
+    def test_preflight_lists_cubrid_overrides_to_unset(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            env, head = self.preflight_fixture(root, installed_commit="placeholder")
+            self.matching_install(env, head)
+            for name in [n for n in env if n.startswith("CUBRID_") and n != "CUBRID_DATABASES"]:
+                del env[name]
+            env.update({"CUBRID_CONF_FILE": "/w/cubrid.conf", "CUBRID_CUBRID_PORT_ID": "41268",
+                        "CUBRID_TMP": "/t", "CUBRID_JAVA_HOME": "/j"})
+
+            result = self.run_cli(root, "preflight", "--suite", "sql", env=env)
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("env_unset=CUBRID_CONF_FILE CUBRID_CUBRID_PORT_ID\n", result.stdout)
+
+    def test_sql_preflight_requires_the_jdbc_driver(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            env, head = self.preflight_fixture(root, installed_commit="placeholder")
+            self.matching_install(env, head)
+            (Path(env["CUBRID"]) / "jdbc" / "cubrid_jdbc.jar").unlink()
+
+            sql = self.run_cli(root, "preflight", "--suite", "sql", env=env)
+            shell = self.run_cli(root, "preflight", "--suite", "shell", env=env)
+
+            self.assertNotEqual(sql.returncode, 0)
+            self.assertIn("jdbc/cubrid_jdbc.jar", sql.stderr)
+            self.assertEqual(shell.returncode, 0, shell.stderr)
 
     def test_preflight_stops_on_confirmed_commit_mismatch(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -743,6 +781,18 @@ class TestkitFocusedTests(unittest.TestCase):
             self.assertIn(f"scenario={bmp}", (root / "single.conf").read_text())
             self.assertIn("parallel_slots=1", (root / "single.conf").read_text())
             self.assertIn("testcase_exclude_from_file=\n", (root / "single.conf").read_text())
+
+    def test_prepare_rejects_an_attempt_root_too_long_for_cubrid_tmp(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            group = root / "group"
+            self.sql_case(group, "a.sql")
+            attempt = root / ("a" * 120)
+            result = self.prepare(root, "sql", group, group / "cases",
+                                  output=attempt / "conf" / "sql.conf", expected=attempt / "expected.txt")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("CUBRID_TMP", result.stderr)
+            self.assertFalse((attempt / "expected.txt").exists())
 
     def test_prepare_rejects_existing_and_equal_outputs_before_writing(self) -> None:
         with tempfile.TemporaryDirectory() as d:

@@ -24,7 +24,7 @@ Use `testkit-focused.py prepare-config --suite sql` with the copied `sql.conf`. 
 Invoke exactly the explicit family under containment:
 
 ```bash
-TESTKIT_NATIVE=sql TESTKIT_CONTAIN=1 testkit sql -c "$CONF"
+TESTKIT_NATIVE=sql TESTKIT_CONTAIN=1 "$TESTKIT" sql -c "$CONF"
 ```
 
 Capture combined output and process status as described by the shared contract. Extract the result root from this attempt's `Result Root Dir:` line, then run `testkit-focused.py verify --suite sql`. A pass requires the expected positive case count, identical expected/executed identities, complete `summary_info`, `main.info`, XML, per-case `.result` artifacts, all successes, and zero failures. Exit status alone is never a verdict.

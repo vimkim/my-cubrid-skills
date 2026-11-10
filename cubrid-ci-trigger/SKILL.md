@@ -16,10 +16,11 @@ Treat these gha-ci commit-status contexts as the stable contract:
 | Context | Merge requirement | Meaning |
 |---|---|---|
 | `gha-ci: build (release)` | required | release build |
-| `gha-ci: build (debug)` | optional | debug build used by the suites |
+| `gha-ci: build (debug)` | optional | debug build used by the shell, SQL, and medium suites |
 | `gha-ci: test_shell` | required | shell suite |
 | `gha-ci: test_sql` | required | SQL suite |
 | `gha-ci: test_medium` | required | medium suite |
+| `gha-ci: test_sql_by_cci` | optional | SQL cases through CCI on the release build |
 
 Discover the complete current merge gate with `gh pr checks "$PR_URL" --required`; do not encode a fixed total count. A gha-ci context may be absent before the first `/run`, so also compare the observed contexts with the stable four-context required set above.
 
@@ -28,7 +29,7 @@ Discover the complete current merge gate with `gh pr checks "$PR_URL" --required
 | Request or state | Operation |
 |---|---|
 | Full CI, unspecified suites, a new PR head, or pre-review qualification | `/run all` |
-| User explicitly names a subset | `/run shell`, `/run sql`, `/run medium`, or their supported combination |
+| User explicitly names a subset | `/run shell`, `/run sql`, `/run medium`, `/run sql_by_cci`, or their supported combination |
 | Flaky testcase failure or a shard that died before running any case | `/run rerun <run-id>` |
 | Transient build or runner job failure | `gh run rerun <run-id> --failed --repo CUBRID/cubrid` |
 | PR head moved, or a shard died after handling only part of its assignment | `/run all` |

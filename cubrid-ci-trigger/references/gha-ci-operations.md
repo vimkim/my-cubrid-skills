@@ -6,15 +6,15 @@ Consult this reference when selecting a rerun mechanism, diagnosing a missing or
 
 For PRs based on `develop` or `feature/**`, `/run` starts GitHub Actions `gha-ci`. CircleCI remains a separate legacy path for release branches and is outside `cubrid-ci-trigger`.
 
-Every comment-triggered run builds both release and debug modes. Requested suites execute with the debug build. Therefore:
+Every comment-triggered run builds both release and debug modes. The shell, SQL, and medium suites execute with the debug build. `test_sql_by_cci` executes the SQL cases through CCI with the release build. Therefore:
 
-- a release-only build failure does not stop the suites;
-- a debug build failure prevents the suites from producing useful testcase verdicts;
+- a release-only build failure does not stop the debug suites, but `test_sql_by_cci` fails with "plan found no usable release build";
+- a debug build failure prevents the shell, SQL, and medium suites from producing useful testcase verdicts;
 - a previously published build for the same commit may be reused;
-- `/run all` produces both build statuses and all three suite statuses;
-- `/run shell`, `/run sql`, or `/run medium` leaves unselected suite contexts untouched or absent.
+- `/run all` produces both build statuses and all four suite statuses;
+- `/run shell`, `/run sql`, `/run medium`, or `/run sql_by_cci` leaves unselected suite contexts untouched or absent.
 
-The default shard counts are shell 50, SQL 10, and medium 1. Treat timing as observed rather than guaranteed; a full run commonly spends its first several minutes building and then depends on queue and suite duration.
+The default shard counts are shell 50, SQL 10, medium 1, and sql_by_cci 10. Treat timing as observed rather than guaranteed; a full run commonly spends its first several minutes building and then depends on queue and suite duration.
 
 ## Run and attempt semantics
 

@@ -9,7 +9,7 @@ Take one status snapshot and one exact-head collection, then attempt exact merge
 
 ## Boundaries
 
-- Analyze all four suites unless the user requests a subset: `test_medium`, `test_sql`, `test_shell`, and `test_sql_by_cci`. A commit whose CI predates `test_sql_by_cci` reports it as `not_observed`; record that as absent evidence, not a failure.
+- Analyze the three default suites unless the user requests a subset: `test_medium`, `test_sql`, and `test_shell`. `test_sql_by_cci` is opt-in in `cubrid-ci`: add it with `--suite` only when the user asks for it or the pinned PR head reports a `gha-ci: test_sql_by_cci` status (section 1).
 - Use the snapshot available now. Add `--wait` only when the user explicitly asks to wait.
 - Keep exact-head and baseline collection mechanics in `cubrid-ci`: accept its run selection, provenance checks, failure inventory, durable paths, and retained-evidence verification. Use `cubrid-tcc` for testcase history under section 3b.
 - Read testcase source at the recorded Git revision from the local testcase repositories. Preserve source and testcase worktrees and indexes unchanged.
@@ -52,8 +52,16 @@ Require a CUBRID PR identity and a 40-character `.pr.head_sha`. Pin that SHA and
 PINNED_PR_URL=$(jq -er '.pr.url' "$STATUS_JSON")
 PINNED_HEAD=$(jq -er '.pr.head_sha' "$STATUS_JSON")
 SUITE_ARGS=()
-# For a user-requested subset, append concrete pairs such as:
-# SUITE_ARGS+=(--suite test_sql)
+# Any --suite replaces cubrid-ci's three-suite default, so the opt-in
+# suite is added together with the defaults.
+if jq -e --arg head "$PINNED_HEAD" 'any(.checks[]?;
+    .name == "gha-ci: test_sql_by_cci" and .current.reported_for_sha == $head)' \
+    "$STATUS_JSON" >/dev/null
+then
+  SUITE_ARGS=(--suite test_medium --suite test_sql --suite test_shell --suite test_sql_by_cci)
+fi
+# For a user-requested subset, replace the list with concrete pairs such as:
+# SUITE_ARGS=(--suite test_sql)
 
 COLLECT_STARTED=$(date -u +%Y-%m-%dT%H:%M:%S.%NZ)
 if cubrid-ci collect "$PINNED_PR_URL" --commit "$PINNED_HEAD" \
@@ -122,6 +130,8 @@ Require the recorded commit and full testcase path to exist, then read it with `
 Inspect CUBRID code only from a local checkout proven to contain the manifest commit, using `git show <commit>:<path>` where practical. A different local `HEAD` is context, not exact evidence. Consult relevant material in `my-cubrid-docs` and `my-cubrid-jira` when it directly informs attribution.
 
 ## 3a. Acquire and compare the exact merge-base baseline
+
+Develop commits currently carry no `test_sql_by_cci` status. When `SUITE_ARGS` includes it, expect the baseline to report that suite as `not_observed` and exit `3`. Record that suite as having no baseline, and compare the other suites from their own per-suite results.
 
 For PR failure attribution, read [Merge-base comparison](../cubrid-common/references/ci-baseline.md). Run one baseline collection with the same suite filters, then verify it against the head pins:
 

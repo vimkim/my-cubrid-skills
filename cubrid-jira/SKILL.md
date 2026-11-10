@@ -28,6 +28,10 @@ cubrid-jira search TICKET_ID
 
 Present the output as-is. Search contacts JIRA by default and refreshes the local cache. If the command fails after preflight, report the exact error rather than guessing.
 
+## Check for duplicates before a write
+
+Before you create an issue or publish a description, run the [`cubrid-jira-dup`](../cubrid-jira-dup/SKILL.md) skill on the Markdown file. Skip it when the calling skill already ran it on the same file content. Report the result with the dry-run output. The check does not block the write and does not replace the user's authorization.
+
 ## Publish a Markdown description
 
 Use this mode only when the user explicitly asks to upload the specified issue report, or when a calling skill states that its triggering request pre-authorizes publication. Do not request another confirmation in the pre-authorized case.

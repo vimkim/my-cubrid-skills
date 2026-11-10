@@ -16,6 +16,7 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | `cubrid-code-review` | Review pinned PRs or diffs with budgeted specialists, verified findings, and follow-up handoffs |
 | `cubrid-pr-create` | Save Korean PR drafts for review, then create or update GitHub PRs after confirmation |
 | `cubrid-jira-issue-write` | Write structured JIRA issue reports in Korean |
+| `cubrid-jira-dup` | Find existing CBRD issues that a draft may duplicate before a JIRA write |
 | `cubrid-manual-search` | Answer CUBRID questions from the local English/Korean RST manual with file-and-line citations |
 | `cubrid-oos-context` | Load OOS (Out-of-row Overflow Storage) project context |
 | `create-testcases` | Create CUBRID test cases (unit/SQL/shell) for features or bug fixes |
@@ -109,6 +110,7 @@ Some skills require external tools:
 | Tool | Required by | Install |
 |------|------------|---------|
 | `cubrid-jira` | `cubrid-jira` | `uv tool install git+https://github.com/vimkim/cubrid-jira` |
+| `cubrid-jira-dup` | `cubrid-jira-dup` | `uv tool install git+https://github.com/vimkim/cubrid-jira-duplicate-poc` |
 | `gh` | `cubrid-ci-trigger`, `cubrid-ci-analyze`, `cubrid-pr-create` | [cli.github.com](https://cli.github.com/) |
 | `cubrid-ci` | `cubrid-ci-analyze` | `cargo install --path /home/vimkim/gh/cubrid-ci --locked` |
 | `testkit` | `cubrid-test-sql-run`, `cubrid-test-medium-run`, `cubrid-test-shell-run` | Manually install the intended `cubrid-testkit` revision with `go install` |

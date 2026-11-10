@@ -40,13 +40,14 @@ Use `cubrid-tcc` to investigate earlier failures of a validated testcase in reta
 
 ### Select the testcase and occurrence
 
-Set `HISTORY_CASE` to the full testcase path and `HISTORY_RUN` to the run ID from the validated failure's suite. Map the suite to `HISTORY_SUITE`:
+Set `HISTORY_CASE` to the full testcase path and `HISTORY_RUN` to the run ID from the validated failure's suite. Map the suite to `HISTORY_SUITE`. Chronicle does not index `test_sql_by_cci`; record its history as unavailable instead of querying `sql`, whose CSQL debug results are a different execution.
 
 | CI suite | Chronicle suite |
 |---|---|
 | `test_sql` | `sql` |
 | `test_medium` | `medium` |
 | `test_shell` | `shell` |
+| `test_sql_by_cci` | none |
 
 ```bash
 cubrid-tcc status "$HISTORY_CASE" --suite "$HISTORY_SUITE" --json

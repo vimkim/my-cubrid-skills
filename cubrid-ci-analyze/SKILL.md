@@ -9,7 +9,7 @@ Take one status snapshot and one exact-head collection, then attempt exact merge
 
 ## Boundaries
 
-- Analyze all three suites unless the user requests a subset: `test_medium`, `test_sql`, and `test_shell`.
+- Analyze all four suites unless the user requests a subset: `test_medium`, `test_sql`, `test_shell`, and `test_sql_by_cci`. A commit whose CI predates `test_sql_by_cci` reports it as `not_observed`; record that as absent evidence, not a failure.
 - Use the snapshot available now. Add `--wait` only when the user explicitly asks to wait.
 - Keep exact-head and baseline collection mechanics in `cubrid-ci`: accept its run selection, provenance checks, failure inventory, durable paths, and retained-evidence verification. Use `cubrid-tcc` for testcase history under section 3b.
 - Read testcase source at the recorded Git revision from the local testcase repositories. Preserve source and testcase worktrees and indexes unchanged.
@@ -112,8 +112,10 @@ For each failure, select the testcase SHA from the matching summary shard and ch
 
 | Suite | Local Git repository |
 |---|---|
-| `test_medium`, `test_sql` | `/home/vimkim/gh/cubrid-testcases/develop` |
+| `test_medium`, `test_sql`, `test_sql_by_cci` | `/home/vimkim/gh/cubrid-testcases/develop` |
 | `test_shell` | `/home/vimkim/gh/cubrid-testcases-private-ex/develop` |
+
+`test_sql_by_cci` runs the `sql` cases through CCI on the release build. Its expected output is the `.answer_cci` file when one exists, otherwise the `.answer` file; the message's `** Expected :` line names the one used. Compare against that file, not the CSQL `.answer`.
 
 Require the recorded commit and full testcase path to exist, then read it with `git -C <repo> show <sha>:<path>`. Use the same form for related answer or fixture paths. Never checkout, reset, fetch, or modify the testcase repository. If the local object or path is absent, record the exact source as unknown and keep the conclusion bounded.
 

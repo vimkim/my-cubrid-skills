@@ -1,12 +1,12 @@
 # Testcase knowledge registry design
 
-Status: proposed, revision 2, 2026-11-11. Nothing here is implemented.
+Status: revision 3, 2026-11-11. The user confirmed SQLite storage and the unlimited default window. Nothing here is implemented.
 
 ## Goal
 
 When a CUBRID CI testcase fails, an agent should see everything known about that testcase in one query. The query answers three questions:
 
-1. In the last N days (60 by default), which PRs and which branches failed this testcase, and with which failure signature?
+1. Which PRs and which branches failed this testcase, and with which failure signature? The view covers all indexed history by default.
 2. Which issues relate to this testcase, and how does each relate?
 3. Which notes did people or agents leave about it?
 
@@ -19,7 +19,7 @@ Today the knowledge lives in [known-ci-issues.md](../cubrid-common/references/kn
 ## Recommendation
 
 - Build a new CLI, `cubrid-tcr` (testcase registry), in its own repository at `~/gh/cubrid-tc-registry`. Install it as a uv tool, like `cubrid-tcc`.
-- Store curated knowledge in SQLite at `~/.local/share/cubrid-tc-registry/registry.sqlite3`. This is a reversal of revision 1. The reasons are in [Storage](#storage-sqlite-now-earns-its-place).
+- Store curated knowledge in SQLite at `~/.local/share/cubrid-tc-registry/registry.sqlite3`. This reverses revision 1, and the user confirmed it. The reasons are in [Storage](#storage-sqlite-now-earns-its-place).
 - Read failure history from Chronicle (`cubrid-tcc`). Do not collect it again.
 - Store only what no current tool has. That is failure signatures, issue links, notes, and the known-issue rules.
 - Keep the skills small. `known-ci-issues.md` shrinks to the routine and the verdict table.
@@ -113,7 +113,7 @@ SQLite wins now. The review gate moves from the diff to the approval step on `ru
 ## CLI commands
 
 ```text
-cubrid-tcr show CASE [--suite S] [--days 60] [--json]
+cubrid-tcr show CASE [--suite S] [--days N | --all] [--json]
 cubrid-tcr check (--case CASE --suite S | --job NAME) --engine SHA
                  [--stack-file F] [--run ID --shard N] [--engine-repo DIR] [--offline] [--json]
 cubrid-tcr signature add CASE --suite S --id ID --frames F1,F2,... [--text T] --label TEXT
@@ -126,7 +126,13 @@ cubrid-tcr rule retire ID --reason TEXT
 cubrid-tcr validate | log [CASE] | backup | export [--format toml]
 ```
 
-- `show` is the testcase view. It resolves the case through `cubrid-tcc find`, reads `cubrid-tcc history --since` for the window, and merges the registry records. Its output has these parts:
+- `show` is the testcase view. It resolves the case through `cubrid-tcc find`, reads `cubrid-tcc history` with no date window, and merges the registry records. The window applies only to the Chronicle failure list. Links, notes, rules, and signatures always appear in full.
+  - By default, `show` lists every indexed failure.
+  - If the list has more than 50 failures, `show` lists only the failures of the last 60 days. It summarizes the older ones as counts by branch and by signature, with the first and last failure dates, and it marks the output as shortened.
+  - `--days N` always limits the list to N days. `--all` always lists every failure.
+  - `show` never passes Chronicle's raw JSON through. One `history` result for one occurrence of `cbrd_27179` was about 350 KB.
+
+  Its output has these parts:
   - Failures grouped by PR, with the target branch, the Engine commit, the time, and the signature. A failure with no signature shows "signature unknown".
   - Counts by branch and by signature.
   - Issue links by relation.
@@ -201,9 +207,10 @@ The Jira read is one anonymous GET with a 30-second timeout on `rest/api/2/issue
 
 ## Decisions for the user
 
+On 2026-11-11 the user confirmed SQLite storage. The user also confirmed an unlimited default window that shortens to 60 days past 50 failures. The 50-failure threshold is an estimate, to be tuned in use. The rest of the list below is open.
+
 1. **The new repository and the name.** The default is `~/gh/cubrid-tc-registry` with the command `cubrid-tcr`. You can instead ask for these records as a separate database inside Chronicle, with `cubrid-tcc note` and related commands. That gives one tool, but it puts curated data next to an index that Chronicle can rebuild, and it adds Jira reads to a tool that is offline today.
 2. **Who may write a `suspected` link or a note.** The default lets agents write both without asking, because neither changes a verdict. You can require approval for links as well.
-3. **The window.** The default is 60 days. Chronicle's current discovery window starts on 2026-10-14, so a longer window shows only what the local index holds.
-4. **Expiry for issue-backed rules.** The default drops it. You can add an optional `review_by` date.
-5. **Policy on `fix_present`.** The default stops applying the rule and analyzes the failure as new.
-6. **The branch `known-issue-cbrd-28018`.** The default leaves it in place.
+3. **Expiry for issue-backed rules.** The default drops it. You can add an optional `review_by` date.
+4. **Policy on `fix_present`.** The default stops applying the rule and analyzes the failure as new.
+5. **The branch `known-issue-cbrd-28018`.** The default leaves it in place.

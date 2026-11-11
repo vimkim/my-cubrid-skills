@@ -114,7 +114,7 @@ Never combine the two mechanisms or start another `/run` while either is active.
 
 ## 5. Verify pickup and report
 
-When the report names a failed job, check it against [Known CI issues](../cubrid-common/references/known-ci-issues.md) and label a match as a known issue.
+When the report names a failed job, check it with [Known CI issues](../cubrid-common/references/known-ci-issues.md) and apply the label for its verdict.
 
 Re-read the PR head and poll checks for up to two minutes. For a new `/run`, require both build contexts and every selected suite context to point to one new gha-ci run; they should first become pending. For a GitHub failed-job rerun, require the same run ID to show a higher attempt or active rerun state. If pickup is still absent at the deadline, inspect the matching issue-comment workflow once and report pickup as unresolved. Preserve the original receipt for background monitoring even when no run has appeared. Never post again to test pickup.
 

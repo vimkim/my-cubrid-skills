@@ -1,6 +1,6 @@
 # Testcase knowledge registry design
 
-Status: revision 3, 2026-11-11. The user accepted this design and every default in the last section. The implementation is not merged.
+Status: revision 3, 2026-11-11. The user accepted this design and every default in the last section. The CLI is implemented on branch `feat/initial-cli` of the local repository `~/gh/cubrid-tc-registry`. It is not merged or installed.
 
 ## Goal
 
@@ -114,13 +114,14 @@ SQLite wins now. The review gate moves from the diff to the approval step on `ru
 
 ```text
 cubrid-tcr show CASE [--suite S] [--days N | --all] [--json]
-cubrid-tcr check (--case CASE --suite S | --job NAME) --engine SHA
-                 [--stack-file F] [--run ID --shard N] [--engine-repo DIR] [--offline] [--json]
+cubrid-tcr check (--case CASE [--suite S] | --job NAME) --engine SHA
+                 [--stack-file F] [--engine-repo DIR] [--offline] [--no-context] [--json]
 cubrid-tcr signature add CASE --suite S --id ID --frames F1,F2,... [--text T] --label TEXT
-cubrid-tcr signature attach CASE --suite S --run ID --shard N --stack-file F [--signature ID]
+cubrid-tcr signature attach CASE --suite S --run ID --shard N [--attempt N] --stack-file F
+                 [--signature ID]
 cubrid-tcr link CASE --suite S --issue KEY --relation origin|tracks|suspected|fixed_by [--signature ID]
 cubrid-tcr note CASE --suite S --body TEXT [--ref REF...]
-cubrid-tcr rule add (--signature ID | --job-contains TEXT) [--issue KEY] [--expires DATE]
+cubrid-tcr rule add --id ID (--signature ID | --job-contains TEXT) [--issue KEY] [--expires DATE]
                     --not-covered TEXT [--approved-by NAME --yes]
 cubrid-tcr rule retire ID --reason TEXT
 cubrid-tcr validate | log [CASE] | backup | export [--format toml]
@@ -175,7 +176,7 @@ The Jira read is one anonymous GET with a 30-second timeout on `rest/api/2/issue
 1. Take the suite and the full testcase path from the validated identity. For a job-level failure without testcase records, take the job name.
 2. Take the tested Engine SHA from the shard build provenance, as [ci-evidence.md](../cubrid-common/references/ci-evidence.md) requires.
 3. If the failure left a core stack, save the backtrace text in the evidence directory.
-4. Run `cubrid-tcr check --json` with the stack file, the run, and the shard. Apply the label from the verdict table, and put the `show` summary in the report as history context. History context never proves the root cause.
+4. Run `cubrid-tcr check --json` with the stack file. Apply the label from the verdict table, and put the `show` summary in the report as history context. History context never proves the root cause.
 5. If `show` reports stale Chronicle coverage for the window, run the bounded sync it names, and run `check` again once.
 6. After the analysis, record what it learned. Run `signature attach` for the stack. Run `link --relation suspected` for an issue that looks related. Run `note` for a fact a later reader needs. Propose a `rule` to the user only when a person confirmed the duplicate.
 

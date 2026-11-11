@@ -17,6 +17,8 @@ If the caller requests no comparison, collect and report the chosen implementati
 
 Use the live CUBRID build interface rather than copying generic CMake flags into the worktree.
 Inspect the available presets and actual compilation and link commands.
+Before final timing, check that every `UNIT_TESTS` and `UNIT_TEST_*` cache value is off and that `compile_commands.json` has no `CUBRID_UNIT_TEST_ENABLED`.
+Reconfigure an existing build with the measurement preset before checking. If stale test options remain, use the fresh-cache procedure in `~/my-cubrid/docs/cmake-presets.md`.
 Check optimization, assertions, allocator, LTO, PGO, sanitizer state, and target ISA.
 Use matching symbols for profiling the actual optimized build.
 Record frame-pointer changes as build differences when they affect generated code.

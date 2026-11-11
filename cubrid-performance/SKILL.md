@@ -38,6 +38,9 @@ Treat imported benchmark numbers as context until their workload, environment, a
 Read [experiments.md](references/experiments.md) before preparing builds, workload state, or performance comparisons.
 Use `cubrid-build` and the live preset-aware `just` interface for engine builds.
 Performance measurement warrants an optimized preset, normally `release_gcc` when available.
+`release_gcc` and `release_clang` disable unit-test options. `release_gcc_nounit` remains compatible with existing measurement workflows.
+Use `release_gcc_unit` for optimized unit tests. It enables instrumentation and is unsuitable for final timing runs.
+After a preset definition changes, reconfigure before building. See `~/my-cubrid/docs/cmake-presets.md` for cache migration.
 Check actual optimization, assertions, symbols, install prefix, and loaded runtime.
 Keep debugger and sanitizer builds separate from final timing builds.
 

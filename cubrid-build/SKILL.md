@@ -22,10 +22,15 @@ Confirm it is a CUBRID source tree by checking for `CMakeLists.txt` and `src/`.
 Use the preset requested by the user. Otherwise use:
 
 - `debug_gcc` for normal development, debugging, fixes, and tests.
-- `release_gcc` only for an explicitly requested performance measurement or benchmark.
+- `release_gcc` for an explicitly requested performance measurement or benchmark. It disables unit-test options and instrumentation.
+- `release_gcc_unit` for RelWithDebInfo with unit tests and instrumentation enabled. Use it for optimized tests.
 - Another preset only when the user or task explicitly requires it.
 
 The preset must appear in `cmake --list-presets=configure`. Never invent a preset name.
+
+`release_clang` also disables unit-test options. `release_gcc_nounit` remains available for existing benchmark workflows.
+After a preset definition changes, run `just configure` before building. Preset selection or `just build` alone does not apply the new cache values.
+For a fresh cache or preset details, read `~/my-cubrid/docs/cmake-presets.md`.
 
 ## 3. Prepare a worktree
 

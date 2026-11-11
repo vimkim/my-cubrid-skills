@@ -1,6 +1,6 @@
 # Testcase knowledge registry design
 
-Status: revision 3, 2026-11-11. The user confirmed SQLite storage and the unlimited default window. Nothing here is implemented.
+Status: revision 3, 2026-11-11. The user accepted this design and every default in the last section. The implementation is not merged.
 
 ## Goal
 
@@ -14,7 +14,7 @@ Only part of that view decides the analysis. A tracked issue can still mark a fa
 
 Revision 1 centered on a matcher that filters failures. This revision centers on the testcase, because the user asked for a testcase-centered view: "a TC failed in several PRs in the last 60 days and seems related to several issues", and "a feature branch already failed this TC earlier". The filter becomes one part of that view.
 
-Today the knowledge lives in [known-ci-issues.md](../cubrid-common/references/known-ci-issues.md). It has two entries on `main`. The unmerged branch `known-issue-cbrd-28018` (commit `0b0707d`) adds a third entry for `cbrd_27179` and CBRD-28018, with six prose "Check on match" steps.
+Today the knowledge lives in [known-ci-issues.md](../cubrid-common/references/known-ci-issues.md). It has three entries on `main`. Commit `0b0707d` added the third, for `cbrd_27179` and CBRD-28018, with six prose "Check on match" steps.
 
 ## Recommendation
 
@@ -75,7 +75,7 @@ The registry keys every record by Chronicle's testcase identity: repository, sui
 | Relation | Meaning | `cbrd_27179` example |
 |---|---|---|
 | `origin` | The testcase was written for this issue. | CBRD-27179 |
-| `tracks` | This issue tracks a failure of the testcase. Confirmed by a person. | CBRD-28018, with signature `vacuum-deallocated-page` |
+| `tracks` | This issue tracks a failure of the testcase. Confirmed by a person. | CBRD-28018, with signature `cbrd_27179-vacuum-deallocated-page` |
 | `suspected` | The failure looks related, but nobody has confirmed it. | Not used yet |
 | `fixed_by` | This issue's fix resolved an earlier failure. | Not used yet |
 
@@ -189,11 +189,10 @@ The Jira read is one anonymous GET with a 30-second timeout on `rest/api/2/issue
 
 ## Migration
 
-1. Create the CBRD-28018 records from commit `0b0707d`: signature `vacuum-deallocated-page` on `cbrd_27179`, an `origin` link to CBRD-27179, a `tracks` link to CBRD-28018, and the rule with approval by the user. Attach the signature to the run 42868959374 occurrence, and record PRs #8469 and #8404 as a note until their runs are synced into Chronicle.
+1. Create the CBRD-28018 records from the `main` entry added in commit `0b0707d`: signature `cbrd_27179-vacuum-deallocated-page` on `cbrd_27179`, an `origin` link to CBRD-27179, a `tracks` link to CBRD-28018, and the rule with approval by the user. Attach the signature to the run 42868959374 occurrence, and record PRs #8469 and #8404 as a note until their runs are synced into Chronicle.
 2. Create the `sql_by_cci` job rule with `expires = 2026-12-09`.
 3. Run `validate`. Then run `check` for each case: the job `shard sql_by_cci 01` returns `known`, the `cbrd_27179` stack returns `known`, another stack returns `no_match`, and `--offline` returns `unknown`.
 4. Replace the entries section of `known-ci-issues.md` with the routine and the verdict table.
-5. Leave the branch `known-issue-cbrd-28018` alone.
 
 ## Not built
 
@@ -207,7 +206,7 @@ The Jira read is one anonymous GET with a 30-second timeout on `rest/api/2/issue
 
 ## Decisions for the user
 
-On 2026-11-11 the user confirmed SQLite storage. The user also confirmed an unlimited default window that shortens to 60 days past 50 failures. The 50-failure threshold is an estimate, to be tuned in use. The rest of the list below is open.
+On 2026-11-11 the user confirmed SQLite storage. The user also confirmed an unlimited default window that shortens to 60 days past 50 failures. The 50-failure threshold is an estimate, to be tuned in use. The user then accepted the default of decisions 1 to 4 below. Decision 5 is settled, because the branch was merged into `main` as `0b0707d` and deleted.
 
 1. **The new repository and the name.** The default is `~/gh/cubrid-tc-registry` with the command `cubrid-tcr`. You can instead ask for these records as a separate database inside Chronicle, with `cubrid-tcc note` and related commands. That gives one tool, but it puts curated data next to an index that Chronicle can rebuild, and it adds Jira reads to a tool that is offline today.
 2. **Who may write a `suspected` link or a note.** The default lets agents write both without asking, because neither changes a verdict. You can require approval for links as well.

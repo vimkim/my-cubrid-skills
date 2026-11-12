@@ -7,7 +7,7 @@
 1. Take the suite and the full testcase path from the validated testcase identity. For a job-level failure without testcase records, take the job name.
 2. Take the tested Engine SHA from the shard build provenance, as [CI evidence and testcase identity](ci-evidence.md) requires. A workflow `head_sha` is not enough.
 3. Set `ENGINE_REPO` to a local `CUBRID/cubrid` checkout, such as the user's `develop` worktree. `check` reads its `origin/develop` to find fix commits, so fetch it first if it is stale.
-4. If the failure left a core stack, save that core's backtrace text in the evidence directory. Save one core per file.
+4. If the failure left a core stack, save that core's backtrace text in the evidence directory. Save one core per file. A gha-ci shell core leaves no GitHub artifact and no stack in the job log. The CTP `CORE ANALYZER` block is in the JUnit failure message, which `cubrid-ci collect` retains as `failures/<id>/message.txt`. Pass that file to `--stack-file` when it holds one core.
 5. Run the check:
 
 ```bash

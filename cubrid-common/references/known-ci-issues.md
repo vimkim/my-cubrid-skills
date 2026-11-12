@@ -6,17 +6,18 @@
 
 1. Take the suite and the full testcase path from the validated testcase identity. For a job-level failure without testcase records, take the job name.
 2. Take the tested Engine SHA from the shard build provenance, as [CI evidence and testcase identity](ci-evidence.md) requires. A workflow `head_sha` is not enough.
-3. If the failure left a core stack, save that core's backtrace text in the evidence directory. Save one core per file.
-4. Run the check:
+3. Set `ENGINE_REPO` to a local `CUBRID/cubrid` checkout, such as the user's `develop` worktree. `check` reads its `origin/develop` to find fix commits, so fetch it first if it is stale.
+4. If the failure left a core stack, save that core's backtrace text in the evidence directory. Save one core per file.
+5. Run the check:
 
 ```bash
 cubrid-tcr check --case "$TC_PATH" --suite "$SUITE" --engine "$ENGINE_SHA" \
-    --stack-file "$EVIDENCE_DIR/core-stack.txt" --json
-cubrid-tcr check --job "$JOB_NAME" --engine "$ENGINE_SHA" --json
+    --engine-repo "$ENGINE_REPO" --stack-file "$EVIDENCE_DIR/core-stack.txt" --json
+cubrid-tcr check --job "$JOB_NAME" --engine "$ENGINE_SHA" --engine-repo "$ENGINE_REPO" --json
 ```
 
-5. Apply the label for the `verdict` from the table below. Cite the rule id, the issue, and the `reason`.
-6. Keep every failure in the failure inventory, whatever its verdict. Still analyze every other failure in the same job.
+6. Apply the label for the `verdict` from the table below. Cite the rule id, the issue, and the `reason`.
+7. Keep every failure in the failure inventory, whatever its verdict. Still analyze every other failure in the same job.
 
 | Verdict | Report label |
 |---|---|

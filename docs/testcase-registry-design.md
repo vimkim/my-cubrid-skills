@@ -164,10 +164,10 @@ A signature rule matches when the stack file matches its signature: the frames a
 
 The fix is present under either of these conditions:
 
-1. Every fix commit is an ancestor of the tested commit. The fix commits come from `git log --format=%H --grep='\[CBRD-n\]' origin/develop` in `/home/vimkim/gh/cb/develop`, because squash-merged develop commits start with `[CBRD-n]`.
+1. Every fix commit is an ancestor of the tested commit. The fix commits come from `git log --format=%H --grep='\[CBRD-n\]' origin/develop` in the engine checkout named by `--engine-repo` or `TCR_ENGINE_REPO`, because squash-merged develop commits start with `[CBRD-n]`.
 2. The tested commit's own history has a commit whose subject names the key. That condition catches a cherry-pick, which changes the SHA.
 
-The Jira read is one anonymous GET with a 30-second timeout on `rest/api/2/issue/<KEY>?fields=status,resolution`. On 2026-11-11 it returned `Open` and resolution `None` for CBRD-28018, and `origin/develop` had no commit naming CBRD-28018. The CLI exits with code 0 for every verdict and with code 2 for an operational error.
+The Jira read is one anonymous GET with a 30-second timeout on `rest/api/2/issue/<KEY>?fields=status,resolution`. On 2026-11-11 it returned `Open` and resolution `None` for CBRD-28018, and `origin/develop` had no commit naming CBRD-28018. The CLI exits with code 0 for every verdict and with code 2 for an operational error. Without `--offline`, `check` exits with code 2 when no engine checkout is named.
 
 ## How the CI skills call it
 

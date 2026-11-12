@@ -1,6 +1,6 @@
 # Testcase knowledge registry design
 
-Status: revision 3, 2026-11-11. The user accepted this design and every default in the last section. The CLI is implemented on branch `feat/initial-cli` of the local repository `~/gh/cubrid-tc-registry`. It is not merged or installed.
+Status: revision 3, 2026-11-11. The user accepted this design and every default in the last section. The CLI is merged into `main` of the local repository `~/gh/cubrid-tc-registry` and installed as `cubrid-tcr` 0.1.0. On 2026-11-12 the migration loaded the three `known-ci-issues.md` entries into the real registry, with both rules approved by the user.
 
 ## Goal
 

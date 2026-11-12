@@ -7,9 +7,11 @@ description: Trigger or rerun GitHub Actions gha-ci for a CUBRID pull request ta
 
 Start or rerun `gha-ci` against the pushed head of one CUBRID PR. This skill applies only when the PR base is `develop` or `feature/**`; stop and report an unsupported base instead of operating legacy CircleCI.
 
+Read [Workflow policy](../cubrid-common/SKILL.md#workflow-policy) before this workflow. It loads applicable user context and distinguishes ongoing CI from the final TC merge handoff.
+
 Read [references/gha-ci-operations.md](references/gha-ci-operations.md) before choosing a recovery method, diagnosing missing or failed checks, or explaining run behavior. A clean first run can follow the workflow below directly.
 
-## Stable merge-gate contract
+## gha-ci status contract
 
 Treat these gha-ci commit-status contexts as the stable contract:
 
@@ -49,15 +51,15 @@ With no supplied PR, discover the current branch's PR only from a CUBRID checkou
 
 When the current checkout is the PR branch, compare `git rev-parse HEAD` with `headRefOid` and inspect `git status --porcelain`. Report unpublished commits and uncommitted changes because gha-ci tests only the pushed PR head. Trigger authorization does not authorize a commit or push.
 
-## 1a. Check the feature testcase baseline
+## 1a. Check the testcase baseline
 
-A PR gha-ci run takes testcases from `tc/pr-<number>` in both testcase repositories and fails when either branch is missing. For a `feature/<name>` base, those branches must contain the latest `origin/feature/<name>` in both testcase repositories, or the run tests stale feature testcases. Run the check-only helper from `~/my-cubrid/bin`:
+A PR gha-ci run takes testcases from `tc/pr-<number>` in both testcase repositories and fails when either branch is missing. Those branches must contain the latest testcase baseline matching the engine PR's destination, including `develop` and `feature/<name>`. Run the check-only helper from `~/my-cubrid/bin`:
 
 ```bash
 cubrid-pr-tc-base-check --pr "$PR_NUMBER"
 ```
 
-It skips a `develop` base with exit `0`. Exit `0` otherwise means both branches pass. Exit `1` (stale, diverged, unrelated, or missing branch) or `2` (fetch or setup error) blocks the trigger: report the per-repository result and ask whether to trigger anyway. Trigger authorization does not authorize merging, rebasing, or pushing testcase branches.
+Exit `0` means both branches contain the latest baseline. Exit `1` (stale, diverged, unrelated, or missing branch) or `2` (fetch or setup error) blocks the trigger: report the per-repository result and ask whether to trigger anyway. Baseline ancestry does not prove CI success or readiness to finalize TC PRs. Trigger authorization does not authorize merging, rebasing, or pushing testcase branches.
 
 A feature merge PR (base `develop`, head `feature/<name>` in `CUBRID/cubrid`) has the stricter rule: its `tc/pr-<number>` must have the same tip as `origin/feature/<name>` in both testcase repositories. Run instead:
 

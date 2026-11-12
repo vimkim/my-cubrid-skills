@@ -7,6 +7,8 @@ description: Analyze exact-commit CUBRID GitHub Actions evidence collected by cu
 
 Take one status snapshot and one exact-head collection, then attempt exact merge-base collection before attributing failures. Interpret each bundle with its own append-only collection observation. Collection success means the requested evidence is complete; a red CI verdict is evidence, not a collector failure.
 
+Read [Workflow policy](../cubrid-common/SKILL.md#workflow-policy) before interpreting checks or recommending next actions. Report an isolation-related TC gate failure separately from regression failures and defer TC finalization to the final merge handoff.
+
 ## Boundaries
 
 - Analyze the three default suites unless the user requests a subset: `test_medium`, `test_sql`, and `test_shell`. `test_sql_by_cci` is opt-in in `cubrid-ci`: add it with `--suite` only when the user asks for it or the pinned PR head reports a `gha-ci: test_sql_by_cci` status (section 1).

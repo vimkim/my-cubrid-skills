@@ -18,6 +18,8 @@ For historical root-level sheet references, find `today-*` under `daily/` and `w
 
 Control sheets state facts with a snapshot date. Snapshots are stale by definition: before recommending any PR-, CI-, or JIRA-related action, re-query the live source.
 
+For CUBRID issue assignments or PR and CI next actions, read [Workflow policy](../cubrid-common/SKILL.md#workflow-policy) and its applicable user context. Use the shared TC lifecycle to distinguish ongoing work from the final merge handoff.
+
 If `$asd-ste100` is available, use it for English planning text. Use Strict mode
 for action instructions and STE-flavored mode for summaries. Preserve the user's
 verbatim plan, requested language, dates, priorities, and uncertainty.

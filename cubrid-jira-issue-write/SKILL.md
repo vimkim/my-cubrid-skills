@@ -9,6 +9,8 @@ Write an evidence-based issue that a colleague can understand without prior know
 
 ## Authority and scope
 
+Before interpreting issue ownership or proposing an assignee, read [Workflow policy](../cubrid-common/SKILL.md#workflow-policy) and its applicable user context.
+
 Apply the user's current instructions over this skill's writing defaults and the [company OPEN guideline](https://dev.cubrid.org/dev-process/jira/open). The guideline is a legacy baseline for JIRA terminology and templates; it is not a requirement to finish a design before triage. Look up its current contents when field details matter; do not depend on a temporary local copy.
 
 Add a one-line summary below the title. Preserve the team's four opening fields and explicit `AI-Generated Context` divider by default. These come from the user's request and the team's writing convention, rather than the official OPEN template. Keep the issue in concise, natural Korean 한다체, with English `##` headings and Korean `###` headings when needed. Explain unfamiliar terms once and retain identifiers as written. Follow an explicit user request to change the format.

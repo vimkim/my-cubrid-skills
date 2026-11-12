@@ -9,6 +9,8 @@ Create CUBRID test cases for a given feature or bug fix.
 
 Select test types that exercise the feature's observable behavior: unit, SQL/medium, shell, or isolation. Do not create all types for every change. Read the module's existing tests and applicable AGENTS.md before choosing a framework.
 
+Read [Workflow policy](../cubrid-common/SKILL.md#workflow-policy) before choosing PR testcase branches or recommending their integration. Keep new cases isolated through review and CI until the final engine merge handoff.
+
 $ARGUMENTS
 
 For OOS (Out-of-row Overflow Storage), consult `cubrid-oos-context`. Choose data and thresholds from the current implementation and configuration; do not confuse OOS with disk exhaustion or assume a payload size alone proves out-of-row placement.

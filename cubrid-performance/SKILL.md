@@ -11,7 +11,7 @@ Use the caller's requested scope: diagnosis, source review, implementation, or m
 
 ## 1. Establish the task and comparison mode
 
-Read `/home/vimkim/my-cubrid/CUBRID.md` and applicable repository instructions.
+Read [Workflow policy](../cubrid-common/SKILL.md#workflow-policy), its applicable user context, and applicable repository instructions.
 Inspect the source checkout, branch, worktrees, and changes before selecting a task checkout.
 Search `my-cubrid-docs` for relevant design and experiment evidence.
 Consult `my-cubrid-jira` when a ticket or PR supplies acceptance criteria.

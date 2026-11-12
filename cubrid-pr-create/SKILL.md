@@ -53,7 +53,7 @@ branch, or existing PR; ask if it cannot be determined.
 
 ### 1. Establish the Source and Target
 
-Read `/home/vimkim/my-cubrid/CUBRID.md` and the applicable repository instructions.
+Read [Workflow policy](../cubrid-common/SKILL.md#workflow-policy), its applicable user context, and the applicable repository instructions.
 Inspect source status, branch/tracking information, and remote URLs. Preserve
 unrelated changes; clarify whether relevant uncommitted work belongs in the PR
 instead of committing it implicitly.

@@ -5,6 +5,8 @@ description: Look up CUBRID JIRA issue context and publish a reviewed Markdown f
 
 Read or update CUBRID JIRA issues with the `cubrid-jira` CLI.
 
+Before interpreting an issue's assignee or recommending work, read [Workflow policy](../cubrid-common/SKILL.md#workflow-policy) and its applicable user context. Preserve the raw issue output separately from that interpretation.
+
 ## Preflight
 
 Verify `cubrid-jira` exists in PATH by running `command -v cubrid-jira`. If it does not exist, halt immediately and tell the user:

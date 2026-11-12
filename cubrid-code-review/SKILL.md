@@ -13,7 +13,7 @@ Use pstack's adversarial and blast-radius methods inside these assignments. The 
 
 ## 1. Pin the review scope
 
-Read `/home/vimkim/my-cubrid/CUBRID.md` when available. Read the target repository's applicable `AGENTS.md` and contribution rules. Preserve unrelated changes.
+Read [Workflow policy](../cubrid-common/SKILL.md#workflow-policy) and its applicable user context. Read the target repository's applicable `AGENTS.md` and contribution rules. Preserve unrelated changes.
 
 Resolve the request into one comparison before delegation:
 

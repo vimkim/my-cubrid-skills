@@ -23,7 +23,7 @@ Use the preset requested by the user. Otherwise use:
 
 - `debug_gcc` for normal development, debugging, fixes, and tests.
 - `release_gcc` for an explicitly requested performance measurement or benchmark. It disables unit-test options and instrumentation.
-- `release_gcc_unit` for RelWithDebInfo with unit tests and instrumentation enabled. Use it for optimized tests.
+- `release_gcc_unit` for RelWithDebInfo with only `UNIT_TEST_OOS`, `UNIT_TEST_SPAGE`, and `UNIT_TEST_PAGE_BUFFER` enabled. It enables instrumentation. `UNIT_TESTS` and the other known test options stay off.
 - Another preset only when the user or task explicitly requires it.
 
 The preset must appear in `cmake --list-presets=configure`. Never invent a preset name.

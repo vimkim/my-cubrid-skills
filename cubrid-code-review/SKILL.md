@@ -78,6 +78,8 @@ For the one or two most consequential boundary risks, assign the same question t
 
 The coordinator covers documented standards and specification conformance across the assignments. Avoid launching a separate generic style-review panel.
 
+Optional static evidence: when `cubrid-static-check` is on `PATH` and a CUBRID worktree holds the pinned commits, run `cubrid-static-check <base-sha> <head-sha>` from it and save the Markdown in the run directory. It reports only what the change adds: cppcheck and clang-tidy findings, new clones, and functions whose complexity grew. It compares the merge base of the two SHAs, so record the base it printed when that differs from the pinned comparison. Put each reported item in the brief of the reviewer who owns its path, as a lead to verify. Section 5 governs it like any other candidate. Record files listed as not fully analyzed (exit 3) as coverage limits.
+
 Each brief contains the user's goal, pinned identity, role, assigned paths, invariants, relevant context pointers, budget, output path, and completion conditions. Include any shared challenge question and the safety fact to test. Point to this skill and the reviewer contract. Do not copy the entire conversation into every brief.
 
 Completion requires an owner for every changed path and every identified cross-domain risk, or an explicit coverage gap.

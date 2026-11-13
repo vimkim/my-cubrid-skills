@@ -153,6 +153,14 @@ verification outcomes must match evidence; include limits and follow-up when
 relevant. Resolve unknown intended behavior before proposing unsupported claims.
 Use an independent reviewer only when the user requests one.
 
+Optional static evidence: when `cubrid-static-check` is on `PATH`, run
+`cubrid-static-check <base> "$SOURCE_COMMIT"` from the source worktree. It reports
+only what the change adds: cppcheck and clang-tidy findings, new clones, and
+functions whose complexity grew. Check each reported item against the code, and
+present every real defect to the user with the review handoff; fixing source is
+outside this skill. Record the summary table and your dispositions in
+`context_file`. The PR body keeps describing verification with public project tools.
+
 Run the material checker below and correct preparation defects. If a correction
 changes text after the user has reviewed it, return that revision for review.
 Commit only the intended files locally when required by the worktree workflow.

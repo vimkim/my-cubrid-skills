@@ -27,7 +27,7 @@ Invoke exactly the explicit shell family under containment:
 TESTKIT_NATIVE=shell TESTKIT_CONTAIN=1 "$TESTKIT" shell -c "$CONF"
 ```
 
-Capture combined output and process status. Because the attempt has its own CTP copy, its result directory is `$ATTEMPT_DIR/CTP/result/shell/current_runtime_logs`. Run `testkit-focused.py verify --suite shell` against it. A pass requires the exact positive dispatched and finished case set, zero failures/skips, passing assertions, complete status/feedback/XML/test logs, and matching expected totals. A shell script's process status and testkit's exit status are not testcase verdicts.
+Capture combined output and process status. Because the attempt has its own CTP copy, its result directory is `$ATTEMPT_DIR/CTP/result/shell/current_runtime_logs`. Run `testkit-focused.py verify --suite shell` against it. A pass requires the exact positive dispatched and finished case set, zero failures, no skip other than a macro skip outside the selected set, passing assertions, complete status/feedback/XML/test logs, and matching expected totals. A shell script's process status and testkit's exit status are not testcase verdicts.
 
 ## 4. Report and iterate
 

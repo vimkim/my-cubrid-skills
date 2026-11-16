@@ -500,7 +500,7 @@ def count_value(text: str, key: str, separator: str) -> int:
     return int(match.group(1))
 
 
-def verify_xml(path: Path, expected: int, *, require_skipped: bool = False) -> None:
+def verify_xml(path: Path, expected: int) -> None:
     read_required(path, "XML result")
     try:
         root = ET.parse(path).getroot()
@@ -512,14 +512,60 @@ def verify_xml(path: Path, expected: int, *, require_skipped: bool = False) -> N
     tests = sum(int(suite.attrib.get("tests", "0")) for suite in suites)
     failures = sum(int(suite.attrib.get("failures", "0")) for suite in suites)
     errors = sum(int(suite.attrib.get("errors", "0")) for suite in suites)
-    if require_skipped and any("skipped" not in suite.attrib for suite in suites):
-        fail(f"XML result is incomplete; missing skipped count: {path}")
     skipped = sum(int(suite.attrib.get("skipped", "0")) for suite in suites)
     if tests != expected or failures != 0 or errors != 0 or skipped != 0:
         fail(
             f"XML result is not a complete pass: tests={tests}, failures={failures}, "
             f"errors={errors}, skipped={skipped}, expected={expected} ({path})"
         )
+
+
+MACRO_SKIP_MESSAGE = "Skipped by macro"
+
+
+def verify_shell_xml(path: Path, cases: list[str], run_log: str) -> int:
+    """Check the shell XML and return the count of macro skips outside the selection."""
+    read_required(path, "XML result")
+    try:
+        root = ET.parse(path).getroot()
+    except ET.ParseError as error:
+        fail(f"invalid XML result {path}: {error}")
+    suites = [root] if root.tag == "testsuite" else list(root.iter("testsuite"))
+    if not suites:
+        fail(f"XML result has no testsuite: {path}")
+    if any("skipped" not in suite.attrib for suite in suites):
+        fail(f"XML result is incomplete; missing skipped count: {path}")
+    tests = sum(int(suite.attrib.get("tests", "0")) for suite in suites)
+    failures = sum(int(suite.attrib.get("failures", "0")) for suite in suites)
+    errors = sum(int(suite.attrib.get("errors", "0")) for suite in suites)
+    skipped = sum(int(suite.attrib.get("skipped", "0")) for suite in suites)
+    if tests != len(cases) or failures != 0 or errors != 0:
+        fail(
+            f"XML result is not a complete pass: tests={tests}, failures={failures}, "
+            f"errors={errors}, skipped={skipped}, expected={len(cases)} ({path})"
+        )
+    if any(element.tag in {"failure", "error"} for element in root.iter()):
+        fail(f"XML result contains a failure or error entry: {path}")
+    expected = set(cases)
+    skips: list[str] = []
+    for case in root.iter("testcase"):
+        entry = case.find("skipped")
+        if entry is None:
+            continue
+        name = case.attrib.get("file", case.attrib.get("name", ""))
+        if name in expected:
+            fail(f"expected case was skipped: {name}")
+        if entry.attrib.get("message") != MACRO_SKIP_MESSAGE:
+            fail(f"skip outside the selection is not a macro skip: {name}")
+        skips.append(name)
+    if skipped != len(skips):
+        fail(f"XML skipped={skipped} does not match {len(skips)} skipped entries ({path})")
+    logged = re.findall(r"(?m)^Skipped File\(macro\): (.+?)\s*$", run_log)
+    if sorted(logged) != sorted(skips):
+        fail(
+            f"run log macro skips ({len(logged)}) differ from XML skipped entries ({len(skips)})"
+        )
+    return len(skips)
 
 
 def verify_sql_summary_xml(path: Path, expected: int) -> None:
@@ -628,8 +674,12 @@ def verify_shell(
         read_required(result_dir / "test_status.data", "test_status.data")
     )
     expected = len(cases)
-    if status["total_case_count"] != expected:
-        fail(f"total case count is {status['total_case_count']}, expected {expected}")
+    skips = verify_shell_xml(result_dir / "test-shell.xml", cases, run_log)
+    if status["total_case_count"] != expected + skips:
+        fail(
+            f"total case count is {status['total_case_count']}, "
+            f"expected {expected} (+{skips} macro skips outside the selection)"
+        )
     if status["total_executed_case_count"] != expected:
         fail(
             f"executed case count is {status['total_executed_case_count']}, expected {expected}"
@@ -638,8 +688,8 @@ def verify_shell(
         fail(
             f"fail count is {status['total_fail_case_count']} even though runner exit was {runner_exit}"
         )
-    if status["total_skip_case_count"] != 0:
-        fail(f"skip count is {status['total_skip_case_count']}")
+    if status["total_skip_case_count"] != skips:
+        fail(f"skip count is {status['total_skip_case_count']}, expected {skips} macro skips")
     if status["total_success_case_count"] != expected:
         fail(f"success count is {status['total_success_case_count']}, expected {expected}")
 
@@ -673,11 +723,11 @@ def verify_shell(
     if feedback_counts["fail"] != 0:
         fail(f"feedback fail count is {feedback_counts['fail']}")
     if feedback_counts != {
-        "total": expected,
+        "total": expected + skips,
         "executed": expected,
         "success": expected,
         "fail": 0,
-        "skip": 0,
+        "skip": skips,
     }:
         fail(f"feedback summary counts disagree with test_status.data: {feedback_counts!r}")
     for log in logs:
@@ -686,7 +736,6 @@ def verify_shell(
     for case in cases:
         if not re.search(rf"(?m)^\[OK\]:\s+{re.escape(case)}(?:\s|$)", feedback):
             fail(f"feedback.log has no OK verdict for {case}")
-    verify_xml(result_dir / "test-shell.xml", expected, require_skipped=True)
     if "[SHELL] TEST END" not in run_log:
         fail("run log lacks the completed shell marker")
     run_counts = {
@@ -695,7 +744,7 @@ def verify_shell(
         "fail": count_value(run_log, "Total Fail Case", ":"),
         "skip": count_value(run_log, "Total Skip Case", ":"),
     }
-    if run_counts != {"executed": expected, "success": expected, "fail": 0, "skip": 0}:
+    if run_counts != {"executed": expected, "success": expected, "fail": 0, "skip": skips}:
         fail(f"run log summary counts disagree with test_status.data: {run_counts!r}")
 
 

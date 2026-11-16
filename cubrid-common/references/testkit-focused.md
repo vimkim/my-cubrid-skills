@@ -83,6 +83,6 @@ python3 "$TESTKIT_FOCUSED" verify \
   --runner-exit "$RUNNER_EXIT"
 ```
 
-A pass requires the exact expected positive case set, complete summaries, zero failures/skips, all-success XML/verdict artifacts, and suite-specific result files. Runner exit `0` is insufficient. Missing artifacts, setup errors, zero cases, or identity differences are inconclusive or failed—not passes.
+A pass requires the exact expected positive case set, complete summaries, zero failures/skips (shell also allows macro skips of cases outside the selected set when XML, status, feedback, and run log reconcile them), all-success XML/verdict artifacts, and suite-specific result files. Runner exit `0` is insufficient. Missing artifacts, setup errors, zero cases, or identity differences are inconclusive or failed—not passes.
 
 Report every attempt path and outcome. A later pass does not erase an earlier failure or inconclusive run. Test execution authorizes neither testcase/source edits nor publication.

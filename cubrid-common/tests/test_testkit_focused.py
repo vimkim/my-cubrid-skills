@@ -704,6 +704,83 @@ class TestkitFocusedTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("skipped=1", result.stderr)
 
+    def shell_macro_skip_run(
+        self,
+        *,
+        selected_skipped: bool = False,
+        skip_message: str = "Skipped by macro",
+        status_total: int = 3,
+        status_skip: int = 2,
+    ) -> subprocess.CompletedProcess:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            case = self.write(root / "corpus" / "shell" / "a" / "cases" / "a.sh", "#!/bin/sh\n")
+            other1 = root / "corpus" / "shell" / "b" / "cases" / "b.sh"
+            other2 = root / "corpus" / "shell" / "c" / "cases" / "c.sh"
+            expected = self.write(root / "expected-cases.txt", f"{case}\n")
+            result_dir = root / "current_runtime_logs"
+            self.write(
+                result_dir / "test_status.data",
+                f"total_case_count={status_total}\ntotal_executed_case_count=1\n"
+                f"total_success_case_count=1\ntotal_fail_case_count=0\n"
+                f"total_skip_case_count={status_skip}\n",
+            )
+            self.write(result_dir / "dispatch_tc_ALL.txt", f"{case}\n")
+            self.write(result_dir / "dispatch_tc_FIN_local.txt", f"{case}\n")
+            self.write(
+                result_dir / "feedback.log",
+                f"[OK]:  {case} 10 EnvId=local[slot0]\n"
+                f"Total Case:3\nTotal Execution Case:1\nTotal Success Case:1\n"
+                f"Total Fail Case:0\nTotal Skip Case:2\n[TEST STOP]\n",
+            )
+            self.write(result_dir / "main_snapshot.properties", "test_category=shell\n")
+            self.write(result_dir / "test_local.log", "a-1 : OK\n")
+            skipped = [other1, other2] if not selected_skipped else [case, other2]
+            entries = "".join(
+                f'<testcase name="n" file="{path}"><skipped message="{skip_message}"/></testcase>'
+                for path in skipped
+            )
+            executed = "" if selected_skipped else f'<testcase name="a" file="{case}"/>'
+            self.write(
+                result_dir / "test-shell.xml",
+                f'<testsuites><testsuite tests="1" skipped="2" failures="0">'
+                f"{entries}{executed}</testsuite></testsuites>\n",
+            )
+            log = self.write(
+                root / "run.log",
+                "".join(f"Skipped File(macro): {path}\n" for path in skipped)
+                + "Total Case:3\nTotal Execution Case:1\nTotal Success Case:1\n"
+                "Total Fail Case:0\nTotal Skip Case:2\n[SHELL] TEST END\n",
+            )
+            return self.run_cli(
+                root, "verify", "--suite", "shell",
+                "--result-dir", str(result_dir),
+                "--expected-list", str(expected),
+                "--run-log", str(log),
+                "--runner-exit", "0",
+                env=os.environ.copy(),
+            )
+
+    def test_verify_shell_accepts_macro_skips_outside_the_selection(self) -> None:
+        result = self.shell_macro_skip_run()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("total=1", result.stdout)
+
+    def test_verify_shell_rejects_a_macro_skipped_selected_case(self) -> None:
+        result = self.shell_macro_skip_run(selected_skipped=True)
+        self.assertNotEqual(result.returncode, 0)
+
+    def test_verify_shell_rejects_a_non_macro_skip_outside_the_selection(self) -> None:
+        result = self.shell_macro_skip_run(skip_message="Skipped by user")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("not a macro skip", result.stderr)
+
+    def test_verify_shell_rejects_macro_skip_counts_that_do_not_reconcile(self) -> None:
+        for kwargs in ({"status_total": 5}, {"status_skip": 1}):
+            result = self.shell_macro_skip_run(**kwargs)
+            self.assertNotEqual(result.returncode, 0, kwargs)
+            self.assertIn("count is", result.stderr)
+
     def prepare(
         self,
         root: Path,

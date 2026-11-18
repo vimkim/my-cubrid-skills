@@ -15,7 +15,23 @@ On entering this workflow policy, establish the current user's identity once per
 
 When the user is `vimkim`, read [vimkim's CUBRID context](references/cubrid-vimkim.md). For another or unknown user, continue with shared policy and that user's instructions without loading this profile.
 
-Before recommending or performing PR, CI, or testcase integration actions, read [Testcase lifecycle](references/testcase-lifecycle.md). It separates ongoing review and CI from the final TC and engine merge handoff.
+Before recommending or performing PR, CI, or testcase integration actions, read [Testcase lifecycle](references/testcase-lifecycle.md). Before recommending, requesting permission for, or performing a GitHub PR merge, apply the [PR approval gate](#pr-approval-gate).
+
+### PR approval gate
+
+Apply this gate to each PR in `CUBRID/cubrid`, `CUBRID/cubrid-testcases`, and `CUBRID/cubrid-testcases-private-ex`. Run the checker immediately before asking for merge permission and again immediately before each merge, including an already-authorized merge. Show its full output to the user at both points. Set `CUBRID_COMMON_DIR` to the directory containing this skill file.
+
+```bash
+"$CUBRID_COMMON_DIR/scripts/cubrid-pr-approval-check" --repo "$REPO" --pr "$PR_NUMBER"
+```
+
+The checker includes each user with a review request that has not since been explicitly removed, plus members of currently requested teams. It excludes the PR author and bots. Each enlisted reviewer's latest non-`COMMENTED` GitHub review must be `APPROVED` and follow the latest active request. A direct request still pending blocks that reviewer.
+
+- Exit 0 satisfies the reviewer gate. Verify the other merge requirements and obtain any required merge permission.
+- Exit 1 blocks the merge. Show each reviewer and their state. Proceed only if the user explicitly names every blocked reviewer and authorizes merging anyway. A general merge go-ahead does not waive the gate.
+- Exit 2 means the checker could not establish the result. Resolve the evidence gap before treating the gate as passed or requesting merge permission.
+
+Never use aggregate GitHub review or merge status (`reviewDecision`, `mergeStateStatus`, or mergeability) or approving language in a comment as evidence of an individual GitHub approval.
 
 ## Reusable helpers
 

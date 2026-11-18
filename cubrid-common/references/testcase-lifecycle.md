@@ -4,7 +4,7 @@ Keep each engine PR's testcase changes on `tc/pr-<engine PR number>` in both `CU
 
 ## Interpret the gate at the right stage
 
-Before acting, inspect the selected base's current TC sync, merge-gate, and finalization workflows. The `develop` workflow uses `TC Merge Gate / Check TC PRs`. Do not assume that feature or release bases use the same gate.
+Before acting, inspect the selected base's current TC sync, merge-gate, and finalization workflows. The `develop` workflow uses `TC Merge Gate / Check TC PRs`. Do not assume that feature or release bases use the same gate. Use the [PR approval gate](../SKILL.md#pr-approval-gate) for the engine PR and each TC PR that needs a merge.
 
 | Observed state | Next action |
 |---|---|
@@ -19,10 +19,10 @@ An isolation-related TC gate failure is not a regression-suite failure. Report b
 ## Complete one final merge handoff
 
 1. Recheck the engine PR's current head and base, completed reviews, and all other applicable CI results. Include required checks and any additional CI the user requested. Confirm that evidence covers the intended engine and TC revisions. Missing, stale, or unexplained results leave the handoff unready.
-2. Inspect both testcase repositories' current `tc/pr-N` tips, TC PR reviews, diffs, and actual target branches. Resolve required approvals for TC publication and the engine merge before changing either TC PR. Reuse authorization already given for these operations.
-3. Merge TC PRs carrying changes into their intended testcase targets. Close a TC PR without merging only after proving it has no unlanded changes. A closed TC PR alone does not prove that its content landed.
+2. Inspect both testcase repositories' current `tc/pr-N` tips, TC PR diffs, and actual target branches. Apply the approval gate to every planned merge before asking for merge permission. Resolve TC publication and engine merge authorization before changing either TC PR. Reuse authorization already given for these operations.
+3. Rerun the approval checker immediately before each TC merge and show the result. Merge TC PRs carrying changes into their intended testcase targets once the gate is satisfied or explicitly waived. Close a TC PR without merging only after proving it has no unlanded changes. A closed TC PR alone does not prove that its content landed.
 4. Refresh the applicable TC gate. For `develop`, rerun `TC Merge Gate / Check TC PRs` and verify its fresh verdict for the current engine head. A rerun of unrelated CI does not rejudge this gate. Confirm that neither testcase branch retains unlanded changes.
-5. Recheck the engine head, reviews, and other applicable checks, then proceed directly to the authorized engine PR merge. A changed head, changed TC content, or new blocker returns the task to verification.
+5. Recheck the engine head and applicable checks. Rerun the approval checker and show the result immediately before the authorized engine merge. A changed head, changed TC content, or new blocker returns the task to verification.
 
 GitHub does not provide a transaction across these repositories. Prepare permissions and review before step 3 to keep the handoff close to atomic. If the engine merge fails or must wait after TC finalization, report which TC changes already landed and the remaining blocker. Preserve the remaining branches and reassess readiness before retrying. Do not claim continued isolation or automatically revert published TC changes.
 

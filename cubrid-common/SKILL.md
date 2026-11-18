@@ -17,6 +17,10 @@ When the user is `vimkim`, read [vimkim's CUBRID context](references/cubrid-vimk
 
 Before recommending or performing PR, CI, or testcase integration actions, read [Testcase lifecycle](references/testcase-lifecycle.md). Before recommending, requesting permission for, or performing a GitHub PR merge, apply the [PR approval gate](#pr-approval-gate).
 
+### Dev2 team membership
+
+Use `cubrid-dev2-members` to identify members of the [GitHub CUBRID/dev2 team](https://github.com/orgs/CUBRID/teams/dev2/members). The command is distributed by `my-cubrid` and refreshes its local cache after 30 days. Add `--json` for a JSON array or `--refresh` to fetch current membership. If the command is unavailable, run `gh api orgs/CUBRID/teams/dev2/members --paginate --jq '.[].login'`. Use the approval checker for merge decisions. It reads requested team membership live.
+
 ### PR approval gate
 
 Apply this gate to each PR in `CUBRID/cubrid`, `CUBRID/cubrid-testcases`, and `CUBRID/cubrid-testcases-private-ex`. Run the checker immediately before asking for merge permission and again immediately before each merge, including an already-authorized merge. Show its full output to the user at both points. Set `CUBRID_COMMON_DIR` to the directory containing this skill file.

@@ -109,6 +109,7 @@ Check the affected replication and failover contracts:
 - Roles and fencing that prevent conflicting writers where the affected protocol requires them.
 - Protocol, on-disk, log, and configuration compatibility across supported versions.
 - Changes to shared records or contracts that an unchanged replica or utility still consumes.
+- Readers of each field that a new record kind or field value leaves NULL or default, in log records, replication items, or list entries. Grep every existing reader that compares or branches on that field, such as `LSA_GT` or `OID_EQ`. Report each reader as `file:line` with the path it governs: savepoint or statement rollback, flush mark, abort, commit, crash recovery, or HA apply.
 
 Trace the actual producer and consumer paths. If the change cannot affect HA, give the source-based reason and mark this role not applicable. Do not invent a requirement for unsupported rolling upgrades.
 

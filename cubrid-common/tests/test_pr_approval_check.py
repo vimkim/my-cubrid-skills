@@ -139,6 +139,12 @@ class ApprovalCheckTests(unittest.TestCase):
         })
         self.assertEqual((status, lines, error), (0, ["CUBRID/cubrid#1", "Reviewer APPROVED", "PASS"], ""))
 
+    def test_no_enlisted_reviewer_blocks_the_merge(self):
+        status, lines, error = self.run_checker({
+            f"{PULL}/reviews": [[review("unsolicited", "APPROVED")]],
+        })
+        self.assertEqual((status, lines, error), (1, ["CUBRID/cubrid#1", "No enlisted reviewers", "BLOCKED"], ""))
+
     def test_unreadable_team_membership_blocks_the_check(self):
         status, lines, error = self.run_checker({
             f"{PULL}/requested_reviewers": {"users": [], "teams": [{"slug": "dev"}]},

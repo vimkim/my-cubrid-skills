@@ -25,7 +25,7 @@ Apply this gate to each PR in `CUBRID/cubrid`, `CUBRID/cubrid-testcases`, and `C
 "$CUBRID_COMMON_DIR/scripts/cubrid-pr-approval-check" --repo "$REPO" --pr "$PR_NUMBER"
 ```
 
-The checker includes each user with a review request that has not since been explicitly removed, plus members of currently requested teams. It excludes the PR author and bots. Each enlisted reviewer's latest non-`COMMENTED` GitHub review must be `APPROVED` and follow the latest active request. A direct request still pending blocks that reviewer.
+The checker includes each user with a review request that has not since been explicitly removed, plus members of currently requested teams. It excludes the PR author and bots. A PR with no enlisted reviewer is blocked. Each enlisted reviewer's latest non-`COMMENTED` GitHub review must be `APPROVED` and follow the latest active request. A direct request still pending blocks that reviewer.
 
 - Exit 0 satisfies the reviewer gate. Verify the other merge requirements and obtain any required merge permission.
 - Exit 1 blocks the merge. Show each reviewer and their state. Proceed only if the user explicitly names every blocked reviewer and authorizes merging anyway. A general merge go-ahead does not waive the gate.

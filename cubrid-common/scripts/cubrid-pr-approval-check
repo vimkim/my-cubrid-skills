@@ -130,7 +130,7 @@ def main():
         print(f"{name} {status}")
     if not verdicts:
         print("No enlisted reviewers")
-    passed = all(approved for _, approved, _ in verdicts)
+    passed = bool(verdicts) and all(approved for _, approved, _ in verdicts)
     print("PASS" if passed else "BLOCKED")
     return 0 if passed else 1
 

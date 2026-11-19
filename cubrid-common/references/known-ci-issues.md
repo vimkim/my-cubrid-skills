@@ -4,20 +4,25 @@
 
 ## Check each failure
 
-1. Take the suite and the full testcase path from the validated testcase identity. For a job-level failure without testcase records, take the job name.
-2. Take the tested Engine SHA from the shard build provenance, as [CI evidence and testcase identity](ci-evidence.md) requires. A workflow `head_sha` is not enough.
-3. Set `ENGINE_REPO` to a local `CUBRID/cubrid` checkout, such as the user's `develop` worktree. `check` reads its `origin/develop` to find fix commits, so fetch it first if it is stale.
-4. If the failure left a core stack, save that core's backtrace text in the evidence directory. Save one core per file. A gha-ci shell core leaves no GitHub artifact and no stack in the job log. The CTP `CORE ANALYZER` block is in the JUnit failure message, which `cubrid-ci collect` retains as `failures/<id>/message.txt`. Pass that file to `--stack-file` when it holds one core.
-5. For a testcase failure, index its run once first, as [Index the current run once](ci-evidence.md#index-the-current-run-once) describes, so the history context includes it. Then run the check:
+1. For testcase failures, take the suite directory that `cubrid-ci` collected, the one that holds `summary.json` and `failures/`. Index its run once, as [Index the current run once](ci-evidence.md#index-the-current-run-once) describes. `--record` needs the run in Chronicle.
+2. Check every failure of that directory with one command:
 
 ```bash
-cubrid-tcr --json check --case "$TC_PATH" --suite "$SUITE" --engine "$ENGINE_SHA" \
-    --engine-repo "$ENGINE_REPO" --stack-file "$EVIDENCE_DIR/core-stack.txt"
-cubrid-tcr --json check --job "$JOB_NAME" --engine "$ENGINE_SHA" --engine-repo "$ENGINE_REPO"
+cubrid-tcr --json check --ci-attempt "$SUITE_DIR" --record
 ```
 
-6. Apply the label for the `verdict` from the table below. Cite the rule id, the issue, and the `reason`.
-7. Keep every failure in the failure inventory, whatever its verdict. Still analyze every other failure in the same job.
+It reads each failure's testcase path, shard, tested Engine SHA from the shard build provenance, and `message.txt`, which holds any CTP `CORE ANALYZER` stacks. It applies the testcase's rules and the rules of the shard's job, so a `test_sql_by_cci` failure needs no second call. `failures[]` has one entry per failure with `identity`, `verdict`, `hits`, `reason`, `stack_found`, and `history` counts. `--record` tags the occurrence when exactly one signature matches its stack; `record.result` says what happened. If the output has `rerun.mode` `carried_forward`, the attempt ran no cases; check the source attempt named in `rerun` instead.
+
+3. For a job-level failure without testcase records, check the job name with the shard's tested Engine SHA. A workflow `head_sha` is not enough.
+
+```bash
+cubrid-tcr --json check --job "$JOB_NAME" --engine "$ENGINE_SHA"
+```
+
+`check` reads fix commits from `origin/develop` of `$TCR_ENGINE_REPO`. If it exits 2 and names that variable, pass `--engine-repo` with a local `CUBRID/cubrid` checkout.
+
+4. Apply the label for the `verdict` from the table below. Cite the rule id, the issue, and the `reason`.
+5. Keep every failure in the failure inventory, whatever its verdict. Still analyze every other failure in the same job.
 
 | Verdict | Report label |
 |---|---|
@@ -28,7 +33,7 @@ cubrid-tcr --json check --job "$JOB_NAME" --engine "$ENGINE_SHA" --engine-repo "
 | `expired` | Do not apply the rule. Tell the user to retire or extend it. |
 | `unknown` | Known issue, with the `reason` that the state is unknown. If the reason is a missing stack, get the stack and check again. |
 
-`check --case` also returns `context`, the testcase view. It lists earlier failures by PR, branch, and signature, plus the related issues and the notes. Report it as history context. History context does not prove a root cause or PR causality. If `context.history.sync_hint` names a date window, record the gap in one line instead of running it. Window syncs outlast the agent's command time limit. `cubrid-tcr show "$TC_PATH" --suite "$SUITE"` prints the same view for a person.
+Each entry's `history` counts earlier failures by branch and signature. Report it as history context. History context does not prove a root cause or PR causality. `cubrid-tcr show "$TC_PATH" --suite "$SUITE"` prints the full testcase view with related issues and notes. If that view's `sync_hint` names a date window, record the gap in one line instead of running it. Window syncs outlast the agent's command time limit.
 
 If `cubrid-tcr` is not installed or exits with code 2, record the limitation and analyze the failure as usual.
 
@@ -36,7 +41,7 @@ If `cubrid-tcr` is not installed or exits with code 2, record the limitation and
 
 Run these commands after the analysis. Each command is idempotent.
 
-- If a stack was available, tag the occurrence: `cubrid-tcr signature attach "$TC_PATH" --suite "$SUITE" --run "$RUN_ID" --shard "$SHARD" --stack-file "$STACK_FILE"`. If no signature matches, the command prints the parsed frames. Add a signature with `signature add` when the shape will recur.
+- If a stack matched no signature (`record.result` is `no_single_match` with no candidates) and the shape will recur, add one with `signature add`. To see the parsed frames, run `cubrid-tcr signature attach "$TC_PATH" --suite "$SUITE" --run "$RUN_ID" --shard "$SHARD" --stack-file "$SUITE_DIR/failures/<id>/message.txt"`. Then rerun the batch check with `--record`.
 - If an issue looks related but nobody has confirmed it, run `cubrid-tcr link "$TC_PATH" --suite "$SUITE" --issue CBRD-n --relation suspected`.
 - If a later reader needs a fact, run `cubrid-tcr note "$TC_PATH" --suite "$SUITE" --body "..." --ref ...`.
 

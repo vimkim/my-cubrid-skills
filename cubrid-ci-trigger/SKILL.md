@@ -36,6 +36,8 @@ Discover the current required CI checks with `gh pr checks "$PR_URL" --required`
 | Transient build or runner job failure | `gh run rerun <run-id> --failed --repo CUBRID/cubrid` |
 | PR head moved, or a shard died after handling only part of its assignment | `/run all` |
 
+Call a testcase failure flaky only with history evidence: earlier failures of the same testcase on other PRs or Engine revisions, from the `history` counts of [Known CI issues](../cubrid-common/references/known-ci-issues.md) or `cubrid-tcc history`. Without that evidence, report the failure as unexplained and recommend analysis before a rerun.
+
 A clear request to run CI authorizes one `/run all`. A request naming an exact supported operation authorizes that operation. For a vague rerun request, inspect the evidence, recommend one operation, and obtain the user's choice. A known current-head run or any active run for the same PR requires explicit supersede authorization because another `/run` cancels it.
 
 ## 1. Resolve and validate the PR

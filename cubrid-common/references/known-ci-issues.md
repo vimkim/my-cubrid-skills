@@ -8,12 +8,12 @@
 2. Take the tested Engine SHA from the shard build provenance, as [CI evidence and testcase identity](ci-evidence.md) requires. A workflow `head_sha` is not enough.
 3. Set `ENGINE_REPO` to a local `CUBRID/cubrid` checkout, such as the user's `develop` worktree. `check` reads its `origin/develop` to find fix commits, so fetch it first if it is stale.
 4. If the failure left a core stack, save that core's backtrace text in the evidence directory. Save one core per file. A gha-ci shell core leaves no GitHub artifact and no stack in the job log. The CTP `CORE ANALYZER` block is in the JUnit failure message, which `cubrid-ci collect` retains as `failures/<id>/message.txt`. Pass that file to `--stack-file` when it holds one core.
-5. Run the check:
+5. For a testcase failure, index its run once first, as [Index the current run once](ci-evidence.md#index-the-current-run-once) describes, so the history context includes it. Then run the check:
 
 ```bash
-cubrid-tcr check --case "$TC_PATH" --suite "$SUITE" --engine "$ENGINE_SHA" \
-    --engine-repo "$ENGINE_REPO" --stack-file "$EVIDENCE_DIR/core-stack.txt" --json
-cubrid-tcr check --job "$JOB_NAME" --engine "$ENGINE_SHA" --engine-repo "$ENGINE_REPO" --json
+cubrid-tcr --json check --case "$TC_PATH" --suite "$SUITE" --engine "$ENGINE_SHA" \
+    --engine-repo "$ENGINE_REPO" --stack-file "$EVIDENCE_DIR/core-stack.txt"
+cubrid-tcr --json check --job "$JOB_NAME" --engine "$ENGINE_SHA" --engine-repo "$ENGINE_REPO"
 ```
 
 6. Apply the label for the `verdict` from the table below. Cite the rule id, the issue, and the `reason`.
@@ -28,7 +28,7 @@ cubrid-tcr check --job "$JOB_NAME" --engine "$ENGINE_SHA" --engine-repo "$ENGINE
 | `expired` | Do not apply the rule. Tell the user to retire or extend it. |
 | `unknown` | Known issue, with the `reason` that the state is unknown. If the reason is a missing stack, get the stack and check again. |
 
-`check --case` also returns `context`, the testcase view. It lists earlier failures by PR, branch, and signature, plus the related issues and the notes. Report it as history context. History context does not prove a root cause or PR causality. If `context.history.sync_hint` is set, run that bounded sync once, and then run `check` again. Report remaining gaps instead of syncing again. `cubrid-tcr show "$TC_PATH" --suite "$SUITE"` prints the same view for a person.
+`check --case` also returns `context`, the testcase view. It lists earlier failures by PR, branch, and signature, plus the related issues and the notes. Report it as history context. History context does not prove a root cause or PR causality. If `context.history.sync_hint` names a date window, record the gap in one line instead of running it. Window syncs outlast the agent's command time limit. `cubrid-tcr show "$TC_PATH" --suite "$SUITE"` prints the same view for a person.
 
 If `cubrid-tcr` is not installed or exits with code 2, record the limitation and analyze the failure as usual.
 

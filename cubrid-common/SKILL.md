@@ -56,7 +56,7 @@ Before attributing or reporting a CI failure, read [Known CI issues](references/
 
 For PR failure attribution or historical Engine CI lookup, read [Merge-base comparison](references/ci-baseline.md). It defines the shared collector, validation, comparison, and missing-baseline contract.
 
-For earlier testcase failures, recurring symptoms, or suspected flakiness, read [Testcase history with Chronicle](references/ci-evidence.md#testcase-history-with-chronicle). It defines `cubrid-tcc` lookup, bounded refresh, and the limits of historical conclusions.
+For earlier testcase failures, recurring symptoms, or suspected flakiness, read [Testcase history with Chronicle](references/ci-evidence.md#testcase-history-with-chronicle). It defines the one-run index refresh, the `cubrid-tcc history` query, and the limits of historical conclusions.
 
 Before writing persistent reports, issue drafts, or planning sheets, read [Document Git workflow](references/document-git-workflow.md). It applies the user's Git workflow to each document repository and resolves artifact paths from the selected task checkout.
 

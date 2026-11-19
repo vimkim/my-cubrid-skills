@@ -162,7 +162,7 @@ Compare each exact testcase path and observed signature with the validated basel
 
 ## 3b. Check testcase failure history
 
-For a complete validated head bundle with testcase failures or errors, read [Testcase history with Chronicle](../cubrid-common/references/ci-evidence.md#testcase-history-with-chronicle). Follow it for each distinct failed testcase, using `cubrid-tcc` when installed. It defines exact-path and suite selection, occurrence matching, bounded index refresh, and the evidence needed for recurrence, matching symptoms, or suspected flakiness.
+For a complete validated head bundle with testcase failures or errors, read [Testcase history with Chronicle](../cubrid-common/references/ci-evidence.md#testcase-history-with-chronicle). Follow it for each distinct failed testcase, using `cubrid-tcc` when installed. It defines suite selection, the one-run index refresh, occurrence matching, and the evidence needed for recurrence, matching symptoms, or suspected flakiness.
 
 Keep historical context separate from the exact merge-base classification. Record unavailable history and unresolved identities as unknown. History cannot upgrade the report-mode gate, supply a missing validated baseline, or change the current failure inventory.
 

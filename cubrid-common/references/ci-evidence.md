@@ -38,7 +38,7 @@ Primary API references when an endpoint or schema needs verification: [GitHub ch
 
 Use `cubrid-tcc` to find earlier failures of a validated testcase in retained `gha-ci` SQL, medium, or shell results. History pays off when the failure is old, such as an identical failure on other PRs or older Engines. It rarely helps for a testcase that the PR adds. If the command is unavailable or a query fails, record the limitation and continue the CI analysis. Record `cubrid-tcc --version`.
 
-Each query takes 10 to 40 seconds and prints about 4 MB of JSON, most of it suite-wide coverage. Run queries one at a time through the projection below, and reuse each result for the rest of the analysis.
+Each query takes about 1 second and prints a few hundred KB of JSON, most of it full occurrence records. Read it through the projection below, and reuse each result for the rest of the analysis.
 
 ### Select the testcase
 

@@ -28,10 +28,11 @@ cubrid-tcr --json check --job "$JOB_NAME" --engine "$ENGINE_SHA"
 |---|---|
 | `no_match` | Analyze as usual. |
 | `known` | "Known issue, not caused by this PR." Do not analyze its root cause or propose a fix. |
+| `known_job` | "Known noisy job." Keep the failure in the inventory, compare its symptom with the merge base, and analyze any symptom the rule's `not_covered` text does not describe. |
 | `fix_missing` | Known issue. Tell the user that the tested branch lacks the fix. For `feature/oos-merge`, a develop sync is needed. |
 | `fix_present` | Do not apply the rule. Analyze the failure as new. Tell the user that the issue may need to be reopened, and cite the run and the stack. |
 | `expired` | Do not apply the rule. Tell the user to retire or extend it. |
-| `unknown` | Known issue, with the `reason` that the state is unknown. If the reason is a missing stack, get the stack and check again. |
+| `unknown` | Known issue, with the `reason` that the state is unknown. If the reason is a missing stack or failure text, get it and check again. |
 
 Each entry's `history` counts earlier failures by branch and signature. Report it as history context. History context does not prove a root cause or PR causality. `cubrid-tcr show "$TC_PATH" --suite "$SUITE"` prints the full testcase view with related issues and notes. If that view's `sync_hint` names a date window, record the gap in one line instead of running it. Window syncs outlast the agent's command time limit.
 
@@ -41,7 +42,9 @@ If `cubrid-tcr` is not installed or exits with code 2, record the limitation and
 
 Run these commands after the analysis. Each command is idempotent.
 
-- If a stack matched no signature (`record.result` is `no_single_match` with no candidates) and the shape will recur, add one with `signature add`. To see the parsed frames, run `cubrid-tcr signature attach "$TC_PATH" --suite "$SUITE" --run "$RUN_ID" --shard "$SHARD" --stack-file "$SUITE_DIR/failures/<id>/message.txt"`. Then rerun the batch check with `--record`.
+- If a failure matched no signature (`record.result` is `no_single_match` with no candidates) and its shape will recur, add one with `signature add`, then rerun the batch check with `--record`.
+  - For a core, pass `--frames` and any `--text`. To see the parsed frames, run `cubrid-tcr signature attach "$TC_PATH" --suite "$SUITE" --run "$RUN_ID" --shard "$SHARD" --stack-file "$SUITE_DIR/failures/<id>/message.txt"`.
+  - For a NOK line without a core, pass only `--text` with the stable part of the line from `message.txt`, such as `--text 'NOK stat.log is empty'`. Leave out run-specific numbers and paths.
 - If an issue looks related but nobody has confirmed it, run `cubrid-tcr link "$TC_PATH" --suite "$SUITE" --issue CBRD-n --relation suspected`.
 - If a later reader needs a fact, run `cubrid-tcr note "$TC_PATH" --suite "$SUITE" --body "..." --ref ...`.
 
@@ -52,9 +55,11 @@ You can write links, signatures, and notes without asking, because they never ch
 A rule hides a failure from analysis, so only the user approves one.
 
 1. Confirm the duplicate. `cubrid-jira-dup candidate-find` suggests candidates. The user confirms the issue.
-2. Choose the narrowest signature that matches every known occurrence. Name the assertion site and the caller that distinguishes the bug. Do not use line numbers, because they differ by branch.
+2. Choose the narrowest signature that matches every known occurrence. For a core, name the assertion site and the caller that distinguishes the bug. Do not use line numbers, because they differ by branch. For a NOK line, use the text that names the symptom.
 3. Run `cubrid-tcr rule add --id ID --signature SIG --issue CBRD-n --not-covered "..."` without `--yes`. Show the printed rule to the user.
 4. After the user approves, rerun it with `--yes --approved-by <user>`.
-5. Prove the rule. `check` with the motivating stack returns `known`. `check` with another stack from the same testcase returns `no_match`, if such a stack exists.
+5. Prove the rule. `check` with the motivating failure text returns `known`. `check` with another failure text from the same testcase returns `no_match`, if one exists.
 
-A rule for a recurring job-level failure without an issue uses `--job-contains TEXT` and needs `--expires YYYY-MM-DD`. Retire a rule with `cubrid-tcr rule retire ID --reason "..."`.
+A rule for a recurring job-level failure without an issue uses `--job-contains TEXT` and needs `--expires YYYY-MM-DD`. It answers `known_job`, never `known`. Retire a rule with `cubrid-tcr rule retire ID --reason "..."`.
+
+`cubrid-tcr rules --audit` lists the active rules with their Jira state and days until expiry, and flags rules whose issue is resolved Fixed or whose expiry is near. Run it when a verdict looks stale, and report its flags to the user, who decides whether to retire or extend a rule.

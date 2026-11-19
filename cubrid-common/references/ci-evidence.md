@@ -62,7 +62,7 @@ cubrid-tcc sync-data --run "$HISTORY_RUN" --suite "$HISTORY_SUITE" \
 
 A run sync takes 13 to 40 seconds. `--revisit-limit 0` keeps it to this run; the default also revisits up to 20 queued runs. Reuse the sync for every testcase of that run and suite.
 
-Run syncs are the only refresh during an analysis. When a result reports older gaps or a `sync_hint` names a date window, record the gap in one line and continue. Window syncs outlast the agent's command time limit. If the run sync fails, for example with HTTP 502, record the failure and query what is indexed.
+Run syncs are the only refresh during an analysis. When `freshness.suggested_sync` or a tcr `sync_hint` names a date window (`--since` and `--until`), record the gap in one line and continue. A suggestion that names `--run` IDs is a run sync; run it once. Window syncs outlast the agent's command time limit. If the run sync fails, for example with HTTP 502, record the failure and query what is indexed.
 
 ### Query history
 

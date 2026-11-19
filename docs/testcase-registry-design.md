@@ -91,7 +91,7 @@ The registry separates the rule that filters from the link that only informs. A 
 
 - A rule has both a signature scope and a job scope, or neither.
 - A rule has no issue and no `expires`. An issue-backed rule takes its lifetime from the Jira state.
-- A signature has `text` but no `frames`.
+- A signature has neither `frames` nor `text`. A text-only signature matches NOK failures without a core (decision of 2026-11-19).
 - An `occurrence_signature` points at a signature of a different testcase.
 - A key other than `CBRD-<digits>` appears.
 
@@ -116,7 +116,7 @@ SQLite wins now. The review gate moves from the diff to the approval step on `ru
 cubrid-tcr show CASE [--suite S] [--days N | --all] [--json]
 cubrid-tcr check (--case CASE [--suite S] | --job NAME) --engine SHA
                  [--stack-file F] [--engine-repo DIR] [--offline] [--no-context] [--json]
-cubrid-tcr signature add CASE --suite S --id ID --frames F1,F2,... [--text T] --label TEXT
+cubrid-tcr signature add CASE --suite S --id ID [--frames F1,F2,...] [--text T]... --label TEXT
 cubrid-tcr signature attach CASE --suite S --run ID --shard N [--attempt N] --stack-file F
                  [--signature ID]
 cubrid-tcr link CASE --suite S --issue KEY --relation origin|tracks|suspected|fixed_by [--signature ID]
@@ -160,7 +160,7 @@ The verdict rules from revision 1 apply to `rule` records. They are unchanged.
 | `fix_present` | The issue is resolved as Fixed, and the tested Engine commit contains the fix. | Do not apply. Analyze the failure as new. Tell the user that the issue may need to be reopened. |
 | `unknown` | Jira did not answer, the resolution is not Fixed, no fix commit was found, or the ancestry could not be computed. | Known issue, with the reason the state is unknown. |
 
-A signature rule matches when the stack file matches its signature: the frames appear in order, innermost first, with any frames between them, and every `text` substring is present. Without `--stack-file`, a signature rule returns `unknown` with the reason "no stack". It never returns `no_match` in that case, because the failure may still be the known crash.
+A signature rule matches when the failure text matches its signature: the frames appear in order, innermost first, with any frames between them, and every `text` substring is present. A text-only signature needs only the substrings. A job rule answers `known_job` instead of `known`, because a noisy job does not explain each symptom. Without `--stack-file`, a signature rule returns `unknown` with the reason "no stack". It never returns `no_match` in that case, because the failure may still be the known crash.
 
 The fix is present under either of these conditions:
 

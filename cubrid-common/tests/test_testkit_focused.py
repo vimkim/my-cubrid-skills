@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -791,6 +792,11 @@ class TestkitFocusedTests(unittest.TestCase):
         output: Path | None = None,
         expected: Path | None = None,
     ) -> subprocess.CompletedProcess[str]:
+        default_output = root / "out.conf"
+        if suite == "shell":
+            # Shell checks the attempt's CTP copy, found beside the output's conf directory.
+            (root / "CTP").mkdir(exist_ok=True)
+            default_output = root / "conf" / "out.conf"
         base = root / "base.conf"
         if not base.exists():
             content = ("[sql]\n" if suite != "shell" else "") + (
@@ -811,7 +817,7 @@ class TestkitFocusedTests(unittest.TestCase):
             "--base-conf", str(base),
             "--scenario", str(scenario),
             "--selection", str(selection),
-            "--output-conf", str(output or root / "out.conf"),
+            "--output-conf", str(output or default_output),
             "--output-expected-list", str(expected or root / "expected.txt"),
         ]
         if suite == "medium":
@@ -930,7 +936,7 @@ class TestkitFocusedTests(unittest.TestCase):
             result = self.prepare(root, "shell", corpus, group)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual((root / "expected.txt").read_text(), f"{case}\n")
-            config = (root / "out.conf").read_text()
+            config = (root / "conf" / "out.conf").read_text()
             for setting in (
                 f"scenario={corpus}",
                 "parallel_slots=1",
@@ -947,9 +953,48 @@ class TestkitFocusedTests(unittest.TestCase):
                 self.assertIn(setting, config)
             result = self.prepare(
                 root, "shell", corpus, case,
-                output=root / "other.conf", expected=root / "other.txt",
+                output=root / "conf" / "other.conf", expected=root / "other.txt",
             )
             self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_prepare_shell_requires_an_empty_ctp_result_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            corpus = root / "shell"
+            case = self.write(corpus / "one" / "cases" / "one.sh", "")
+            old_log = self.write(
+                root / "CTP" / "result" / "shell" / "current_runtime_logs" / "test_local.log",
+                "old run\n",
+            )
+
+            result = self.prepare(root, "shell", corpus, case)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn(f"result tree is not empty: {root / 'CTP' / 'result'}", result.stderr)
+            self.assertFalse((root / "conf" / "out.conf").exists())
+            self.assertFalse((root / "expected.txt").exists())
+            self.assertEqual(old_log.read_text(), "old run\n")
+
+            shutil.rmtree(root / "CTP" / "result")
+            (root / "CTP" / "result").mkdir()
+            result = self.prepare(root, "shell", corpus, case)
+            self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_prepare_shell_requires_the_attempt_ctp_copy(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            corpus = root / "shell"
+            case = self.write(corpus / "one" / "cases" / "one.sh", "")
+            attempt = root / "attempt"
+
+            result = self.prepare(
+                root, "shell", corpus, case,
+                output=attempt / "conf" / "shell.conf", expected=attempt / "expected.txt",
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn(f"attempt has no CTP copy at {attempt / 'CTP'}", result.stderr)
+            self.assertFalse((attempt / "expected.txt").exists())
 
     def test_shell_rejects_noncase_and_symlink_selections(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -967,7 +1012,7 @@ class TestkitFocusedTests(unittest.TestCase):
                 with self.subTest(selection=selection):
                     result = self.prepare(
                         root, "shell", corpus, selection,
-                        output=root / f"out-{index}.conf", expected=root / f"expected-{index}.txt",
+                        output=root / "conf" / f"out-{index}.conf", expected=root / f"expected-{index}.txt",
                     )
                     self.assertNotEqual(result.returncode, 0)
             result = self.prepare(root, "shell", corpus, corpus)
@@ -1002,7 +1047,7 @@ class TestkitFocusedTests(unittest.TestCase):
             result = self.prepare(root, "shell", alias, alias / "one" / "cases" / "one.sh")
 
             self.assertNotEqual(result.returncode, 0)
-            self.assertFalse((root / "out.conf").exists())
+            self.assertFalse((root / "conf" / "out.conf").exists())
             self.assertFalse((root / "expected.txt").exists())
 
     def test_prepare_retains_list_when_config_write_fails(self) -> None:

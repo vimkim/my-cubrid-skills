@@ -424,12 +424,25 @@ def prepare_config(
     outputs = [output_expected_list, output_conf]
     if output_conf.resolve() == output_expected_list.resolve():
         fail("output paths must differ")
-    attempt_tmp = output_conf.resolve().parent.parent / "cubrid" / "tmp"
+    attempt_root = output_conf.resolve().parent.parent
+    attempt_tmp = attempt_root / "cubrid" / "tmp"
     if len(str(attempt_tmp)) > CUBRID_TMP_MAX_LENGTH:
         fail(
             f"attempt CUBRID_TMP would be {len(str(attempt_tmp))} characters ({attempt_tmp}); "
             f"CUBRID accepts at most {CUBRID_TMP_MAX_LENGTH}. Use a shorter attempt root."
         )
+    if suite == "shell":
+        # Shell testkit appends to fixed files in <CTP_HOME>/result/shell/current_runtime_logs,
+        # so old runs carried by a copied CTP tree would mix into this attempt's logs.
+        attempt_ctp = attempt_root / "CTP"
+        if not attempt_ctp.is_dir():
+            fail(f"attempt has no CTP copy at {attempt_ctp}; copy $CTP_HOME there first")
+        ctp_results = attempt_ctp / "result"
+        if ctp_results.is_dir() and any(ctp_results.iterdir()):
+            fail(
+                f"attempt CTP result tree is not empty: {ctp_results}. "
+                "Earlier runs there would mix into this attempt's shell logs; remove it from the attempt first."
+            )
     for output in outputs:
         if output.resolve().is_relative_to(scenario.resolve()):
             fail(f"output is inside scenario: {output}")

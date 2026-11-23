@@ -7,7 +7,7 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | Skill | Description |
 |-------|-------------|
 | `cubrid-jira` | Look up CUBRID JIRA issue context (CBRD-XXXXX) |
-| `cubrid-worktree` | Create, prepare, list, and open ticket-first CUBRID worktrees and Herdr Spaces/Tabs |
+| `cubrid-worktree` | Create, prepare, list, open, and safely delete (with submodules) ticket-first CUBRID worktrees and Herdr Spaces/Tabs |
 | `cubrid-test-sql-run` | Run focused SQL cases with native testkit and verify artifact verdicts |
 | `cubrid-test-medium-run` | Run complete medium directories serially with native testkit and verify artifact verdicts |
 | `cubrid-test-shell-run` | Run focused shell cases with contained native testkit and verify artifact verdicts |

@@ -13,7 +13,7 @@ cubrid-ci-watch register "$PR_URL" \
   --triggered-at "$TRIGGER_TIME" --receipt "$RECEIPT"
 ```
 
-Pass all four suites (`shell`, `sql`, `medium`, `sql_by_cci`) for `/run all`, or only the selected suites for a subset run. Both build contexts are included by the CLI. Use the returned comment URL as the receipt for `/run` operations. For a GitHub failed-job rerun, pass `--kind rerun-failed`, `--run-id "$RUN_ID"`, and the intended `--attempt "$TARGET_ATTEMPT"`, with the stable operation receipt saved before the mutation.
+Pass all four suites (`shell`, `sql`, `medium`, `sql_by_cci`) for `/run all`, every suite present in the source run (including zero-shard carried-forward suites) for `/run rerun <run-id>`, or only the selected suites for a subset run. Both build contexts are included by the CLI. Use the returned comment URL as the receipt for `/run` operations. For a GitHub failed-job rerun, pass `--kind rerun-failed`, `--run-id "$RUN_ID"`, and the intended `--attempt "$TARGET_ATTEMPT"`, with the stable operation receipt saved before the mutation.
 
 When pickup is verified, include `--run-id` and `--attempt` in registration. To bind a request registered before pickup, repeat its original registration with those two options. Repeating the registration preserves its identity, original trigger time, deadline, and already recorded events. A conflicting binding is an error, not authorization to follow another run.
 

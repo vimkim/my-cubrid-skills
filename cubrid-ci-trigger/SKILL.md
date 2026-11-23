@@ -1,6 +1,6 @@
 ---
 name: cubrid-ci-trigger
-description: Trigger, rerun, or wait on GitHub Actions gha-ci for a CUBRID pull request targeting develop or feature/**, choose a full, subset, or failure-only run, prevent same-PR cancellation, verify pickup, register with cubrid-ci-watch, and arrange event-driven monitoring or waiting. Use whenever posting /run, running CI after a PR push, rerunning CI, or waiting for a CUBRID PR CI run to finish; release/11.x CircleCI operation is outside this skill.
+description: Trigger, rerun, or wait on GitHub Actions gha-ci for a CUBRID pull request targeting develop or feature/**, prefer /run rerun <run-id> when an eligible same-head run suffices over full or suite runs, prevent same-PR cancellation, verify pickup, register with cubrid-ci-watch, and arrange event-driven monitoring or waiting. Use whenever posting /run, running CI after a PR push, rerunning CI, or waiting for a CUBRID PR CI run to finish; release/11.x CircleCI operation is outside this skill.
 ---
 
 # Operate CUBRID gha-ci on a PR
@@ -28,17 +28,20 @@ Discover the current required CI checks with `gh pr checks "$PR_URL" --required`
 
 ## Select one operation
 
+**Check for an eligible same-head `/run rerun <run-id>` before choosing `/run all` or `/run <suite>`.** When the PR engine head SHA is unchanged, an eligible completed `gha-ci` run covers the needed suites, and no disqualifier applies, prefer `/run rerun <run-id>` over `/run all`, `/run shell`, `/run sql`, `/run medium`, or `/run sql_by_cci`: it reuses published builds, skips unchanged passing suites with 0 shards (carrying forward their `pass` status), and runs on 1 `cubrid-arc-light` shard per affected suite instead of claiming up to 71 `cubrid-arc` shards.
+
 | Request or state | Operation |
 |---|---|
-| Full CI, unspecified suites, a new PR head, or pre-review qualification | `/run all` |
-| User explicitly names a subset | `/run shell`, `/run sql`, `/run medium`, `/run sql_by_cci`, or their supported combination |
-| Flaky testcase failure or a shard that died before running any case | `/run rerun <run-id>` |
-| Transient build or runner job failure | `gh run rerun <run-id> --failed --repo CUBRID/cubrid` |
-| PR head moved, or a shard died after handling only part of its assignment | `/run all` |
+| New/moved PR head, missing required suites, or pre-review full qualification with no eligible same-head source run | `/run all` |
+| TC-only changes on the same engine head (`cases/` or `answers/` added, modified, renamed, or deleted in `tc/pr-<N>`, or `develop` merged into `tc/pr-<N>` — even if the source run passed 100%) | `/run rerun <run-id>` |
+| Verified flaky testcase failure (with history evidence), wholly dead shard (`found=no`, 0 handled), or chaining onto a prior `/run rerun` | `/run rerun <run-id>` |
+| Transient `build (debug)` or `build (release)` failure | `gh run rerun <run-id> --failed --repo CUBRID/cubrid` (or `/run all` / `/run sql_by_cci` if `sql_by_cci` was left `nobuild` and needs 10 shards) |
+| Any `/run rerun` disqualifier: engine commit moved, TC changes outside `cases/`/`answers/`, partial dead/timed-out shard (`rerun_short > 0`), `held` fault / provenance mismatch / `rerun_gone > 0`, changed build recipe, source run >30 days old / incomplete / `built by run` ID, new `testtools=<branch>` needing passing-case coverage, or oversized `sql`/`medium`/`sql_by_cci` rerun exceeding 1 light shard | `/run all` (or affected `/run <suite>`) |
+| User explicitly needs a specific subset not covered by an eligible rerun source, or confirms full suite re-execution despite an eligible rerun | `/run shell`, `/run sql`, `/run medium`, `/run sql_by_cci`, or their supported combination |
 
-Call a testcase failure flaky only with history evidence: earlier failures of the same testcase on other PRs or Engine revisions, from the `history` counts of [Known CI issues](../cubrid-common/references/known-ci-issues.md) or `cubrid-tcc history`. Without that evidence, report the failure as unexplained and recommend analysis before a rerun.
+Call an unchanged-testcase failure flaky only with history evidence: earlier failures of the same testcase on other PRs or Engine revisions, from the `history` counts of [Known CI issues](../cubrid-common/references/known-ci-issues.md) or `cubrid-tcc history`. Without that evidence, report the failure as unexplained and recommend analysis before a rerun. By contrast, TC fixes, additions, deletions, or renames in `tc/pr-<N>` (under `cases/` or `answers/`) and wholly dead shards (`found=no`) do **not** require flakiness history to use `/run rerun <run-id>`.
 
-A clear request to run CI authorizes one `/run all`. A request naming an exact supported operation authorizes that operation. For a vague rerun request, inspect the evidence, recommend one operation, and obtain the user's choice. A known current-head run or any active run for the same PR requires explicit supersede authorization because another `/run` cancels it.
+On a new PR head with no completed current-head run, a clear request to run CI authorizes one `/run all`. When a completed same-head run already exists, check `/run rerun <run-id>` eligibility first: for general or suite-named rerun requests (such as "CI 다시 돌려줘" or "TC 고쳤으니 sql/shell 돌려줘"), recommend `/run rerun <run-id>` when sufficient instead of `/run all` or `/run <suite>`. Even if the user asks for `/run all` or `/run <suite>` literally when `/run rerun <run-id>` suffices (and no disqualifier applies), briefly note that `/run rerun <run-id>` suffices and obtain confirmation before launching full compute; honor explicit confirmation if they still want a full run. A known current-head run or any active run for the same PR requires explicit supersede authorization because another `/run` cancels it.
 
 ## 1. Resolve and validate the PR
 
@@ -94,7 +97,18 @@ gh run view "$RUN_ID" --repo CUBRID/cubrid \
   --json databaseId,name,workflowName,event,status,conclusion,url,attempt
 ```
 
-Require a completed `gha-ci` run associated with this PR. For `/run rerun`, prefer a run linked from the current head's gha-ci statuses; the workflow also enforces that its tested engine commit equals the current PR head. For GitHub failed-job reruns, require the source run to be linked from the current head's gha-ci statuses because a rerun of an older head cannot satisfy the current merge gate. Warn that the same run ID gains a new workflow attempt and its reported evidence changes.
+Require a completed `gha-ci` run associated with this PR.
+
+For `/run rerun <run-id>`, verify all of the following before posting:
+
+- **Valid completed `gha-ci` suite run**: `<run-id>` is a completed `gha-ci` run for this PR with `shard` or `status` jobs covering every needed suite — never a `built by run` ID, never a run still active/cancelled/dead before `collect` wrote `failed.list` (including a `debug` build failure where `plan` exited 1), and never missing a suite you need to add.
+- **Same head, <30 days old, same build recipe**: the source run's tested engine commit equals current `headRefOid`, its internal `/home/ci/shared/runs/<id>` directory is not pruned (<30 days old and post-relayout/`tc_sha`), and `develop`'s build recipe (`image|args`) has not changed.
+- **No unrecoverable `held` fault**: confirm the source summary/evidence has no `rerun_short > 0` (partial shard execution before timeout/death), no build or TC provenance `mixed`/`mismatch`, no unexplained `rerun_gone > 0`, no inherited `held`, and not a pre-`held` legacy failed run with 0 cases to rerun.
+- **TC-only scope check**: if rerunning for TC-only updates in `tc/pr-<N>`, verify the changed paths are under `cases/` or `answers/`; shared helpers, scripts, configs, or data files outside `(cases|answers)/[^/]+$` are ignored by `/run rerun` and require `/run <suite>` or `/run all`.
+- **Single-shard capacity for dir-unit suites**: `sql`, `medium`, and `sql_by_cci` always run on 1 `cubrid-arc-light` shard (120-min timeout) and pull each failed case's entire top-level `_...` directory; if many top-level directories failed/changed (or `sql_by_cci` had `nobuild`), use `/run <suite>` or `/run all` instead.
+- **`testtools=<branch>` provenance**: inspect `CTP provenance` or the suggested rerun command in the source summary and preserve any non-default `testtools=<branch>`. If a *new* `testtools=<branch>` must also retest previously passing cases, use `/run <suite> testtools=<branch>` or `/run all testtools=<branch>`.
+
+For GitHub failed-job reruns (`gh run rerun <run-id> --failed`), require the source run to be linked from the current head's gha-ci statuses because a rerun of an older head cannot satisfy the current merge gate. Warn that the same run ID gains a new workflow attempt and its reported evidence changes.
 
 ## 4. Execute exactly once
 
@@ -132,7 +146,7 @@ Re-read the PR head and poll checks for up to two minutes. For a new `/run`, req
 
 ## 6. Arrange monitoring or wait for results
 
-By default, register every triggered request with `cubrid-ci-watch`, including one whose pickup remains unresolved. Pass `--suite shell --suite sql --suite medium --suite sql_by_cci` for `/run all`, or the explicitly selected suites for a subset, and include `--run-id` and `--attempt` once pickup is verified. Record the `request_id`, receipt, head SHA, and last event ID in `work-tracker` when tracking long-running work. Honor an explicit user request to skip monitoring. Read [references/ci-monitoring.md](references/ci-monitoring.md) for the exact registration, polling, `wait`, and delivery commands.
+By default, register every triggered request with `cubrid-ci-watch`, including one whose pickup remains unresolved. Pass `--suite shell --suite sql --suite medium --suite sql_by_cci` for `/run all`, every suite present in the source run (including zero-shard carried-forward suites) for `/run rerun <run-id>`, or the explicitly selected suites for a subset, and include `--run-id` and `--attempt` once pickup is verified. Record the `request_id`, receipt, head SHA, and last event ID in `work-tracker` when tracking long-running work. Honor an explicit user request to skip monitoring. Read [references/ci-monitoring.md](references/ci-monitoring.md) for the exact registration, polling, `wait`, and delivery commands.
 
 Choose the post-trigger mode from the user's request:
 

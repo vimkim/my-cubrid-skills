@@ -48,7 +48,7 @@ Do not run it for a documentation-only or conceptual question unless the answer 
 
 - You're in a **git repository** (or worktree) — needed for code search, grep, and git features
 - The directory is a **CUBRID source tree** (has CMakeLists.txt + CMakePresets.json)
-- **OOS source files** exist (oos_file.cpp — indicates you're on a feat/oos branch)
+- **OOS source files** exist (`oos_file.cpp` — indicates OOS sources are present on this branch)
 - **PRESET_MODE** is set and a **build directory** exists (build_preset_*)
 - **compile_commands.json** is present at the project root — this is essential for LSP features (hover, goto-definition, find-references via clangd)
 - **clangd** and **just** are available
@@ -75,10 +75,10 @@ When the request depends on current state:
 
 Use this authority and reconciliation rule:
 
-- The normative context file is authoritative for required OOS behavior, terminology, layout, and invariants.
+- The normative context file (`OOS-CONTEXT.md`) and accepted ADRs (`docs/adr/NNNN-*.md`) are the single Source of Truth (SoT) for required OOS behavior, terminology, layout, invariants, and accepted decisions.
+- The official CBRD JIRA hub issue ([CBRD-28315](https://jira.cubrid.org/browse/CBRD-28315), Sub-task under `CBRD-26357`) is a one-way mirror of this SoT for colleagues. If the JIRA mirror differs from the SoT, treat the SoT as authoritative and report the sync drift.
 - The checked-out source is evidence of what that exact revision currently implements; it does not override the specification.
 - JIRA is authoritative for current ticket workflow state.
-- ADRs are authoritative for accepted decisions within their stated scope.
 - Local reports and reviews are supporting evidence, not automatically accepted design.
 
 If source and specification disagree, classify the difference as an implementation conformance gap unless the specification explicitly marks the behavior proposed, historical, or non-normative. State the conflict and identify the revision/date involved. Ask for clarification only when the specification itself is ambiguous or internally inconsistent.
@@ -86,8 +86,8 @@ If source and specification disagree, classify the difference as an implementati
 ## Step 4: Answer or act
 
 - Distinguish current implementation, accepted design, proposed work, known defect, and historical behavior.
-- Do not treat incomplete `feat/oos` implementation or temporary merge-readiness instrumentation as normative behavior.
-- Use the terminology and writing conventions from the context file.
-- Cite source functions, commits, tickets, or ADRs when they materially support a claim.
-- Do not describe an experimental branch implementation as merged into `feat/oos` without verification.
-- When asked to update OOS knowledge, edit the authoritative context repository rather than adding facts to this loader.
+- Do not treat incomplete OOS implementations or temporary merge-readiness instrumentation as normative behavior.
+- Use the terminology and writing conventions from the context file. When citing OOS ADRs in JIRA, PRs, or reviews, use the standard `OOS-ADR-NNNN` identifier (for example `OOS-ADR-0001` through `OOS-ADR-0011`), state `accepted` vs `proposed` and `last_updated`, and link [CBRD-28315](https://jira.cubrid.org/browse/CBRD-28315) when helpful for colleagues.
+- Cite source functions, commits, tickets, or `OOS-ADR-NNNN` entries when they materially support a claim.
+- Do not describe an experimental or feature branch implementation as merged into `develop` without verification.
+- When asked to update OOS knowledge, edit the authoritative context repository (`cubrid-oos-context`) rather than adding facts to this loader or editing JIRA directly. After any Spec or ADR edit, follow `docs/maintenance/jira-sync.md` in `cubrid-oos-context`: run `scripts/check-jira-sync.py` and `scripts/render-jira-sync.py` to prepare JIRA sync dry-run payloads, and never run `cubrid-jira ... --yes` or `git push` without explicit user approval.

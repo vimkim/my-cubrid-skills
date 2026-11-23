@@ -9,7 +9,7 @@ Create CUBRID test cases for a given feature or bug fix.
 
 Select test types that exercise the feature's observable behavior: unit, SQL/medium, shell, or isolation. Do not create all types for every change. Read the module's existing tests and applicable AGENTS.md before choosing a framework.
 
-Read [Workflow policy](../cubrid-common/SKILL.md#workflow-policy) before choosing PR testcase branches or recommending their integration. Keep new cases isolated through review and CI until the final engine merge handoff.
+Read [Workflow policy](../cubrid-common/SKILL.md#workflow-policy) before choosing PR testcase branches or recommending their integration. Keep new cases on `tc/pr-<engine PR number>` through review and CI; for TC-only changes targeting `develop` or `feature/**`, follow [TC-only changes (CI-carrier draft engine PR)](../cubrid-common/references/testcase-lifecycle.md#tc-only-changes-ci-carrier-draft-engine-pr) instead of opening a standalone TC-repository PR.
 
 $ARGUMENTS
 

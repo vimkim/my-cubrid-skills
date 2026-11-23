@@ -123,7 +123,9 @@ identity and published content fingerprints in the context; these are execution
 results, not authorization for future changes. If triggering or waiting on PR
 `gha-ci` is part of or follows publication, invoke `cubrid-ci-trigger` so TC
 baseline checks, `/run` concurrency guards, `cubrid-ci-watch` registration, and
-event-driven waiting apply instead of posting `/run` ad hoc.
+event-driven waiting apply instead of posting `/run` ad hoc. For a TC-only
+CI-carrier draft engine PR, wait for `TC Branch Sync` to create `tc/pr-<N>` and
+push the TC changes to `tc/pr-<N>` before invoking `cubrid-ci-trigger`.
 
 If a command times out or partially succeeds, inspect actual remote state before
 retrying. Recognize verified completed operations, including a PR created by this

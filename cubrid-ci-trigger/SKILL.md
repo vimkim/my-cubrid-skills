@@ -52,7 +52,7 @@ gh pr view <pr-url-or-number> --repo CUBRID/cubrid \
   --json url,number,state,baseRefName,headRefName,headRefOid
 ```
 
-With no supplied PR, discover the current branch's PR only from a CUBRID checkout by running the same command without the positional argument. Require an open PR in `CUBRID/cubrid` whose base is `develop` or `feature/**`.
+With no supplied PR, discover the current branch's PR only from a CUBRID checkout by running the same command without the positional argument. Require an open PR in `CUBRID/cubrid` whose base is `develop` or `feature/**`. If the user has only a standalone TC-repository PR or local TC-only changes targeting `develop` or `feature/**` with no `CUBRID/cubrid` PR yet, stop and direct them to the [TC-only CI-carrier draft engine PR](../cubrid-common/references/testcase-lifecycle.md#tc-only-changes-ci-carrier-draft-engine-pr) workflow so `TC Branch Sync` creates `tc/pr-<N>` for `gha-ci`.
 
 When the current checkout is the PR branch, compare `git rev-parse HEAD` with `headRefOid` and inspect `git status --porcelain`. Report unpublished commits and uncommitted changes because gha-ci tests only the pushed PR head. Trigger authorization does not authorize a commit or push.
 

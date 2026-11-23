@@ -1,6 +1,6 @@
 ---
 name: cubrid-pr-create
-description: Prepare a CUBRID PR body as persistent Markdown in my-cubrid-docs for human review, then create a draft PR or update an existing description after explicit confirmation. Use for creating, drafting, publishing, or revising CUBRID PR descriptions, including resuming a saved draft.
+description: Prepare a CUBRID PR body as persistent Markdown in my-cubrid-docs for human review, then create a draft PR or update an existing description after explicit confirmation. Use for creating, drafting, publishing, or revising CUBRID engine or TC-only PRs and descriptions, including resuming a saved draft.
 ---
 
 # CUBRID PR Creator
@@ -70,6 +70,21 @@ ask when unclear (especially for derived release/backport branches such as
 integration branch still applies. Select source push routing using `CUBRID.md`;
 the usual personal fork is `github.com/vimkim/cubrid`. Routing is not
 publication permission.
+
+- **TC-only changes targeting `develop` or `feature/**`**: Do not create a
+  standalone PR directly in `CUBRID/cubrid-testcases` or
+  `CUBRID/cubrid-testcases-private-ex`, because standalone TC PRs cannot trigger
+  `gha-ci` directly. Follow
+  [TC-only changes (CI-carrier draft engine PR)](../cubrid-common/references/testcase-lifecycle.md#tc-only-changes-ci-carrier-draft-engine-pr):
+  prepare a CBRD ticket branch in `CUBRID/cubrid` with one empty commit
+  (`git commit --allow-empty`), draft a CI-carrier **draft** engine PR in
+  `CUBRID/cubrid` using the standard three-section body (`## Purpose`,
+  `## Implementation` noting no engine code changes, and `## Remarks` stating
+  that only the TC PR will be merged and this draft engine PR will be closed
+  without merging), then push the TC changes to the auto-created `tc/pr-<N>`
+  branch and run `cubrid-ci-trigger`. Reserve standalone TC-repository PRs for
+  bases without `TC Branch Sync` / `gha-ci` (such as `release/*`) or explicit
+  user requests.
 
 Set `SOURCE_COMMIT` to the full hexadecimal source commit from
 `git rev-parse --verify 'HEAD^{commit}'`.

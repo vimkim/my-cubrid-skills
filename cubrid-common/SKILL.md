@@ -1,6 +1,6 @@
 ---
 name: cubrid-common
-description: Shared CUBRID workflow policy, user context, and helpers for worktrees, focused native testkit, PR metadata, build presets, remotes, and shared links. Use before interpreting issue assignments or recommending PR, CI, or testcase integration actions, and when maintaining skills that depend on common checks. This is a shared dependency rather than a standalone workflow.
+description: Shared CUBRID workflow policy, user context, and helpers for worktrees, focused native testkit, PR metadata, build presets, remotes, and shared links. Use before interpreting issue assignments or recommending PR, CI, TC-only PR, or testcase integration actions, and when maintaining skills that depend on common checks. This is a shared dependency rather than a standalone workflow.
 ---
 
 # CUBRID Common Helpers
@@ -15,7 +15,7 @@ On entering this workflow policy, establish the current user's identity once per
 
 When the user is `vimkim`, read [vimkim's CUBRID context](references/cubrid-vimkim.md). For another or unknown user, continue with shared policy and that user's instructions without loading this profile.
 
-Before recommending or performing PR, CI, or testcase integration actions, read [Testcase lifecycle](references/testcase-lifecycle.md). Before recommending, requesting permission for, or performing a GitHub PR merge, apply the [PR approval gate](#pr-approval-gate).
+Before recommending or performing PR, CI, TC-only PR, or testcase integration actions, read [Testcase lifecycle](references/testcase-lifecycle.md). Before recommending, requesting permission for, or performing a GitHub PR merge, apply the [PR approval gate](#pr-approval-gate).
 
 ### Dev2 team membership
 

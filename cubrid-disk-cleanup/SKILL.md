@@ -1,6 +1,8 @@
 ---
 name: cubrid-disk-cleanup
-description: "Audit and reduce disk usage under a CUBRID home directory on Linux. Use when /home approaches capacity, a quota alert triggers, or old worktrees, build directories, and caches accumulate. Triggers on phrases like 'disk usage warning', 'reduce /home usage', 'remove old worktrees', '디스크 용량 정리', '빌드 아티팩트 정리'."
+description: "Audit and reduce disk usage under a CUBRID home directory on Linux with tiered safety checks."
+argument-hint: "[threshold-or-scope]"
+disable-model-invocation: true
 ---
 
 # CUBRID Disk Cleanup

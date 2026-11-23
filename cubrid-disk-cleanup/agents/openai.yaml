@@ -1,0 +1,5 @@
+interface:
+  display_name: "CUBRID Disk Cleanup"
+  short_description: "Audit and reduce CUBRID home disk usage by tier"
+policy:
+  allow_implicit_invocation: false

@@ -48,6 +48,7 @@ Identify the actual server, broker, client, utility, and background processes ne
 Check their binary paths and build identities.
 Read the host-workenv reference required by `CUBRID.md` before host DB setup or daemon startup.
 Use separate install and database locations for incompatible builds.
+When creating a separate benchmark, baseline, or diagnostic worktree for a ticket, prefer `cubrid-worktree create <TICKET>-<summary>` (for example `CBRD-NNNNN-bench`, `CBRD-NNNNN-base`, or `CBRD-NNNNN-diag`).
 Preserve the input, configuration, expected results, and commands with the experiment artifacts.
 
 Finish this step with a runnable workload and a correctness check, or a concrete explanation of the unavailable prerequisite.

@@ -31,7 +31,7 @@ For a PR, inspect its description and linked issue. Use an available GitHub conn
 
 Save the complete changed-file list, diff statistics, and patch. Inspect renames, deletions, submodules, and binary changes. Check whether remote patches are truncated. Obtain missing hunks from pinned Git objects. If source remains unavailable, record the uncovered files.
 
-Read source with `git show <sha>:<path>` or a detached review worktree at the pinned head. A dirty working copy does not establish the snapshot's behavior.
+Read source directly when the current or ticket worktree (`~/gh/cb/CBRD-NNNNN` or `~/gh/cb/CBRD-NNNNN-pr-<N>`, created from any `pwd` via `cubrid-worktree review <pr>`) is clean and at the pinned head SHA; otherwise preserve any dirty or differing checkout untouched and read with `git show <sha>:<path>` or a detached review worktree at the pinned head. A dirty working copy does not establish the snapshot's behavior.
 
 If the comparison is empty, record that result and continue with section 6 without reviewers. If a required input is ambiguous, resolve it before reviewing that scope.
 

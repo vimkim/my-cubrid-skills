@@ -62,10 +62,13 @@ instead of committing it implicitly.
 Resolve the target repository (normally `CUBRID/CUBRID`), source repository and
 branch, and base. For an existing PR, read its actual metadata and body. For a new
 PR, prefer the user's explicit base and current project integration guidance;
-otherwise use `develop` for ordinary `CBRD-*` branches, `cubvec/cubvec` for
-`cubvec/*`, or ask when unclear. Inspect live branches instead of assuming a
-historical OOS integration branch still applies. Select source push routing using
-`CUBRID.md`; the usual personal fork is `github.com/vimkim/cubrid`. Routing is not
+otherwise use `develop` for primary `CBRD-*` branches (`CBRD-NNNNN` or ordinary
+`develop`-targeted `CBRD-NNNNN-<summary>`), `cubvec/cubvec` for `cubvec/*`, or
+ask when unclear (especially for derived release/backport branches such as
+`CBRD-NNNNN-11.4`, which must target their matching release branch rather than
+`develop`). Inspect live branches instead of assuming a historical OOS
+integration branch still applies. Select source push routing using `CUBRID.md`;
+the usual personal fork is `github.com/vimkim/cubrid`. Routing is not
 publication permission.
 
 Set `SOURCE_COMMIT` to the full hexadecimal source commit from

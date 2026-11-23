@@ -5,7 +5,7 @@ description: Prepare, configure, build, install, and run configured ctest tests 
 
 # CUBRID Build & Test
 
-Use the shared justfile workflow for every CUBRID build. New agent-created worktrees are not ready until the stowed environment files, a valid CMake preset, configuration, and an initial build are present.
+Use the shared justfile workflow for every CUBRID build. New agent-created worktrees (typically `~/gh/cb/CBRD-NNNNN` or `~/gh/cb/CBRD-NNNNN-<summary>`, prepared from any `pwd` with `cubrid-worktree`) are not ready until the stowed environment files, a valid CMake preset, configuration, and an initial build are present.
 
 ## 1. Locate the worktree
 
@@ -39,6 +39,7 @@ Before building, check that all preparation files exist at the worktree root:
 - `justfile`
 - `.envrc`
 - `CMakeUserPresets.json`
+- `.env`
 
 If any are missing, or if this is a newly-created worktree, use the global preparation recipe from the worktree root:
 

@@ -7,6 +7,7 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | Skill | Description |
 |-------|-------------|
 | `cubrid-jira` | Look up CUBRID JIRA issue context (CBRD-XXXXX) |
+| `cubrid-worktree` | Create, prepare, list, and open ticket-first CUBRID worktrees and Herdr Spaces/Tabs |
 | `cubrid-test-sql-run` | Run focused SQL cases with native testkit and verify artifact verdicts |
 | `cubrid-test-medium-run` | Run complete medium directories serially with native testkit and verify artifact verdicts |
 | `cubrid-test-shell-run` | Run focused shell cases with contained native testkit and verify artifact verdicts |
@@ -89,6 +90,7 @@ Restore the source directory too before the next normal sync. Explicit `just rem
 Once installed, invoke skills as slash commands in Claude Code:
 
 ```
+/cubrid-worktree CBRD-28099
 /cubrid-jira CBRD-25123
 /cubrid-pr-create CBRD-26583
 /cubrid-ci-analyze https://github.com/CUBRID/cubrid/pull/6864
@@ -110,6 +112,7 @@ Some skills require external tools:
 
 | Tool | Required by | Install |
 |------|------------|---------|
+| `cubrid-worktree` | `cubrid-worktree` | `uv tool install git+https://github.com/vimkim/cubrid-worktree` (or `just install` in `/home/vimkim/gh/cubrid-worktree`) |
 | `cubrid-jira` | `cubrid-jira` | `uv tool install git+https://github.com/vimkim/cubrid-jira` |
 | `cubrid-jira-dup` | `cubrid-jira-dup` | `uv tool install git+https://github.com/vimkim/cubrid-jira-duplicate-poc` |
 | `gh` | `cubrid-ci-trigger`, `cubrid-ci-analyze`, `cubrid-pr-create` | [cli.github.com](https://cli.github.com/) |

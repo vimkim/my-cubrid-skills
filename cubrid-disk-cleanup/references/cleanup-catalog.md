@@ -77,3 +77,7 @@ Reference catalog for `cubrid-disk-cleanup` on `dev2` (`/home/vimkim`).
 5. **`du` vs `df` Discrepancies**
    - XFS shared extents/reflinks, concurrent server writes by other `dev2` users, or open `(deleted)` FDs can cause `df` free-space deltas to differ from `du` sums.
    - Always report both `du` and `df -h /home`, and check that `/proc/*/fd` shows `0` bytes held in `(deleted)` files under `$HOME`.
+
+6. **`uv cache clean` Lock Hang**
+   - `uv cache clean` can hang indefinitely on `~/.cache/uv/.lock` when another `uv` process or stale lock blocks access.
+   - Always invoke `uv cache clean` with a short timeout (for example `timeout=30`), and skip it when the lock blocks completion.

@@ -60,8 +60,9 @@ Reference catalog for `cubrid-disk-cleanup` on `dev2` (`/home/vimkim`).
 
 2. **Git Submodule Bloat Inside `~/gh/cb/cubrid/.git/worktrees/`**
    - Initialized `cubrid-cci` and `cubrid-jdbc` submodules store module gitdirs inside `cubrid/.git/worktrees/<name>/modules/` (~19 GiB across ~240 worktrees).
-   - Run `git -C <wt> submodule foreach --recursive 'git status --porcelain=v1 --untracked-files=all'` first. If clean, run `git -C <wt> submodule deinit --all` (without `--force`) to empty the submodule working tree.
-   - `git submodule deinit --all` leaves `<common-git-dir>/worktrees/<name>/modules/` behind, which blocks plain `git worktree remove`. After checking that every `git submodule status` line starts with `-`, remove that stale `modules/` directory and run plain `git worktree remove` (without `--force`).
+   - Never rely only on `git submodule status` when `submodule.*.url` is unset. Read submodule paths from `.gitmodules` and check `<wt>/<subpath>/.git` directly with `git -C <wt>/<subpath> status --porcelain=v1 --untracked-files=all`.
+   - After checking that both the superproject and populated submodules are clean, run `git submodule deinit --all` (without `--force`).
+   - If `<wt>/<subpath>/.git` or `<common-git-dir>/worktrees/<name>/modules/` remains, empty `<wt>/<subpath>/` (leaving an empty placeholder directory) and remove that `modules/` directory. Then check that `git status --porcelain=v1 --untracked-files=all` is empty, and run plain `git worktree remove` (without `--force`).
 
 3. **Active Daemons, Bots, and Agents**
    - Always check live `/proc` before removing `node_modules`, `.venv`, `.cache/ms-playwright`, `~/.hermes`, `~/.local/share/*-bot`, or `~/temp/*`:

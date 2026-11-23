@@ -4,6 +4,10 @@ Load this profile only when the current user is `vimkim`, as established by [Wor
 
 For CUBRID work, read `/home/vimkim/my-cubrid/CUBRID.md` once for vimkim's local development and publication policies, including the ticket-first `pwd`-independent worktree and Herdr Space/Tab workflow (`cubrid-worktree`). Current user instructions take precedence.
 
+## CI monitoring and delivery
+
+On vimkim's host, `my-cubrid-hermes` runs the shared `cubrid-ci-watch` collector (`cubrid-hermes-*-watcher.service`) and the `cubrid-briefing` delivery bridge (Discord and explicitly bound Herdr agents). Use `cubrid-ci-watch wait` when waiting inside the current session, and `cubrid-briefing bind` when out-of-session Discord or Herdr alerts are desired.
+
 ## Interpret team-leader assignment
 
 `hornetmj` is vimkim's development team 2 leader. When a CUBRID issue is assigned to `hornetmj`, the team leader has not yet decided who will implement it.

@@ -120,7 +120,10 @@ Fetch the resulting PR and compare its decoded body with the uploaded file; also
 verify its target, source revision, title when applicable, and expected status.
 Report the PR URL, completed operations, and any failure. Record the resulting PR
 identity and published content fingerprints in the context; these are execution
-results, not authorization for future changes.
+results, not authorization for future changes. If triggering or waiting on PR
+`gha-ci` is part of or follows publication, invoke `cubrid-ci-trigger` so TC
+baseline checks, `/run` concurrency guards, `cubrid-ci-watch` registration, and
+event-driven waiting apply instead of posting `/run` ad hoc.
 
 If a command times out or partially succeeds, inspect actual remote state before
 retrying. Recognize verified completed operations, including a PR created by this

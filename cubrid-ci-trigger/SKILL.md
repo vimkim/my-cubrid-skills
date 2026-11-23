@@ -1,6 +1,6 @@
 ---
 name: cubrid-ci-trigger
-description: Trigger or rerun GitHub Actions gha-ci for a CUBRID pull request targeting develop or feature/**, choose a full, subset, or failure-only run, prevent same-PR cancellation, verify pickup, and arrange bounded background monitoring. Use when the user asks to run, trigger, or rerun CI on a supported CUBRID PR; release/11.x CircleCI operation is outside this skill.
+description: Trigger, rerun, or wait on GitHub Actions gha-ci for a CUBRID pull request targeting develop or feature/**, choose a full, subset, or failure-only run, prevent same-PR cancellation, verify pickup, register with cubrid-ci-watch, and arrange event-driven monitoring or waiting. Use whenever posting /run, running CI after a PR push, rerunning CI, or waiting for a CUBRID PR CI run to finish; release/11.x CircleCI operation is outside this skill.
 ---
 
 # Operate CUBRID gha-ci on a PR
@@ -130,10 +130,13 @@ Re-read the PR head and poll checks for up to two minutes. For a new `/run`, req
 - any still-missing stable required gha-ci context;
 - the live `gh pr checks --required` result without replacing it with a hard-coded total.
 
-## 6. Arrange background monitoring
+## 6. Arrange monitoring or wait for results
 
-By default, register the request with `cubrid-ci-watch`, including one whose pickup remains unresolved. The CLI owns the shared registry, 15-minute polling, the 24-hour delay event, and the 48-hour monitoring deadline. Read [references/ci-monitoring.md](references/ci-monitoring.md) for registration, run binding, and event consumption.
+By default, register every triggered request with `cubrid-ci-watch`, including one whose pickup remains unresolved. Pass `--suite shell --suite sql --suite medium --suite sql_by_cci` for `/run all`, or the explicitly selected suites for a subset, and include `--run-id` and `--attempt` once pickup is verified. Record the `request_id`, receipt, head SHA, and last event ID in `work-tracker` when tracking long-running work. Honor an explicit user request to skip monitoring. Read [references/ci-monitoring.md](references/ci-monitoring.md) for the exact registration, polling, `wait`, and delivery commands.
 
-Return the triggering session after reporting the receipt and monitoring setup. Reuse one persistent `cubrid-ci-watch poll` process for all registered requests. Invoke AI for meaningful events rather than each poll. Honor an explicit request to skip monitoring. Report registration, poller execution, and event delivery separately. If persistent execution or event delivery is unavailable, retain the registration and report the missing part instead of claiming automatic monitoring and notification.
+Choose the post-trigger mode from the user's request:
+
+- **Return the session (default)**: verify an existing shared poller (such as `cubrid-hermes` holding `poll.lock`) or start one persistent `cubrid-ci-watch poll` process, bind an available delivery channel (such as `cubrid-briefing`) when out-of-session alerts are desired, report registration, poller execution, and delivery separately, and return the session. If persistent execution or event delivery is unavailable, retain the registration and report the missing part instead of claiming automatic monitoring and notification.
+- **Wait in the current session until CI fails or finishes**: launch `cubrid-ci-watch wait "$REQUEST_ID" --after "$LAST_EVENT_ID"` (`--until meaningful` by default, or `--until terminal` to wait through an early failure) as one background shell task and yield the turn so the runtime wakes the session only on a meaningful event. Use `cubrid-ci-watch wait` instead of `schedule` timers or periodic `gh run view` / `gh pr checks` loops. Fall back to a timer of at least 15 minutes only when `cubrid-ci-watch` is unavailable, and state why.
 
 Use `cubrid-ci status` for a later status-only request and `cubrid-ci-analyze` for failure analysis, including its read-only exact merge-base comparison. Finding or lacking baseline evidence does not authorize another run or waive required CI contexts.

@@ -60,7 +60,8 @@ Reference catalog for `cubrid-disk-cleanup` on `dev2` (`/home/vimkim`).
 
 2. **Git Submodule Bloat Inside `~/gh/cb/cubrid/.git/worktrees/`**
    - Initialized `cubrid-cci` and `cubrid-jdbc` submodules store module gitdirs inside `cubrid/.git/worktrees/<name>/modules/` (~19 GiB across ~240 worktrees).
-   - Run `git -C <wt> submodule foreach --recursive 'git status --porcelain=v1 --untracked-files=all'` first. If clean, run `git -C <wt> submodule deinit --all` (without `--force`) before `git worktree remove` (without `--force`) so Git cleanly removes both the working tree and `.git/worktrees/<name>`.
+   - Run `git -C <wt> submodule foreach --recursive 'git status --porcelain=v1 --untracked-files=all'` first. If clean, run `git -C <wt> submodule deinit --all` (without `--force`) to empty the submodule working tree.
+   - `git submodule deinit --all` leaves `<common-git-dir>/worktrees/<name>/modules/` behind, which blocks plain `git worktree remove`. After checking that every `git submodule status` line starts with `-`, remove that stale `modules/` directory and run plain `git worktree remove` (without `--force`).
 
 3. **Active Daemons, Bots, and Agents**
    - Always check live `/proc` before removing `node_modules`, `.venv`, `.cache/ms-playwright`, `~/.hermes`, `~/.local/share/*-bot`, or `~/temp/*`:
@@ -81,3 +82,7 @@ Reference catalog for `cubrid-disk-cleanup` on `dev2` (`/home/vimkim`).
 6. **`uv cache clean` Lock Hang**
    - `uv cache clean` can hang indefinitely on `~/.cache/uv/.lock` when another `uv` process or stale lock blocks access.
    - Always invoke `uv cache clean` with a short timeout (for example `timeout=30`), and skip it when the lock blocks completion.
+
+7. **Python 3.12+/3.14 `shutil.rmtree` Permission Handler Pitfall**
+   - `shutil.rmtree(..., onexc=...)` may pass `os.open` as `func` (requiring `flags`), which breaks simple `func(path)` retries.
+   - Pre-chmod directories inside `target_real` to `u+rwx` and regular files to `u+rw` before calling `shutil.rmtree` so read-only test trees remove cleanly.

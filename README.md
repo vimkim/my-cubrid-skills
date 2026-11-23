@@ -20,6 +20,7 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | `cubrid-manual-search` | Answer CUBRID questions from the local English/Korean RST manual with file-and-line citations |
 | `cubrid-oos-context` | Load OOS (Out-of-row Overflow Storage) project context |
 | `create-testcases` | Create CUBRID test cases (unit/SQL/shell) for features or bug fixes |
+| `cubrid-disk-cleanup` | Audit `dev2` home disk usage, enforce safety checks, and clean approved artifacts by tier |
 | `cubrid-common` | Shared helper scripts used internally by other CUBRID skills |
 
 The general-purpose skills `gh-pr-comments-all`, `resolve-greptile-comments`, `markdown-write`, and `track-work` moved to [vimkim/my-skills](https://github.com/vimkim/my-skills). Maintain and install them from that collection. `question-socratically` moved there too and is now disabled. `daily-schedule` and `my-cubrid-skills-create` remain here; `daily-schedule` uses the external `track-work` skill. See [migration coordination](docs/general-skills-migration.md).

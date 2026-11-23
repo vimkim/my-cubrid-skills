@@ -25,6 +25,7 @@ Each top-level directory with a `SKILL.md` is a skill:
 - `cubrid-qa-fetch/` — authenticated CUBRID internal QA result retrieval and analysis
 - `cubrid-test-shell-run/` — run and debug focused shell tests locally
 - `create-testcases/` — CUBRID test case generator
+- `cubrid-disk-cleanup/` — `dev2` home disk usage audit, tiered cleanup, and safety guardrails
 - `my-cubrid-skills-create/` — create new skills in this collection
 - `cubrid-common/` — shared helper scripts used by CUBRID skills; an internal dependency rather than a user-facing workflow
 

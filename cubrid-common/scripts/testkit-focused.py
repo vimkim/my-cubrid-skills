@@ -119,6 +119,22 @@ def preflight(suite: str, allow_commit_mismatch: bool) -> None:
         ):
             fail(f"native {suite} requires JDK 8; selected javac reports {java_version!r}")
 
+    # The run keeps CUBRID_JAVA_HOME, and the PL server starts from it. A JDK newer than 8
+    # fails at server start ("PL server can not be started"), so stop here instead.
+    cubrid_java_home = os.environ.get("CUBRID_JAVA_HOME", "")
+    cubrid_java_version = ""
+    if cubrid_java_home:
+        java = Path(cubrid_java_home) / "bin" / "java"
+        if not java.is_file() or not os.access(java, os.X_OK):
+            fail(f"CUBRID_JAVA_HOME does not provide executable bin/java: {cubrid_java_home}")
+        java_result = subprocess.run([str(java), "-version"], text=True, capture_output=True, check=False)
+        cubrid_java_version = ((java_result.stderr.strip() or java_result.stdout.strip()).splitlines() or [""])[0]
+        if java_result.returncode != 0 or not re.search(r'version\s+"1\.8[."]', cubrid_java_version):
+            fail(
+                f"CUBRID_JAVA_HOME must be Java 8 for the PL server; it reports {cubrid_java_version!r} "
+                f"({cubrid_java_home}). Point CUBRID_JAVA_HOME at a Java 8 install and rerun."
+            )
+
     if suite in {"sql", "medium"} and not (cubrid / "jdbc" / "cubrid_jdbc.jar").is_file():
         fail(f"native {suite} needs the JDBC driver, but the install has no jdbc/cubrid_jdbc.jar: {cubrid}")
 
@@ -187,6 +203,9 @@ def preflight(suite: str, allow_commit_mismatch: bool) -> None:
     if java_home is not None:
         facts["java_home"] = str(java_home)
         facts["java_version"] = java_version
+    if cubrid_java_home:
+        facts["cubrid_java_home"] = cubrid_java_home
+        facts["cubrid_java_version"] = cubrid_java_version
     for key, value in facts.items():
         print(f"{key}={value}")
 

@@ -79,6 +79,11 @@ class TestkitFocusedTests(unittest.TestCase):
             "#!/bin/sh\necho 'javac 1.8.0-test' >&2\n",
             executable=True,
         )
+        self.write(
+            java_home / "bin" / "java",
+            "#!/bin/sh\necho 'openjdk version \"1.8.0_462\"' >&2\n",
+            executable=True,
+        )
 
         tool_bin = root / "tools"
         tool_bin.mkdir()
@@ -100,6 +105,7 @@ class TestkitFocusedTests(unittest.TestCase):
                 "CUBRID_DATABASES": str(cubrid / "databases"),
                 "CTP_HOME": str(ctp_home),
                 "JAVA_HOME": str(java_home),
+                "CUBRID_JAVA_HOME": str(java_home),
             }
         )
         return env, head
@@ -208,7 +214,7 @@ class TestkitFocusedTests(unittest.TestCase):
             for name in [n for n in env if n.startswith("CUBRID_") and n != "CUBRID_DATABASES"]:
                 del env[name]
             env.update({"CUBRID_CONF_FILE": "/w/cubrid.conf", "CUBRID_CUBRID_PORT_ID": "41268",
-                        "CUBRID_TMP": "/t", "CUBRID_JAVA_HOME": "/j"})
+                        "CUBRID_TMP": "/t", "CUBRID_JAVA_HOME": env["JAVA_HOME"]})
 
             result = self.run_cli(root, "preflight", "--suite", "sql", env=env)
 
@@ -342,7 +348,36 @@ class TestkitFocusedTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("suite=shell", result.stdout)
-            self.assertNotIn("java_home=", result.stdout)
+            self.assertNotIn("\njava_home=", result.stdout)
+
+    def test_shell_preflight_rejects_cubrid_java_home_newer_than_8(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            env, head = self.preflight_fixture(root, installed_commit="placeholder")
+            self.matching_install(env, head)
+            jdk21 = root / "jdk21"
+            self.write(
+                jdk21 / "bin" / "java",
+                "#!/bin/sh\necho 'openjdk version \"21.0.5\" 2024-10-15' >&2\n",
+                executable=True,
+            )
+            env["CUBRID_JAVA_HOME"] = str(jdk21)
+
+            result = self.run_cli(root, "preflight", "--suite", "shell", env=env)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("CUBRID_JAVA_HOME must be Java 8", result.stderr)
+
+    def test_preflight_reports_a_java8_cubrid_java_home(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            env, head = self.preflight_fixture(root, installed_commit="placeholder")
+            self.matching_install(env, head)
+
+            result = self.run_cli(root, "preflight", "--suite", "shell", env=env)
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn('cubrid_java_version=openjdk version "1.8.0_462"', result.stdout)
 
     def test_sql_preflight_rejects_non_jdk8(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

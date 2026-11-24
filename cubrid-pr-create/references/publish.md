@@ -125,7 +125,12 @@ results, not authorization for future changes. If triggering or waiting on PR
 baseline checks, `/run` concurrency guards, `cubrid-ci-watch` registration, and
 event-driven waiting apply instead of posting `/run` ad hoc. For a TC-only
 CI-carrier draft engine PR, wait for `TC Branch Sync` to create `tc/pr-<N>` and
-push the TC changes to `tc/pr-<N>` before invoking `cubrid-ci-trigger`.
+push the TC changes to `tc/pr-<N>` before invoking `cubrid-ci-trigger`. When the
+user explicitly requests automated PR orchestration or has established a
+standing instruction covering automated review and CI handling, invoke
+`cubrid-pr-flow start --pr "$pr_number" --ticket "$ticket" --json` instead
+(which launches parallel `cubrid-code-review`, polls `cubrid-pr-tc-base-check`,
+triggers `/run all`, and registers with `cubrid-ci-watch`).
 
 If a command times out or partially succeeds, inspect actual remote state before
 retrying. Recognize verified completed operations, including a PR created by this

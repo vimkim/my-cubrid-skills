@@ -74,3 +74,25 @@ Create `handoff.md` when follow-up review is required. Write a self-contained br
 For a changed PR, keep the old snapshot intact. Pin the new base and head before reviewing the delta. Revisit affected invariants beyond the new hunks. Preserve stable finding IDs when their root causes remain the same.
 
 End the handoff with a resumable request that names this skill, the manifest path, the pinned scope, and the unresolved IDs. A handoff authorizes no new spending or publication by itself.
+
+## Machine-readable verdict
+
+When `verdict.json` is requested (for example by `cubrid-pr-flow`), write one JSON object with `schema_version: 1`:
+
+```json
+{
+  "schema_version": 1,
+  "pr_number": 8504,
+  "base_sha": "<40-char>",
+  "head_sha": "<40-char>",
+  "merge_base_sha": "<40-char>",
+  "verdict": "no-confirmed-findings | changes-required | incomplete",
+  "follow_up_required": false,
+  "findings_count": {"P0": 0, "P1": 0, "P2": 0, "P3": 0},
+  "findings_summary": "한두 문장 요약",
+  "report_url": "https://github.com/vimkim/my-cubrid-docs/blob/main/...",
+  "comment_url": "https://github.com/CUBRID/cubrid/pull/8504#issuecomment-..."
+}
+```
+
+Record `report_url` and `comment_url` from the verified publication step (empty string only when local-only or publication failed).

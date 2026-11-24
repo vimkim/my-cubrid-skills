@@ -144,3 +144,5 @@ For an explicit PR-review request, continue with [PR publication](references/pr-
 This publication scope covers review documents and a PR-page comment. Formal GitHub review submissions, source fixes, CI triggers, and source-branch merges or pushes require their own authorization.
 
 End with the highest-impact findings, coverage limits, budget status, follow-up decision, and artifact locations. For published PR reviews, include the report and comment URLs. Report any unfinished publication step explicitly. A zero-finding result means no confirmed defect within the inspected scope. Apply the [PR approval gate](../cubrid-common/SKILL.md#pr-approval-gate) before recommending a merge.
+
+When invoked with a machine-readable verdict path (or by `cubrid-pr-flow`), also write `verdict.json` alongside the report artifacts using the schema in [the report contract](references/report.md#machine-readable-verdict).

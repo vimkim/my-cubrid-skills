@@ -28,6 +28,10 @@ Read [artifact and publication rules](references/publication.md) before choosing
 7. **Complete the requested workflow.** Follow the publication reference after review: commit the report locally, present required integration and publication approval, and continue authorized operations. Respect an explicit draft-only request or other publication limit, and reuse applicable authorization already established in the conversation.
 8. **Link CI testcases to the issue.** After the report is published to an issue, link each CI testcase whose failure the issue reports: `cubrid-tcr link "$TC_PATH" --suite "$SUITE" --issue CBRD-n --relation tracks`. The next registry check then names the issue. A link changes no verdict, so it needs no approval. Skip this step when the issue reports no CI testcase failure or `cubrid-tcr` is not installed.
 
+### Automated draft-only handoff (`draft-result.json`)
+
+When invoked in draft-only automation mode (such as by `cubrid-pr-flow`'s `draft_jira_issue` executor) with a result JSON path, stop after step 6 (local commit + `cubrid-jira-dup` check, without creating or updating JIRA) and write `draft-result.json` (`schema_version: 1`) with `project`, `issue_type`, `summary`, `draft_file` (absolute path to the committed Markdown draft), `draft_sha256` (64-char hex), `docserve_url`, `dup_candidates`, `priority`, `components`, `labels`, and `testcases` (`[{"path": "...", "suite": "shell|sql|medium"}]`).
+
 ## The triage argument
 
 Use these questions to review the draft, not as required headings. Below the opening fields, add the minimum shared explanation that lets a colleague understand the problem and assess the evidence. One connected paragraph can be enough for a small issue.

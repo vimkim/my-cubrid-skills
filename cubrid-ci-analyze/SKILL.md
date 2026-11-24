@@ -166,6 +166,10 @@ For a complete validated head bundle with testcase failures or errors, read [Tes
 
 Keep historical context separate from the exact merge-base classification. Record unavailable history and unresolved identities as unknown. History cannot upgrade the report-mode gate, supply a missing validated baseline, or change the current failure inventory.
 
+## 3c. Check duplicate JIRA issues for new-bug candidates
+
+For any failure whose `PR relation` is `unlikely` (or `also_observed_on_base`) and that is not already linked to an active issue in `cubrid-tcr` or [Known CI issues](../cubrid-common/references/known-ci-issues.md), check existing JIRA issues with `cubrid-jira-dup candidate-find --json` when installed before classifying it as a `new_bug_candidate`. Record matching issue keys and note unavailable `cubrid-jira-dup` state as unknown rather than assuming the failure is new.
+
 ## 4. Write the report
 
 If `$asd-ste100` is available, use its STE-flavored mode for English report prose.
@@ -202,3 +206,13 @@ Never include credentials, headers, signed URLs, or environment values.
 Re-read the saved report against the selected manifest and evidence. Require every requested suite to appear exactly once, every validated failure/error to appear exactly once, all totals to reconcile, every comparison to reconcile against the independently validated baseline and input scope, every attribution to cite concrete evidence, and every inference to have a falsifier. Check historical claims against retained occurrences, symptom evidence, and identity/coverage limitations. Correct discrepancies before sharing.
 
 Complete the Document Git workflow's local review and task commit, including any required report index. Return the report path, exact analyzed commit, suite states and counts, incomplete-evidence warnings, task checkout/branch and report commit, checks, and the highest-priority next action. Present any required integration approval with this committed result; continue approved integration and publication under the same workflow.
+
+### Machine-readable summary (`analysis-summary.json`)
+
+When invoked with a summary output path (for example by `cubrid-pr-flow`), write `analysis-summary.json` with `schema_version: 1` containing:
+
+- `pr_number`, `head_sha` (40-char), and `classification` (`pr_defect`, `known_ci_issue`, `new_bug_candidate`, `incomplete_evidence`, or `no_failures`)
+- `probable_causes`: list of concise Korean root-cause strings (ordered by confidence/impact)
+- `rerun_recommendation`: optional object (`eligible`, `mode`, `source_run_id`, `suites`, `reason`) or `null`
+- `new_bug_candidates`: list of candidate objects (`testcase`, `suite`, `symptom`, `dup_candidates`)
+- `report_path` and `report_url` (docserve or published report URL)

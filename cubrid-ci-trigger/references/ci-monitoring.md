@@ -1,6 +1,6 @@
 # Monitor requests with cubrid-ci-watch
 
-Use `cubrid-ci-watch` from `my-cubrid/bin`. The Python CLI owns durable request state, shared polling, deadlines, and replayable JSON events. It consumes `cubrid-pr-status --json --history 0` and read-only GitHub metadata. Use the installed command or `~/my-cubrid/bin/cubrid-ci-watch`. Read its `--help` and `docs/cubrid-ci-watch/README.md` in the `my-cubrid` checkout for the current CLI contract.
+Use the standalone `cubrid-ci-watch` CLI (`~/gh/cubrid-ci-watch`, installed via `just install` or `daily-update-cubrid` to `~/.local/bin/cubrid-ci-watch`). The Python CLI owns durable request state, shared polling, deadlines, and replayable JSON events. It consumes `cubrid-pr-status --json --history 0` and read-only GitHub metadata. Read `cubrid-ci-watch --help` and `~/gh/cubrid-ci-watch/README.md` for the current CLI contract.
 
 ## Register the original request
 
@@ -21,7 +21,7 @@ An unbound request can produce a `pickup_candidate` event. Verify the candidate 
 
 ## Run one shared poller
 
-Use one persistent process for all requests. Check whether a host-managed collector (such as `cubrid-hermes`) is already running before starting a new poller. Start a poller only if none owns `poll.lock`:
+Use one persistent process for all requests. Check `cubrid-ci-watch status` (or `systemctl --user status cubrid-ci-watch.service` on hosts running the user systemd service) to see whether a shared poller already holds `poll.lock` before starting a new one. Start a poller only if none owns `poll.lock`:
 
 ```bash
 cubrid-ci-watch poll
@@ -29,7 +29,7 @@ cubrid-ci-watch poll
 
 If `cubrid-ci-watch poll` exits `2` with `another poller owns the state directory`, treat that as an already-running shared poller rather than a failure requiring a manual polling loop. Alternatively, an existing scheduler can invoke `cubrid-ci-watch poll --once`. Registration alone does not establish that polling is running. If the CLI or persistent runner is unavailable, preserve the receipt and registration details and report monitoring as not started.
 
-Use `cubrid-ci-watch status --json` for the registry's stored observations. Use `cubrid-ci status "$PR_NUMBER" --json --history 0` when the user requests a fresh standalone snapshot. A successful query means collection succeeded, not that CI passed.
+By default, `poll` uses per-PR 1/2/4/8/16-minute exponential backoff with a 10-second wakeup loop (pass `--interval SECONDS` for a fixed interval override). Use `cubrid-ci-watch status` (or `ls`) for the concise active-request human summary and poller state, `cubrid-ci-watch show "$REQUEST_ID"` for one request's detailed contexts and events, and `cubrid-ci-watch status --json` for the registry's stored observations. Use `cubrid-ci status "$PR_NUMBER" --json --history 0` when the user requests a fresh standalone snapshot. A successful query means collection succeeded, not that CI passed.
 
 ## Wait inside the current session
 
@@ -41,13 +41,13 @@ cubrid-ci-watch wait "$REQUEST_ID" --after "$LAST_EVENT_ID"
 cubrid-ci-watch wait "$REQUEST_ID" --after "$LAST_EVENT_ID" --until terminal
 ```
 
-Launch `cubrid-ci-watch wait` as one background shell task and end the turn so the runtime wakes the session only when a meaningful event (`pickup_candidate`, `failure`, `no_verdict`, `complete`, `head_changed`, `superseded`, `delay`, `deadline`) commits and prints as JSONL on stdout. `wait` cooperates with any running poller via non-blocking `poll.lock` checks (making no duplicate GitHub API calls while a shared poller runs) and falls back to 15-minute polling (`--interval 900`) when no poller is active.
+Launch `cubrid-ci-watch wait` as one background shell task and end the turn so the runtime wakes the session only when a meaningful event (`pickup_candidate`, `failure`, `no_verdict`, `complete`, `head_changed`, `superseded`, `delay`, `deadline`) commits and prints as JSONL on stdout. `wait` cooperates with any running poller via non-blocking `poll.lock` checks (making no duplicate GitHub API calls while a shared poller runs) and falls back to per-PR 1/2/4/8/16-minute backoff polling (or a fixed `--interval SECONDS` if given) when no poller is active.
 
 `wait` exits `0` after emitting matching events or when the request is already closed, `3` if an optional `--timeout` elapses, and `2` on invalid input or storage errors. After waking on an intermediate event (such as an early `failure`), advance `LAST_EVENT_ID` to the highest emitted `id` before calling `wait` again.
 
 ## Consume events
 
-Read events with `cubrid-ci-watch events --after "$LAST_EVENT_ID"`. Save the cursor only after handling the events. Replayed events retain their identifiers, so consumers can deduplicate them. For out-of-session notifications on hosts running `my-cubrid-hermes`, bind the request with `cubrid-briefing bind` to deliver watcher events to Discord and an idle bound Herdr agent; verify the configured sink before claiming notifications are enabled. A local event stream alone does not establish that an agent or user received it.
+Read events with `cubrid-ci-watch events --after "$LAST_EVENT_ID"`. Save the cursor only after handling the events. Replayed events retain their identifiers, so consumers can deduplicate them. `cubrid-ci-watch` records local state and JSONL events only and sends no notifications on its own; verify any external delivery sink separately before claiming out-of-session notifications are enabled. A local event stream alone does not establish that an agent or user received it.
 
 Invoke AI for a pickup candidate, a new failure or `no_verdict` event, a combined terminal result, a changed head or superseding execution, the 24-hour delay, or the monitoring deadline. Waiting states and unchanged results stay in the CLI. Keep long-running CI work waiting in `work-tracker`, with its CLI request identifier, receipt, head SHA, and last processed event identifier.
 

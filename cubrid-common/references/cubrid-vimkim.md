@@ -4,9 +4,9 @@ Load this profile only when the current user is `vimkim`, as established by [Wor
 
 For CUBRID work, read `/home/vimkim/my-cubrid/CUBRID.md` once for vimkim's local development and publication policies, including the ticket-first `pwd`-independent worktree and Herdr Space/Tab workflow (`cubrid-worktree`). Current user instructions take precedence.
 
-## CI monitoring and delivery
+## CI monitoring
 
-On vimkim's host, `my-cubrid-hermes` runs the shared `cubrid-ci-watch` collector (`cubrid-hermes-*-watcher.service`) and the `cubrid-briefing` delivery bridge (Discord and explicitly bound Herdr agents). Use `cubrid-ci-watch wait` when waiting inside the current session, and `cubrid-briefing bind` when out-of-session Discord or Herdr alerts are desired.
+On vimkim's host, the standalone `cubrid-ci-watch` package (`~/gh/cubrid-ci-watch`, installed to `~/.local/bin/cubrid-ci-watch`) runs the shared background poller as user systemd unit `cubrid-ci-watch.service` (per-PR 1/2/4/8/16m backoff, 48h deadline, 10s wakeup; ledger at `~/.local/state/cubrid-ci-watch/watch.sqlite3`). Check poller and active request state with `cubrid-ci-watch status` (or `just status` in `~/gh/cubrid-ci-watch`), and use `cubrid-ci-watch wait` when waiting inside the current session. No separate out-of-session notification bridge (`my-cubrid-hermes` / `cubrid-briefing`) is active.
 
 ## Interpret team-leader assignment
 

@@ -13,7 +13,7 @@ cubrid-ci-watch register "$PR_URL" \
   --triggered-at "$TRIGGER_TIME" --receipt "$RECEIPT"
 ```
 
-Pass all four suites (`shell`, `sql`, `medium`, `sql_by_cci`) for `/run all`, every suite present in the source run (including zero-shard carried-forward suites) for `/run rerun <run-id>`, or only the selected suites for a subset run. Both build contexts are included by the CLI. Use the returned comment URL as the receipt for `/run` operations. For a GitHub failed-job rerun, pass `--kind rerun-failed`, `--run-id "$RUN_ID"`, and the intended `--attempt "$TARGET_ATTEMPT"`, with the stable operation receipt saved before the mutation.
+Pass all four suites (`shell`, `sql`, `medium`, `sql_by_cci`) for `/run all`, every suite present in the source run (including zero-shard carried-forward suites) for `/run rerun <run-id>`, or only the selected suites for a subset run. Both build contexts are included by the CLI. On explicit user request to exclude optional suites (`sql_by_cci`), pass `--required-only` (defaults to `shell`, `sql`, `medium`, or filters `sql_by_cci` out of supplied `--suite` flags) at registration, or remove an optional suite from an active request with `cubrid-ci-watch drop-suite "$REQUEST_ID" --suite sql_by_cci`. Use the returned comment URL as the receipt for `/run` operations. For a GitHub failed-job rerun, pass `--kind rerun-failed`, `--run-id "$RUN_ID"`, and the intended `--attempt "$TARGET_ATTEMPT"`, with the stable operation receipt saved before the mutation.
 
 When pickup is verified, include `--run-id` and `--attempt` in registration. To bind a request registered before pickup, repeat its original registration with those two options. Repeating the registration preserves its identity, original trigger time, deadline, and already recorded events. A conflicting binding is an error, not authorization to follow another run.
 
@@ -38,12 +38,19 @@ For typical 1–24h CI runs, prefer registering and returning/closing the sessio
 Only when staying in the current session for a short run until CI produces a failure or finishes, block on `cubrid-ci-watch wait` instead of `schedule` timers or repeated `gh run view` / `gh pr checks` loops:
 
 ```bash
+# Wake on any meaningful event (default):
 cubrid-ci-watch wait "$REQUEST_ID" --after "$LAST_EVENT_ID"
-# or wait until the request closes (complete / head_changed / superseded / deadline):
+# Wait until all required contexts finish (ignores pending/failing optional contexts such as sql_by_cci):
+cubrid-ci-watch wait "$REQUEST_ID" --after "$LAST_EVENT_ID" --until required
+# Wait until all tracked contexts finish or the request closes (complete / head_changed / superseded / deadline):
 cubrid-ci-watch wait "$REQUEST_ID" --after "$LAST_EVENT_ID" --until terminal
 ```
 
-Launch `cubrid-ci-watch wait` as one background shell task and end the turn so the runtime wakes the session only when a meaningful event (`pickup_candidate`, `failure`, `no_verdict`, `complete`, `head_changed`, `superseded`, `delay`, `deadline`) commits and prints as JSONL on stdout. `wait` cooperates with any running poller via non-blocking `poll.lock` checks (making no duplicate GitHub API calls while a shared poller runs) and falls back to per-PR 1/2/4/8/16-minute backoff polling (or a fixed `--interval SECONDS` if given) when no poller is active.
+Whenever the user's condition is "all required checks pass" or "wait only for required checks", use `cubrid-ci-watch wait "$REQUEST_ID" --after "$LAST_EVENT_ID" --until required` (and optionally `cubrid-ci-watch drop-suite "$REQUEST_ID" --suite sql_by_cci` if the user wants to stop tracking `sql_by_cci`); never hand-roll a `gh pr checks --required` polling loop.
+
+`cubrid-ci-watch` classifies each context as required or optional from the union of the stable required set (`build (release)`, `test_shell`, `test_sql`, `test_medium`) and live `gh pr checks --required` when available (cached across transient errors). Once every required context is attributed and terminal while optional contexts remain unfinished, the poller emits `required_complete` (`payload.outcome`, `required_contexts`, `required_source`) and keeps the request active until `complete` (whose payload records both overall `outcome` and `required_outcome`). `wait --until required` wakes on `required_complete`, `complete`, `head_changed`, `superseded`, or `deadline`, and exits `0` immediately if `required_complete` already committed at `id <= --after`.
+
+Launch `cubrid-ci-watch wait` as one background shell task and end the turn so the runtime wakes the session only when a meaningful event (`pickup_candidate`, `failure`, `no_verdict`, `required_complete`, `complete`, `head_changed`, `superseded`, `delay`, `deadline`) commits and prints as JSONL on stdout. `wait` cooperates with any running poller via non-blocking `poll.lock` checks (making no duplicate GitHub API calls while a shared poller runs) and falls back to per-PR 1/2/4/8/16-minute backoff polling (or a fixed `--interval SECONDS` if given) when no poller is active.
 
 `wait` exits `0` after emitting matching events or when the request is already closed, `3` if an optional `--timeout` elapses, and `2` on invalid input or storage errors. After waking on an intermediate event (such as an early `failure`), advance `LAST_EVENT_ID` to the highest emitted `id` before calling `wait` again.
 

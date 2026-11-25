@@ -1,6 +1,6 @@
 ---
 name: cubrid-jira
-description: Look up CUBRID JIRA issue context and publish a reviewed Markdown file as an existing issue's description. Use when a CBRD-XXXXX ticket is mentioned, when the user asks about a JIRA issue, or when another authorized workflow needs to upload a finished issue report.
+description: Look up CUBRID JIRA issue context, choose an issue's status transitions, and publish a reviewed Markdown file as an existing issue's description. Use when a CBRD-XXXXX ticket is mentioned, when the user asks about a JIRA issue, when recommending or running a JIRA transition such as resolving after a PR merge, or when another authorized workflow needs to upload a finished issue report.
 ---
 
 Read or update CUBRID JIRA issues with the `cubrid-jira` CLI.
@@ -29,6 +29,28 @@ cubrid-jira search TICKET_ID
 ```
 
 Present the output as-is. Search contacts JIRA by default and refreshes the local cache. If the command fails after preflight, report the exact error rather than guessing.
+
+## Resolve an issue after its fix merges
+
+When a PR that fixes the issue merged normally, the issue's target is status `Resolved` with resolution `Fixed`, even when the issue skipped Analysis or Develop. Walk the fix route forward from the current status:
+
+| Current status | Transition | New status |
+|---|---|---|
+| `Confirmed` or `Analysis` | `Start Develop` | `Develop` |
+| `Develop` | `Accept the fix` | `Handover` |
+| `Handover` | `Check in fix` with `--resolution Fixed` | `Resolved` |
+
+Transition names depend on the current status, and JIRA lists ` Check in fix` with a leading space (`--to` matches names case-insensitively without the surrounding spaces). Before each step, list the live transitions and their target statuses, and take the one this table names:
+
+```bash
+cubrid-jira transition TICKET_ID --output json
+```
+
+`Resolve without fix` and `Ask Reconfirmation` record the issue as unfixed or send it back to the reporter, so they fit only an issue whose fix did not land. An issue already `Resolved` or `Closed` needs no transition. For any other status, such as `Open`, report the status and the listed transitions to the user.
+
+After `/cubrid-pr-merge`, `pr-final-merge-handoff cleanup --pr PR --jira-resolve-fixed` previews this whole walk for the PR's tickets; `--apply` runs it. Elsewhere, such as a TC-only change whose carrier engine PR closed unmerged, run each step with `cubrid-jira transition TICKET_ID --to NAME`.
+
+Every transition is a live JIRA write. Show the dry-run and send it (`--yes` or `--apply`) only when the user asks for it or approves it in this session.
 
 ## Check for duplicates before a write
 

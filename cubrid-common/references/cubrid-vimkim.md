@@ -14,6 +14,10 @@ On vimkim's host, the standalone `cubrid-ci-watch` package (`~/gh/cubrid-ci-watc
 
 `cubrid-pr-flow.service` applies the same 1-per-head cap in the background (`auto_rerun_max_per_head = 1`) and falls back to an `ACT-<N>` confirmation prompt on a second failure or any guardrail miss. Explicit user approval remains required for a 2nd rerun on the same head, any `/run all` or `/run <suite>` retrigger, testcase PR closure or merge, and engine PR merges.
 
+## Standing review-approval authorization
+
+On 2026-11-25, `vimkim` granted standing review-approval authorization for `cubrid-code-review`: a requested and published PR review whose result is clean submits a formal GitHub `APPROVE` under the conditions in [Approve a clean review](../../cubrid-code-review/references/pr-publication.md#approve-a-clean-review), whatever the author's `/run all` or other CI result. Explicit user approval remains required for any other formal review, including `CHANGES_REQUESTED`, and for merges, CI triggers, and TC PR actions.
+
 ## Interpret team-leader assignment
 
 `hornetmj` is vimkim's development team 2 leader. When a CUBRID issue is assigned to `hornetmj`, the team leader has not yet decided who will implement it.

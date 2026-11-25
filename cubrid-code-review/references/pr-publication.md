@@ -53,4 +53,41 @@ Recheck the PR's base and head before posting. If it moved, preserve the reviewe
 
 Use an available GitHub connector to create or update the PR-page comment. If it lacks that capability, use `gh pr comment --repo <owner/repo> <number> --body-file <saved-comment-file>`. Read back the posted body and verify the report link and snapshot marker. On a retry or uncertain write result, inspect existing comments first. Update only a comment authored by the authenticated account with the same PR, full base, and full head marker. A different snapshot receives a new comment so earlier review results remain attributable.
 
-After the merge, perform the documentation repository's required cleanup from outside the merged task worktree. Remove only this review's worktree and branch without force, preserving valuable local material. Report any cleanup obstacle separately from successful publication. Completion requires the verified report URL, comment URL, and explicit status of any unfinished step.
+## Approve a clean review
+
+Apply this section only when the user's context grants standing review-approval authorization. Otherwise the comment is the last GitHub write. Start it after the comment is verified.
+
+Submit an approval only when every condition holds:
+
+- The report verdict is `no-confirmed-findings` and `Follow-up review required` is `no`.
+- The PR is open.
+- The authenticated account (`gh api user --jq .login`) is not the PR author.
+- The PR's base and head SHAs, rechecked immediately before submission, equal the reviewed snapshot.
+
+CI state is outside this decision: pending or failed checks and the TC Merge Gate leave a clean review approvable. `APPROVE` is the only formal review this workflow submits. For `changes-required` or `incomplete`, the Korean comment remains the only review output. When a condition fails, record the failed condition as the skip reason.
+
+Save the approval body in the run directory, replacing all placeholders:
+
+```markdown
+코드 리뷰 결과 검토한 범위에서 확인된 결함이 없어 승인합니다. (base `{base-short}` / head `{head-short}`)
+
+이 승인은 코드 리뷰만 다룹니다. 병합 전에 CI 결과와 TC Merge Gate를 별도로 확인해야 합니다.
+
+- **전체 보고서:** [리뷰 보고서]({검증된 my-cubrid-docs/blob/main/ 경로})
+
+<!-- cubrid-code-review-approval: {owner}/{repo}#{pr-number} base={full-base-sha} head={full-head-sha} -->
+```
+
+On a retry or uncertain write result, first list the PR's reviews and reuse an `APPROVED` review by the authenticated account whose `commit_id` is the reviewed head. Otherwise submit:
+
+```bash
+gh pr review <N> --repo <owner/repo> --approve --body-file <saved-approval-file>
+```
+
+Read back the review with `gh api repos/<owner>/<repo>/pulls/<N>/reviews --paginate`. Verify that the authenticated account's latest review has state `APPROVED`, `commit_id` equal to the reviewed head, and the snapshot marker. Record its `html_url` as the approval URL in the run directory's publication progress, the final summary, and `verdict.json`.
+
+Then run the [PR approval checker](../../cubrid-common/SKILL.md#pr-approval-gate) for this PR and show its full output. The approval and the checker result authorize no merge, CI trigger, or TC PR action; those gates apply unchanged.
+
+## Clean up
+
+After the documentation merge, perform the documentation repository's required cleanup from outside the merged task worktree. Remove only this review's worktree and branch without force, preserving valuable local material. Report any cleanup obstacle separately from successful publication. Completion requires the verified report URL, comment URL, the approval URL or recorded skip reason, and explicit status of any unfinished step.

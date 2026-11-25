@@ -91,8 +91,9 @@ When `verdict.json` is requested (for example by `cubrid-pr-flow`), write one JS
   "findings_count": {"P0": 0, "P1": 0, "P2": 0, "P3": 0},
   "findings_summary": "한두 문장 요약",
   "report_url": "https://github.com/vimkim/my-cubrid-docs/blob/main/...",
-  "comment_url": "https://github.com/CUBRID/cubrid/pull/8504#issuecomment-..."
+  "comment_url": "https://github.com/CUBRID/cubrid/pull/8504#issuecomment-...",
+  "approval_url": "https://github.com/CUBRID/cubrid/pull/8504#pullrequestreview-..."
 }
 ```
 
-Record `report_url` and `comment_url` from the verified publication step (empty string only when local-only or publication failed).
+Record `report_url` and `comment_url` from the verified publication step (empty string only when local-only or publication failed). Record `approval_url` from the verified [approval](pr-publication.md#approve-a-clean-review), or an empty string when no approval was submitted. `approval_url` is optional for readers, so `schema_version` stays 1.

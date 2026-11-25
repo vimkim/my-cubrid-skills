@@ -213,6 +213,6 @@ When invoked with a summary output path (for example by `cubrid-pr-flow`), write
 
 - `pr_number`, `head_sha` (40-char), and `classification` (`pr_defect`, `known_ci_issue`, `new_bug_candidate`, `incomplete_evidence`, or `no_failures`)
 - `probable_causes`: list of concise Korean root-cause strings (ordered by confidence/impact)
-- `rerun_recommendation`: optional object (`eligible`, `mode`, `source_run_id`, `suites`, `reason`) or `null`
+- `rerun_recommendation`: optional object (`eligible` bool, `auto_rerun` bool, `mode` `"comment"` for `/run rerun <source_run_id>` or `"gh_rerun_failed"`, `source_run_id` positive int, `suites` list from `shell`, `sql`, `medium`, `sql_by_cci`, `reason` string) or `null`. Set `auto_rerun` to `true` only when every red suite's failures are explained by a `cubrid-tcr` `known` rule, verified flaky history, or a wholly dead shard (`found=no`), with no `pr_defect`, no `new_bug_candidates`, and no `/run rerun` disqualifier (`held`, `rerun_short > 0`); otherwise set `auto_rerun` to `false`.
 - `new_bug_candidates`: list of candidate objects (`testcase`, `suite`, `symptom`, `dup_candidates`)
 - `report_path` and `report_url` (docserve or published report URL)

@@ -21,7 +21,24 @@ Read [Workflow policy](../cubrid-common/SKILL.md#workflow-policy), [Testcase lif
 pr-final-merge-handoff plan --pr "$PR" --json
 ```
 
-Read `data.steps`, `data.testcases`, `data.approvals`, `data.ci_evidence`, and `data.blockers`. Each `squash message required (--message KEY=FILE)` blocker names one pull that the handoff merges and the `KEY` for its message. Every other blocker stops the skill: report it with the approval checker output and end. A reviewer waiver (`--waive-reviewer LOGIN`) is used only when the user names that reviewer in this session.
+Read `data.steps`, `data.testcases`, `data.approvals`, `data.ci_evidence`, `data.review_threads`, and `data.blockers`. Two blocker kinds are handled here:
+
+- `squash message required (--message KEY=FILE)` names one pull that the handoff merges and the `KEY` for its message. Step 3 writes it.
+- `unresolved review thread(s)` means GitHub will refuse that merge (`All comments must be resolved`). Resolve this before any testcase PR changes, because the handoff merges the TC PRs first. For each entry in `data.review_threads`, show the user its PR, path, first author, URL, and whether the latest reply addresses it:
+
+  ```bash
+  gh api graphql -f query='query($id: ID!) { node(id: $id) { ... on PullRequestReviewThread { comments(last: 3) { nodes { author { login } body } } } } }' -f id="$THREAD_ID"
+  ```
+
+  Resolve only the threads that the user approves in this session, then run the plan again:
+
+  ```bash
+  gh api graphql -f query='mutation($id: ID!) { resolveReviewThread(input: {threadId: $id}) { thread { isResolved } } }' -f id="$THREAD_ID"
+  ```
+
+  A thread without an answer goes back to the user; the skill ends until it is addressed.
+
+Every other blocker stops the skill: report it with the approval checker output and end. A reviewer waiver (`--waive-reviewer LOGIN`) is used only when the user names that reviewer in this session.
 
 ## 3. Write the messages
 
@@ -47,7 +64,7 @@ Run the plan again with every message:
 pr-final-merge-handoff plan --pr "$PR" --message engine="$ENGINE_FILE" --message cubrid-testcases="$TC_FILE"
 ```
 
-Pass only the keys from step 2. Require `ready` with no blockers. Show the user, in this order:
+Pass only the keys from step 2. Require `ready` with no blockers and an empty `review_threads`. Show the user, in this order:
 
 1. The approval checker output for every PR.
 2. Each squash message exactly as it will land, labeled with its repository and PR number.

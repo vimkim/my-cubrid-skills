@@ -1,0 +1,211 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 524" width="1200" height="524" role="img" aria-labelledby="title desc">
+  <title id="title">my-cubrid-skills — End-to-End CUBRID Agent Workflow (Light)</title>
+  <desc id="desc">Pure-vector workflow diagram showing the 6 stages of CUBRID database engine development skills from JIRA lookup and worktrees to build/testkit, 2-step draft PRs, review/CI analysis, and user-invoked merges, anchored by cubrid-common.</desc>
+  <defs>
+    <pattern id="dot-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="12" cy="12" r="1" fill="#d8dee4" opacity="0.7"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 1 1.5 L 8.5 5 L 1 8.5 z" fill="#8c959f"/>
+    </marker>
+    <style>
+      .sans { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
+      .mono { font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace; }
+      .title { font-size: 22px; font-weight: 700; fill: #1f2328; letter-spacing: -0.3px; }
+      .subtitle { font-size: 13px; font-weight: 400; fill: #57606a; }
+      .meta-pill-text { font-size: 11.5px; font-weight: 600; fill: #1f2328; }
+      .stage-label { font-size: 11px; font-weight: 700; letter-spacing: 0.7px; }
+      .stage-sub { font-size: 12px; font-weight: 400; fill: #57606a; }
+      .skill-pill { font-size: 11.5px; font-weight: 600; }
+      .mini-text { font-size: 11px; font-weight: 500; fill: #1f2328; }
+      .gate-text { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; }
+      .footer-note { font-size: 11px; font-weight: 400; fill: #6e7781; }
+      .core-badge { font-size: 10px; font-weight: 700; letter-spacing: 0.7px; fill: #57606a; }
+      .core-desc { font-size: 11.5px; font-weight: 400; fill: #57606a; }
+      .core-extra { font-size: 11px; font-weight: 500; fill: #6e7781; }
+    </style>
+  </defs>
+
+  <!-- Canvas & Border -->
+  <rect x="0" y="0" width="1200" height="524" rx="14" fill="#ffffff"/>
+  <rect x="2" y="2" width="1196" height="520" rx="12" fill="url(#dot-grid)"/>
+  <rect x="1" y="1" width="1198" height="522" rx="13" fill="none" stroke="#d0d7de" stroke-width="1.5"/>
+
+  <!-- Header -->
+  <g id="header">
+    <rect x="40" y="28" width="42" height="42" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+    <path d="M 52 44 L 59 49 L 52 54" fill="none" stroke="#0969da" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="62" y1="55" x2="70" y2="55" stroke="#1a7f37" stroke-width="2.2" stroke-linecap="round"/>
+
+    <text x="96" y="47" class="sans title">my-cubrid-skills</text>
+    <text x="96" y="67" class="sans subtitle">End-to-end Claude Code &amp; Codex skill pipeline for CUBRID engine development</text>
+
+    <!-- Header Metadata Pills (right-aligned to x=1160) -->
+    <rect x="692" y="34" width="96" height="28" rx="14" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+    <text x="740" y="52" text-anchor="middle" class="sans meta-pill-text">23 Skills</text>
+
+    <rect x="798" y="34" width="184" height="28" rx="14" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+    <text x="890" y="52" text-anchor="middle" class="sans meta-pill-text">Human-Gated PR &amp; Merge</text>
+
+    <rect x="992" y="34" width="168" height="28" rx="14" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1"/>
+    <text x="1076" y="52" text-anchor="middle" class="sans meta-pill-text">Ownership-Aware Sync</text>
+
+    <line x1="40" y1="90" x2="1160" y2="90" stroke="#e5e9ee" stroke-width="1.2"/>
+  </g>
+
+  <!-- Row 1 Connectors -->
+  <line x1="388" y1="186" x2="420" y2="186" stroke="#8c959f" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <line x1="776" y1="186" x2="808" y2="186" stroke="#8c959f" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- Row 1 -> Row 2 Stepped Connector -->
+  <path d="M 988 267 L 988 272 Q 988 279 980 279 L 220 279 Q 212 279 212 286 L 212 289" fill="none" stroke="#8c959f" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- Row 2 Connectors -->
+  <line x1="388" y1="372" x2="420" y2="372" stroke="#8c959f" stroke-width="1.8" marker-end="url(#arrow)"/>
+  <line x1="776" y1="372" x2="808" y2="372" stroke="#8c959f" stroke-width="1.8" marker-end="url(#arrow)"/>
+
+  <!-- STAGE 01: JIRA & TRIAGE -->
+  <g id="stage-01">
+    <rect x="40" y="108" width="344" height="156" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+    <rect x="40" y="108" width="344" height="4" rx="2" fill="#0969da"/>
+    <circle cx="62" cy="130" r="4" fill="#0969da"/>
+    <text x="74" y="134" class="sans stage-label" fill="#0969da">01 · JIRA &amp; TRIAGE</text>
+    <text x="58" y="152" class="sans stage-sub">Lookup, duplicate check &amp; Korean reports</text>
+
+    <rect x="58" y="165" width="108" height="26" rx="6" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/>
+    <text x="112" y="182" text-anchor="middle" class="mono skill-pill" fill="#0969da">cubrid-jira</text>
+
+    <rect x="174" y="165" width="142" height="26" rx="6" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/>
+    <text x="245" y="182" text-anchor="middle" class="mono skill-pill" fill="#0969da">cubrid-jira-dup</text>
+
+    <rect x="58" y="199" width="198" height="26" rx="6" fill="#ddf4ff" stroke="#54aeff" stroke-width="1"/>
+    <text x="157" y="216" text-anchor="middle" class="mono skill-pill" fill="#0969da">cubrid-jira-issue-write</text>
+
+    <text x="58" y="248" class="sans footer-note">Also: cubrid-xref (PR ↔ JIRA local cache)</text>
+  </g>
+
+  <!-- STAGE 02: WORKTREE & HERDR SPACE -->
+  <g id="stage-02">
+    <rect x="428" y="108" width="344" height="156" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+    <rect x="428" y="108" width="344" height="4" rx="2" fill="#8250df"/>
+    <circle cx="450" cy="130" r="4" fill="#8250df"/>
+    <text x="462" y="134" class="sans stage-label" fill="#8250df">02 · WORKTREE &amp; HERDR SPACE</text>
+    <text x="446" y="152" class="sans stage-sub">Ticket checkout, submodules &amp; Space/Tab setup</text>
+
+    <rect x="446" y="165" width="146" height="26" rx="6" fill="#fbefff" stroke="#c297ff" stroke-width="1"/>
+    <text x="519" y="182" text-anchor="middle" class="mono skill-pill" fill="#8250df">cubrid-worktree</text>
+
+    <rect x="446" y="201" width="66" height="24" rx="5" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+    <text x="479" y="217" text-anchor="middle" class="mono mini-text">create</text>
+
+    <rect x="520" y="201" width="66" height="24" rx="5" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+    <text x="553" y="217" text-anchor="middle" class="mono mini-text">review</text>
+
+    <rect x="594" y="201" width="54" height="24" rx="5" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+    <text x="621" y="217" text-anchor="middle" class="mono mini-text">open</text>
+
+    <rect x="656" y="201" width="66" height="24" rx="5" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+    <text x="689" y="217" text-anchor="middle" class="mono mini-text">delete</text>
+
+    <text x="446" y="248" class="sans footer-note">Safe cci / jdbc submodule lifecycle</text>
+  </g>
+
+  <!-- STAGE 03: BUILD & FOCUSED TESTKIT -->
+  <g id="stage-03">
+    <rect x="816" y="108" width="344" height="156" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+    <rect x="816" y="108" width="344" height="4" rx="2" fill="#1a7f37"/>
+    <circle cx="838" cy="130" r="4" fill="#1a7f37"/>
+    <text x="850" y="134" class="sans stage-label" fill="#1a7f37">03 · BUILD &amp; FOCUSED TESTKIT</text>
+    <text x="834" y="152" class="sans stage-sub">Preset builds, ctest &amp; ordered artifact verdicts</text>
+
+    <rect x="834" y="164" width="114" height="25" rx="6" fill="#dafbe1" stroke="#4ac26b" stroke-width="1"/>
+    <text x="891" y="181" text-anchor="middle" class="mono skill-pill" fill="#1a7f37">cubrid-build</text>
+
+    <rect x="956" y="164" width="170" height="25" rx="6" fill="#dafbe1" stroke="#4ac26b" stroke-width="1"/>
+    <text x="1041" y="181" text-anchor="middle" class="mono skill-pill" fill="#1a7f37">cubrid-test-sql-run</text>
+
+    <rect x="834" y="196" width="192" height="25" rx="6" fill="#dafbe1" stroke="#4ac26b" stroke-width="1"/>
+    <text x="930" y="213" text-anchor="middle" class="mono skill-pill" fill="#1a7f37">cubrid-test-medium-run</text>
+
+    <rect x="834" y="228" width="184" height="25" rx="6" fill="#dafbe1" stroke="#4ac26b" stroke-width="1"/>
+    <text x="926" y="245" text-anchor="middle" class="mono skill-pill" fill="#1a7f37">cubrid-test-shell-run</text>
+  </g>
+
+  <!-- STAGE 04: 2-STEP DRAFT PR -->
+  <g id="stage-04">
+    <rect x="40" y="294" width="344" height="156" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+    <rect x="40" y="294" width="344" height="4" rx="2" fill="#9a6700"/>
+    <circle cx="62" cy="316" r="4" fill="#9a6700"/>
+    <text x="74" y="320" class="sans stage-label" fill="#9a6700">04 · 2-STEP DRAFT PR</text>
+    <text x="58" y="338" class="sans stage-sub">Save Korean body in docs, confirm, publish</text>
+
+    <rect x="58" y="351" width="148" height="26" rx="6" fill="#fff8c5" stroke="#d4a72c" stroke-width="1"/>
+    <text x="132" y="368" text-anchor="middle" class="mono skill-pill" fill="#9a6700">cubrid-pr-create</text>
+
+    <rect x="214" y="354" width="96" height="20" rx="10" fill="#ffffff" stroke="#d4a72c" stroke-width="1"/>
+    <text x="262" y="368" text-anchor="middle" class="sans gate-text" fill="#9a6700">HUMAN GATE</text>
+
+    <rect x="58" y="387" width="136" height="28" rx="6" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+    <text x="126" y="405" text-anchor="middle" class="sans mini-text">1. Draft in docs</text>
+
+    <line x1="199" y1="401" x2="218" y2="401" stroke="#8c959f" stroke-width="1.4" marker-end="url(#arrow)"/>
+
+    <rect x="224" y="387" width="142" height="28" rx="6" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+    <text x="295" y="405" text-anchor="middle" class="sans mini-text">2. Confirm &amp; open</text>
+
+    <text x="58" y="435" class="sans footer-note">Persisted review draft before GitHub write</text>
+  </g>
+
+  <!-- STAGE 05: REVIEW & CI ANALYZE -->
+  <g id="stage-05">
+    <rect x="428" y="294" width="344" height="156" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+    <rect x="428" y="294" width="344" height="4" rx="2" fill="#bc4c00"/>
+    <circle cx="450" cy="316" r="4" fill="#bc4c00"/>
+    <text x="462" y="320" class="sans stage-label" fill="#bc4c00">05 · REVIEW &amp; CI ANALYZE</text>
+    <text x="446" y="338" class="sans stage-sub">Budgeted audit, gha-ci trigger &amp; root cause</text>
+
+    <rect x="446" y="351" width="152" height="26" rx="6" fill="#fff1e5" stroke="#fb8f44" stroke-width="1"/>
+    <text x="522" y="368" text-anchor="middle" class="mono skill-pill" fill="#bc4c00">cubrid-code-review</text>
+
+    <rect x="606" y="351" width="148" height="26" rx="6" fill="#fff1e5" stroke="#fb8f44" stroke-width="1"/>
+    <text x="680" y="368" text-anchor="middle" class="mono skill-pill" fill="#bc4c00">cubrid-ci-trigger</text>
+
+    <rect x="446" y="385" width="156" height="26" rx="6" fill="#fff1e5" stroke="#fb8f44" stroke-width="1"/>
+    <text x="524" y="402" text-anchor="middle" class="mono skill-pill" fill="#bc4c00">cubrid-ci-analyze</text>
+
+    <text x="446" y="435" class="sans footer-note">Read-only snapshot analysis decoupled from trigger</text>
+  </g>
+
+  <!-- STAGE 06: USER-INVOKED MERGE -->
+  <g id="stage-06">
+    <rect x="816" y="294" width="344" height="156" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+    <rect x="816" y="294" width="344" height="4" rx="2" fill="#0e7490"/>
+    <circle cx="838" cy="316" r="4" fill="#0e7490"/>
+    <text x="850" y="320" class="sans stage-label" fill="#0e7490">06 · USER-INVOKED MERGE</text>
+    <text x="834" y="338" class="sans stage-sub">Preview squash commits, merge TC &amp; engine PRs</text>
+
+    <rect x="834" y="351" width="138" height="26" rx="6" fill="#e0f7fa" stroke="#38bdf8" stroke-width="1"/>
+    <text x="903" y="368" text-anchor="middle" class="mono skill-pill" fill="#0e7490">cubrid-pr-merge</text>
+
+    <rect x="980" y="354" width="106" height="20" rx="10" fill="#ffffff" stroke="#38bdf8" stroke-width="1"/>
+    <text x="1033" y="368" text-anchor="middle" class="sans gate-text" fill="#0e7490">MANUAL ONLY</text>
+
+    <rect x="834" y="387" width="308" height="28" rx="6" fill="#ffffff" stroke="#d0d7de" stroke-width="1" stroke-dasharray="4 3"/>
+    <text x="988" y="405" text-anchor="middle" class="mono mini-text">squash preview → TC PRs → gate → engine PR</text>
+
+    <text x="834" y="435" class="sans footer-note">Closes unchanged TC PRs after confirmation</text>
+  </g>
+
+  <!-- FOUNDATION STRIP -->
+  <g id="foundation">
+    <rect x="40" y="466" width="1120" height="40" rx="10" fill="#f6f8fa" stroke="#d0d7de" stroke-width="1.2"/>
+    <rect x="54" y="474" width="96" height="24" rx="6" fill="#ffffff" stroke="#d0d7de" stroke-width="1"/>
+    <text x="102" y="490" text-anchor="middle" class="sans core-badge">SHARED CORE</text>
+
+    <rect x="160" y="474" width="122" height="24" rx="12" fill="#eaeef2" stroke="#afb8c1" stroke-width="1"/>
+    <text x="221" y="490" text-anchor="middle" class="mono skill-pill" fill="#1f2328">cubrid-common</text>
+
+    <text x="294" y="490" class="sans core-desc">Testkit preflight, CI evidence identity &amp; PR policy</text>
+    <text x="1144" y="490" text-anchor="end" class="sans core-extra">+ create-testcases · cubrid-performance · cubrid-manual-search · +5 ops/QA</text>
+  </g>
+</svg>

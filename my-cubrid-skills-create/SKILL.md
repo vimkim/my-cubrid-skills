@@ -63,18 +63,18 @@ Correct defects in place and run appropriate source-level checks for supporting 
 
 Use an independent reviewer only when the user requests one; provide the saved file, workflow context, and these criteria, and request concrete findings. A design interview is a separate user-requested activity, not an installation prerequisite.
 
-### Step 7: Confirm publication, reinstall, and verify
+### Step 7: Integrate, sync, and verify
 
-After validation, ask whether to reinstall the skills and commit and push the intended repository changes, as required by the collection's `AGENTS.md`. Run only the publication actions explicitly authorized by the user.
+After validation, follow the Tier 1 completion workflow in the collection's `AGENTS.md`: inspect the diff and staging area, commit only the intended skill files (preserving unrelated changes, matching the commit style of `git log --oneline -10`), rebase onto `main`, fast-forward merge with `git merge --ff-only`, push to the configured remote, and clean up the task worktree and branch.
 
-For an authorized reinstall, run from the collection root:
+From the merged collection root, sync and verify the installed skills (authorized under Tier 1):
 
 ```bash
 just sync
 just list
 ```
 
-Verify that the frontmatter `name:` appears for both Claude Code and Codex. For an authorized commit and push, inspect the diff and staging area, include only the intended skill files, and preserve unrelated changes. Match the commit scope to the style of `git log --oneline -10`, push to the intended repository branch, and report the result.
+Verify that the frontmatter `name:` appears for both Claude Code and Codex, and report the commit, push, sync, and cleanup results.
 
 ## Valid skill structure
 

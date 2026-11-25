@@ -40,7 +40,7 @@ The `.agents/`, `.claude/`, and other generated directories created by `npx skil
 
 1. Edit the skill's `SKILL.md` and any supporting scripts or assets in its source directory.
 2. Perform appropriate source-level validation.
-3. Ask the user for confirmation before the completion workflow below.
+3. Complete the Tier 1 workflow below.
 
 ## Adding a skill
 
@@ -48,13 +48,12 @@ The `.agents/`, `.claude/`, and other generated directories created by `npx skil
 2. Add a `SKILL.md` with `name` and `description` frontmatter plus its instructions.
 3. Add supporting `scripts/`, `assets/`, or reference files when needed.
 4. Perform appropriate source-level validation.
-5. Ask the user for confirmation before the completion workflow below.
+5. Complete the Tier 1 workflow below.
 
 ## Completion workflow
 
-- After finishing and verifying any skill change, ask the user whether to:
-  1. sync the installed skills with `just sync`, which also removes deleted or renamed skills, and
-  2. commit and push the repository changes.
-- Run those publication steps only after the user explicitly confirms (for example, `yes`).
-- After syncing, verify the installed skills with `just list`.
-- Before committing, preserve unrelated user changes and include only the intended skill work.
+- `my-cubrid-skills` is a Tier 1 repository (`~/.codex/AGENTS.md` / `~/.claude/CLAUDE.md`). Once validation passes:
+  1. Commit only the intended skill changes (preserving unrelated user changes), rebase onto the destination branch (`main`), fast-forward merge with `git merge --ff-only`, and push to its configured remote (`origin`).
+  2. From the merged primary checkout, sync the installed skills with `just sync` (which also removes deleted or renamed skills) and verify with `just list`.
+  3. Clean up the merged task worktree and local topic branch.
+- Tier 1 integration authorizes `just sync` together with merge, push, and cleanup; no separate confirmation is required unless validation fails or rebase/sync encounters an unexpected conflict.

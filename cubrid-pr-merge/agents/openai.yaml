@@ -1,0 +1,5 @@
+interface:
+  display_name: "CUBRID PR Merge"
+  short_description: "Confirm squash messages, then merge TC PRs, close empty ones, and merge the engine PR"
+policy:
+  allow_implicit_invocation: false

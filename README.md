@@ -16,6 +16,7 @@ A collection of Claude Code skills for CUBRID database engine development. These
 | `cubrid-performance` | Diagnose and optimize CUBRID performance, with optional baseline comparisons |
 | `cubrid-code-review` | Review pinned PRs or diffs with budgeted specialists, verified findings, and follow-up handoffs |
 | `cubrid-pr-create` | Save Korean PR drafts for review, then create or update GitHub PRs after confirmation |
+| `cubrid-pr-merge` | User-invoked: show the squash commit messages, then merge TC PRs, close unchanged ones, and merge the engine PR after confirmation |
 | `cubrid-jira-issue-write` | Write structured JIRA issue reports in Korean |
 | `cubrid-jira-dup` | Find existing CBRD issues that a draft may duplicate before a JIRA write |
 | `cubrid-manual-search` | Answer CUBRID questions from the local English/Korean RST manual with file-and-line citations |

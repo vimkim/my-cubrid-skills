@@ -15,7 +15,7 @@ On entering this workflow policy, establish the current user's identity once per
 
 When the user is `vimkim`, read [vimkim's CUBRID context](references/cubrid-vimkim.md). For another or unknown user, continue with shared policy and that user's instructions without loading this profile.
 
-Before recommending or performing PR, CI, TC-only PR, or testcase integration actions, read [Testcase lifecycle](references/testcase-lifecycle.md). Before recommending, requesting permission for, or performing a GitHub PR merge, apply the [PR approval gate](#pr-approval-gate).
+Before recommending or performing PR, CI, TC-only PR, or testcase integration actions, read [Testcase lifecycle](references/testcase-lifecycle.md). Before recommending, requesting permission for, or performing a GitHub PR merge, apply the [PR approval gate](#pr-approval-gate). Write every squash commit message by the [Squash commit message convention](references/squash-message.md). The user starts the final engine merge handoff with `/cubrid-pr-merge <PR>`.
 
 ### Dev2 team membership
 

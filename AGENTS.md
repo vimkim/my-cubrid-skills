@@ -19,6 +19,7 @@ Each top-level directory with a `SKILL.md` is a skill:
 - `cubrid-ci-analyze/` — exact-commit GitHub Actions evidence analysis with `cubrid-ci`
 - `cubrid-ci-trigger/` — trigger CUBRID CI suites on GitHub PRs
 - `cubrid-pr-create/` — GitHub PR creation with CBRD title format
+- `cubrid-pr-merge/` — user-invoked final merge handoff with confirmed squash commit messages
 - `cubrid-jira-issue-write/` — JIRA issue report writer
 - `cubrid-jira-dup/` — duplicate-candidate check before a JIRA write
 - `cubrid-manual-search/` — evidence-backed English/Korean CUBRID manual search

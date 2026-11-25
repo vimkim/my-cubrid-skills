@@ -12,7 +12,7 @@ On vimkim's host, the standalone `cubrid-ci-watch` package (`~/gh/cubrid-ci-watc
 
 `vimkim` grants standing authorization for **at most one automatic `/run rerun <run-id>` per `(PR, head_sha)`** when every guardrail in `cubrid-ci-trigger` holds: zero prior reruns on that head, all failures are `cubrid-tcr` `known` / verified flaky / `found=no` dead shard with no PR defect or unexplained new failure, no `/run rerun` disqualifier, no active run, and any `cubrid-pr-tc-base-check` `stale` exit is solely due to later `develop` commits that keep both PRs `MERGEABLE` without modifying the failing testcases.
 
-`cubrid-pr-flow.service` applies the same 1-per-head cap in the background (`auto_rerun_max_per_head = 1`) and falls back to an `ACT-<N>` confirmation prompt on a second failure or any guardrail miss. Explicit user approval remains required for a 2nd rerun on the same head, any `/run all` or `/run <suite>` retrigger, testcase PR closure or merge, and engine PR merges.
+`cubrid-pr-flow.service` applies the same 1-per-head cap in the background (`auto_rerun_max_per_head = 1`) and falls back to an `ACT-<N>` confirmation prompt on a second failure or any guardrail miss. Explicit user approval remains required for a 2nd rerun on the same head, any `/run all` or `/run <suite>` retrigger, testcase PR closure or merge, and engine PR merges (engine PR handoffs go through `/cubrid-pr-merge <PR>`).
 
 ## Standing review-approval authorization
 
@@ -20,7 +20,7 @@ On 2026-11-25, `vimkim` granted standing review-approval authorization for `cubr
 
 ## Merge handoff scope
 
-On 2026-11-25, `vimkim` limited `/cubrid-pr-merge` to engine PRs that vimkim both opened and is assigned to. A PR that vimkim only reviews or approves is merged by its author. `pr-final-merge-handoff` enforces this with an `ownership` blocker that no waiver lifts.
+On 2026-11-25, `vimkim` limited final engine PR merges (and their linked `tc/pr-<N>` PRs) to the user-invoked `/cubrid-pr-merge <PR>` skill (`pr-final-merge-handoff`), and only for engine PRs that `vimkim` both opened and is assigned to. A PR that `vimkim` only reviews or approves is merged by its author; `pr-final-merge-handoff` enforces this with an `ownership` blocker that no waiver lifts. Outside `/cubrid-pr-merge`, direct `vimkim` to run `/cubrid-pr-merge <PR>` once reviews and CI are ready rather than proposing manual close/merge steps, requesting ad-hoc merge permission, or running `gh pr merge` directly on an engine PR.
 
 ## Interpret team-leader assignment
 

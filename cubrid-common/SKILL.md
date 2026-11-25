@@ -15,7 +15,7 @@ On entering this workflow policy, establish the current user's identity once per
 
 When the user is `vimkim`, read [vimkim's CUBRID context](references/cubrid-vimkim.md). For another or unknown user, continue with shared policy and that user's instructions without loading this profile.
 
-Before recommending or performing PR, CI, TC-only PR, or testcase integration actions, read [Testcase lifecycle](references/testcase-lifecycle.md). Before recommending, requesting permission for, or performing a GitHub PR merge, apply the [PR approval gate](#pr-approval-gate). Write every squash commit message by the [Squash commit message convention](references/squash-message.md). The user starts the final engine merge handoff with `/cubrid-pr-merge <PR>`.
+Before recommending or performing PR, CI, TC-only PR, or testcase integration actions, read [Testcase lifecycle](references/testcase-lifecycle.md). Before recommending, requesting permission for, or performing a GitHub PR merge, apply the [PR approval gate](#pr-approval-gate). Write every squash commit message by the [Squash commit message convention](references/squash-message.md). Final engine PR merges (and their linked `tc/pr-<N>` PRs) run only through the user-invoked `/cubrid-pr-merge <PR>` skill (`pr-final-merge-handoff`): outside `/cubrid-pr-merge`, direct the user to run `/cubrid-pr-merge <PR>` once reviews and CI are ready rather than proposing manual close/merge steps or running `gh pr merge` directly.
 
 ### Dev2 team membership
 
@@ -35,7 +35,7 @@ The checker includes each user with a review request that has not since been exp
 - Exit 1 blocks the merge. Show each reviewer and their state. Proceed only if the user explicitly names every blocked reviewer and authorizes merging anyway. A general merge go-ahead does not waive the gate.
 - Exit 2 means the checker could not establish the result. Resolve the evidence gap before treating the gate as passed or requesting merge permission.
 
-Recommend a merge, ask for merge permission, or report final-handoff readiness only for an engine PR that the current user both opened and is assigned to; the author merges anyone else's PR, and its TC PRs follow it. `pr-final-merge-handoff` enforces this with an `ownership` blocker that no waiver lifts.
+Report final-handoff readiness or suggest `/cubrid-pr-merge <PR>` only for an engine PR that the current user both opened and is assigned to; the author merges anyone else's PR, and its TC PRs follow it. Outside `/cubrid-pr-merge`, do not request ad-hoc merge permission or run `gh pr merge` directly on a `CUBRID/cubrid` engine PR (TC-only CI-carrier PRs follow [testcase-lifecycle.md](references/testcase-lifecycle.md#tc-only-changes-ci-carrier-draft-engine-pr)). `pr-final-merge-handoff` enforces ownership with an `ownership` blocker that no waiver lifts.
 
 Never use aggregate GitHub review or merge status (`reviewDecision`, `mergeStateStatus`, or mergeability) or approving language in a comment as evidence of an individual GitHub approval.
 

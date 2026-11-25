@@ -22,13 +22,15 @@ An isolation-related TC gate failure is not a regression-suite failure. Report b
 
 This handoff applies only to an engine PR that the current user both opened and is assigned to ([PR approval gate](../SKILL.md#pr-approval-gate)). For anyone else's PR, report review and CI readiness and leave the merge to its author.
 
+**Entry point:** Run this handoff exclusively through the user-invoked `/cubrid-pr-merge <engine PR>` skill (`pr-final-merge-handoff`), which shows every squash commit message before `pr-final-merge-handoff execute`. Each merge uses a message from the [Squash commit message convention](squash-message.md), never GitHub's default commit list. Outside `/cubrid-pr-merge`, once reviews and CI are ready, direct the user to run `/cubrid-pr-merge <engine PR>` rather than requesting ad-hoc merge permission, proposing a manual TC-close/merge sequence, or running `gh pr merge` directly.
+
+Inside `/cubrid-pr-merge`, `pr-final-merge-handoff` enforces these five steps:
+
 1. Recheck the engine PR's current head and base, completed reviews, and all other applicable CI results. Include required checks and any additional CI the user requested. Confirm that evidence covers the intended engine and TC revisions. Missing, stale, or unexplained results leave the handoff unready.
 2. Inspect both testcase repositories' current `tc/pr-N` tips, TC PR diffs, and actual target branches. Apply the approval gate to every planned merge before asking for merge permission. Resolve TC publication and engine merge authorization before changing either TC PR. Reuse authorization already given for these operations.
 3. Rerun the approval checker immediately before each TC merge and show the result. Merge TC PRs carrying changes into their intended testcase targets once the gate is satisfied or explicitly waived. Close a TC PR without merging only after proving it has no unlanded changes. A closed TC PR alone does not prove that its content landed.
 4. Refresh the applicable TC gate. For `develop`, rerun `TC Merge Gate / Check TC PRs` and verify its fresh verdict for the current engine head. A rerun of unrelated CI does not rejudge this gate. Confirm that neither testcase branch retains unlanded changes.
 5. Recheck the engine head and applicable checks. Rerun the approval checker and show the result immediately before the authorized engine merge. A changed head, changed TC content, or new blocker returns the task to verification.
-
-The user runs this handoff with `/cubrid-pr-merge <engine PR>`, which shows every squash commit message before `pr-final-merge-handoff execute`. Each merge uses a message from the [Squash commit message convention](squash-message.md), never GitHub's default commit list.
 
 GitHub does not provide a transaction across these repositories. Prepare permissions and review before step 3 to keep the handoff close to atomic. If the engine merge fails or must wait after TC finalization, report which TC changes already landed and the remaining blocker. Preserve the remaining branches and reassess readiness before retrying. Do not claim continued isolation or automatically revert published TC changes.
 

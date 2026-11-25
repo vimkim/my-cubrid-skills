@@ -5,11 +5,7 @@ description: Fetch and analyze authenticated pages from CUBRID's internal QA por
 
 # Fetch qahome QA Pages
 
-Use the local qahome fetcher tool first:
-
-```text
-/home/vimkim/gh/cubrid-qahome-fetcher
-```
+Use the installed `cubrid-qahome` command from the current working directory.
 
 The tool handles authenticated login, qahome host allowlisting, build-tree traversal, raw page saving, detail-page fetching, and report generation. Do not reimplement the login flow with ad hoc `curl` unless this tool is missing or broken and the user still wants a best-effort manual fetch.
 
@@ -32,15 +28,19 @@ export CUBRID_QA_PASS='...'
 Check the environment without printing secret values:
 
 ```bash
-cd /home/vimkim/gh/cubrid-qahome-fetcher
-just check-env
+missing=()
+[[ -n ${CUBRID_QA_USER:-} ]] || missing+=(CUBRID_QA_USER)
+[[ -n ${CUBRID_QA_PASS:-} ]] || missing+=(CUBRID_QA_PASS)
+if ((${#missing[@]})); then
+  printf 'missing: %s\n' "${missing[*]}"
+fi
 ```
 
 ## Guardrails
 
 - Only send qahome credentials to exactly `qahome.cubrid.org`.
 - Do not echo `CUBRID_QA_PASS`, write it to files, include it in command output, or put it in output filenames.
-- Use the fetcher commands from `/home/vimkim/gh/cubrid-qahome-fetcher`; they reject non-qahome hosts and non-`/qaresult/` URLs.
+- Use `cubrid-qahome` commands, which enforce the qahome host and `/qaresult/` path allowlist.
 - Treat unauthenticated WebFetch/curl output as suspicious. Login pages are usually around 3 KB and contain `name="loginform"`.
 - Do not silently analyze a neighboring build. Match the requested build text or commit suffix, or report that the target build was not found.
 
@@ -49,18 +49,16 @@ just check-env
 Use this for a concrete qahome URL such as `viewShellTestResult.nhn`, `showFailResult.nhn`, `showFuntionRes.nhn`, `showstat.nhn`, or `showfile.nhn`.
 
 ```bash
-cd /home/vimkim/gh/cubrid-qahome-fetcher
-uv run cubrid-qahome fetch-url --json '<qahome-url>'
+cubrid-qahome fetch-url --json '<qahome-url>'
 ```
 
 Relative `/qaresult/...` paths and endpoint-relative paths are also accepted:
 
 ```bash
-cd /home/vimkim/gh/cubrid-qahome-fetcher
-uv run cubrid-qahome fetch-url --json 'viewShellTestResult.nhn?shellTestId=...&resultType=NOK'
+cubrid-qahome fetch-url --json 'viewShellTestResult.nhn?shellTestId=...&resultType=NOK'
 ```
 
-The command writes a run directory under `runs/` with:
+The command writes a run directory under `runs/` in the current working directory by default. Pass `--output-dir <path>` to choose a different location. Each run contains:
 
 - `manifest.json`: fetched URL, saved raw page path, status code, size, content type
 - `raw/<page>.html`: fetched HTML
@@ -81,23 +79,13 @@ https://qahome.cubrid.org/qaresult/index.nhn
 Find a build by text or commit suffix:
 
 ```bash
-cd /home/vimkim/gh/cubrid-qahome-fetcher
-uv run cubrid-qahome find-build --query '<commit-or-build-substring>' --json
+cubrid-qahome find-build --query '<commit-or-build-substring>' --json
 ```
 
 The resolver checks `Recent builds(72h)` first, then scans branch groups under `cubrid`. Force a group when the user names one or when auto-detection is ambiguous:
 
 ```bash
-cd /home/vimkim/gh/cubrid-qahome-fetcher
-uv run cubrid-qahome find-build --query '<commit-or-build-substring>' --group 'RB-11.5.0-Manual' --json
-```
-
-The `just` wrappers are equivalent:
-
-```bash
-cd /home/vimkim/gh/cubrid-qahome-fetcher
-just find '<commit-or-build-substring>'
-just find '<commit-or-build-substring>' 'RB-11.5.0-Manual'
+cubrid-qahome find-build --query '<commit-or-build-substring>' --group 'RB-11.5.0-Manual' --json
 ```
 
 If the target build is not found, say so. Do not use bare `showstat.nhn`, `showMain.nhn`, or the first default page after login as a substitute; qahome can point those pages at stale builds.
@@ -107,38 +95,26 @@ If the target build is not found, say so. Do not use bare `showstat.nhn`, `showM
 Use this for normal QA result analysis. It resolves the build, fetches `showstat.nhn`, derives and fetches the misspelled functional summary endpoint `showFuntionRes.nhn?tree_id=...&buildId=...`, verifies the expected build text, fetches NOK detail pages by default, and writes deterministic reports.
 
 ```bash
-cd /home/vimkim/gh/cubrid-qahome-fetcher
-uv run cubrid-qahome fetch-build --query '<commit-or-build-substring>'
+cubrid-qahome fetch-build --query '<commit-or-build-substring>'
 ```
 
 Force a branch/group when needed:
 
 ```bash
-cd /home/vimkim/gh/cubrid-qahome-fetcher
-uv run cubrid-qahome fetch-build --query '<commit-or-build-substring>' \
+cubrid-qahome fetch-build --query '<commit-or-build-substring>' \
   --group 'RB-11.5.0-Manual'
 ```
 
 Use `--summary-only` when the user only needs `showstat`, `showFuntionRes`, and summary counts without detail pages:
 
 ```bash
-cd /home/vimkim/gh/cubrid-qahome-fetcher
-uv run cubrid-qahome fetch-build --query '<commit-or-build-substring>' \
+cubrid-qahome fetch-build --query '<commit-or-build-substring>' \
   --summary-only
 ```
 
 Use `--all-result-types` only when the user asks for non-NOK shell detail pages too. The default is `--nok-only`.
 
 For `fetch-build`, omit `--json` during normal analysis. Non-JSON fetches write the same run artifacts but print only the run directory; `--json` can dump a large in-memory summary and failure report to stdout. Use `--json` for bounded outputs such as `find-build` and `fetch-url`, or only when the caller explicitly needs the full machine-readable command result.
-
-The `just` wrappers are equivalent in fetched artifacts and intentionally more efficient on stdout because they omit `--json`:
-
-```bash
-cd /home/vimkim/gh/cubrid-qahome-fetcher
-just fetch '<commit-or-build-substring>'
-just fetch-summary '<commit-or-build-substring>'
-just fetch '<commit-or-build-substring>' 'RB-11.5.0-Manual'
-```
 
 Each run directory contains:
 
@@ -157,16 +133,7 @@ After a build fetch, use `failure-report.md` as the first human-readable view. I
 Regenerate summaries and failure reports from an existing run directory:
 
 ```bash
-cd /home/vimkim/gh/cubrid-qahome-fetcher
-uv run cubrid-qahome summarize 'runs/<run-id>'
-```
-
-Convenience views:
-
-```bash
-cd /home/vimkim/gh/cubrid-qahome-fetcher
-just report 'runs/<run-id>'
-just latest-report
+cubrid-qahome summarize '/path/to/runs/<run-id>'
 ```
 
 Use `summary.json`, `failure-report.json`, and raw pages for precise analysis. The markdown files are the quickest human-readable view.
@@ -183,7 +150,7 @@ Use `summary.json`, `failure-report.json`, and raw pages for precise analysis. T
 
 | Symptom | Meaning | Action |
 | --- | --- | --- |
-| `missing: CUBRID_QA_USER, CUBRID_QA_PASS` | Current process has no credentials. | Ask the user to set env vars and restart/relaunch if needed. |
+| Missing `CUBRID_QA_USER` or `CUBRID_QA_PASS` | Current process has incomplete credentials. | Ask the user to set env vars and restart/relaunch if needed. |
 | `login failed` or qahome returns a login form | Wrong credentials, expired session, or account issue. | Have the user verify in a browser; do not print the password. |
 | `Only qahome.cubrid.org URLs are allowed` | The input URL is not on the qahome host. | Refuse to fetch it with this skill. |
 | `Only /qaresult qahome URLs are allowed` | The input is outside the QA result portal. | Ask for a `/qaresult/` URL or path. |
@@ -193,7 +160,7 @@ Use `summary.json`, `failure-report.json`, and raw pages for precise analysis. T
 
 ## Manual Fallback
 
-Only use manual `curl` login and page parsing if `/home/vimkim/gh/cubrid-qahome-fetcher` is unavailable or broken and the user agrees to a best-effort fallback. Preserve the same guardrails: environment-only credentials, qahome host allowlist, temporary cookie jar, login-form detection, explicit build matching, and no password output.
+Only use manual `curl` login and page parsing if `cubrid-qahome` is unavailable or broken and the user agrees to a best-effort fallback. Preserve the same guardrails: environment-only credentials, qahome host allowlist, temporary cookie jar, login-form detection, explicit build matching, and no password output.
 
 ## Persistent AI Analysis
 
@@ -217,7 +184,7 @@ reports unchanged.
 Always tell the user:
 
 - Which URL, build query, or tree path was fetched
-- The run directory under `/home/vimkim/gh/cubrid-qahome-fetcher/runs/`
+- The actual run directory reported by `cubrid-qahome`
 - The key raw/report paths and page size/status when relevant
 - Any build-id mismatch, missing target-build finding, parser warning, or credential/environment problem
 

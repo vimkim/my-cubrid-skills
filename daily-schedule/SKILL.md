@@ -1,11 +1,11 @@
 ---
 name: daily-schedule
-description: Maintain and answer the user's daily and weekly work plan from the todays-schedule control sheets, the work-tracker ledger, and live GitHub/CI state. Use when the user asks what to do today or next, hands over a daily or weekly plan to track, reports progress on planned items, or wants an end-of-day or end-of-week wrap-up. Triggers on phrases like 'what should I do today', '오늘 뭐 하지', '다음은?', 'what did I plan last week', '지난주에 뭐 하기로 했지', '차주 계획', 'track my schedule', 'wrap up today'.
+description: Maintain and answer the user's daily and weekly work plan from the my-cubrid-schedule control sheets, the work-tracker ledger, and live GitHub/CI state. Use when the user asks what to do today or next, hands over a daily or weekly plan to track, reports progress on planned items, or wants an end-of-day or end-of-week wrap-up. Triggers on phrases like 'what should I do today', '오늘 뭐 하지', '다음은?', 'what did I plan last week', '지난주에 뭐 하기로 했지', '차주 계획', 'track my schedule', 'wrap up today'.
 ---
 
 # Daily Schedule
 
-Schedule repository: `/home/vimkim/temp/todays-schedule/`. Before changing sheets or saving a plan, follow [Document Git workflow](../cubrid-common/references/document-git-workflow.md) for this repository. Set the schedule home to the selected `ARTIFACT_WORKTREE`, commit meaningful sheet changes locally before handoff, and use the user's approval rules for integration and publication. For a read-only query, read from the existing schedule checkout.
+The schedule repository is `/home/vimkim/temp/my-cubrid-schedule/`. Before changing sheets or saving a plan, follow [Document Git workflow](../cubrid-common/references/document-git-workflow.md) for this repository. Set the schedule home to the selected `ARTIFACT_WORKTREE`, commit meaningful sheet changes locally before handoff, and use the user's approval rules for integration and publication. For a read-only query, read from the existing schedule checkout.
 
 File conventions inside the schedule home:
 

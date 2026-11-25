@@ -33,7 +33,7 @@ Reference catalog for `cubrid-disk-cleanup` on `dev2` (`/home/vimkim`).
 - Inactive `~/gh/cb/*/.cub-workenv`: Contains `db/` test databases (can reach 9–34 GiB each for `inner-table`, `sidecar`, `repid-65535-repro`). Must cross-check active `cub_master`, `cub_server`, `cub_broker`, `cub_cas`, agents, and containers.
 - `CLEAN` linked worktrees in `~/gh/cubrid-testcases-private-ex/*` and `~/gh/cubrid-testcases/*` (excluding `develop`).
 - `CLEAN` inactive linked worktrees in `~/gh/cb/*` (excluding `cubrid` and `develop`, and preserving worktrees containing `.scratch`, `.artifacts`, or `scratch`).
-  - Removing linked worktrees with `git submodule deinit --all` and `git worktree remove` (without `--force`) also reclaims ~10–20 GiB of per-worktree submodule checkouts stored under `~/gh/cb/cubrid/.git/worktrees/<name>/modules/`.
+  - `cubrid-worktree delete` also removes clean per-worktree submodule checkouts under `~/gh/cb/cubrid/.git/worktrees/<name>/modules/`. These can account for ~10–20 GiB across the worktree collection.
 - Remaining inactive `~/.cub/install/<name>` directories (always preserve `develop` and active daemon prefixes).
 - Project `.scratch/`, `experiments/`, and docker runtime node directories (`docker-compose/node-{a,b}`) after checking 0 git-tracked files, 0 active daemons, and 0 `ET_CORE` files.
 
@@ -60,9 +60,7 @@ Reference catalog for `cubrid-disk-cleanup` on `dev2` (`/home/vimkim`).
 
 2. **Git Submodule Bloat Inside `~/gh/cb/cubrid/.git/worktrees/`**
    - Initialized `cubrid-cci` and `cubrid-jdbc` submodules store module gitdirs inside `cubrid/.git/worktrees/<name>/modules/` (~19 GiB across ~240 worktrees).
-   - Never rely only on `git submodule status` when `submodule.*.url` is unset. Read submodule paths from `.gitmodules` and check `<wt>/<subpath>/.git` directly with `git -C <wt>/<subpath> status --porcelain=v1 --untracked-files=all`.
-   - After checking that both the superproject and populated submodules are clean, run `git submodule deinit --all` (without `--force`).
-   - If `<wt>/<subpath>/.git` or `<common-git-dir>/worktrees/<name>/modules/` remains, empty `<wt>/<subpath>/` (leaving an empty placeholder directory) and remove that `modules/` directory. Then check that `git status --porcelain=v1 --untracked-files=all` is empty, and run plain `git worktree remove` (without `--force`).
+   - Use `cubrid-worktree delete --dry-run` to check the superproject and populated submodules, including submodules with no configured `submodule.*.url`. Follow the linked-worktree removal procedure in the skill.
 
 3. **Active Daemons, Bots, and Agents**
    - Always check live `/proc` before removing `node_modules`, `.venv`, `.cache/ms-playwright`, `~/.hermes`, `~/.local/share/*-bot`, or `~/temp/*`:
@@ -74,7 +72,7 @@ Reference catalog for `cubrid-disk-cleanup` on `dev2` (`/home/vimkim`).
 4. **Preserve Build Speed & History**
    - Never remove `~/.cache/ccache` (keeps incremental CUBRID rebuilds under ~20s).
    - Never remove `dirty` Git worktrees or worktrees containing `.scratch` or `.artifacts` notes without explicit review.
-   - Always check `git for-each-ref refs/heads` before and after bulk `git worktree remove` and save exact `git worktree add` restoration JSON.
+   - Check `git for-each-ref refs/heads` before and after bulk worktree cleanup and save exact `git worktree add` restoration JSON.
 
 5. **`du` vs `df` Discrepancies**
    - XFS shared extents/reflinks, concurrent server writes by other `dev2` users, or open `(deleted)` FDs can cause `df` free-space deltas to differ from `du` sums.

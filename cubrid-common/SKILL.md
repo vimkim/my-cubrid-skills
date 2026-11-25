@@ -35,6 +35,8 @@ The checker includes each user with a review request that has not since been exp
 - Exit 1 blocks the merge. Show each reviewer and their state. Proceed only if the user explicitly names every blocked reviewer and authorizes merging anyway. A general merge go-ahead does not waive the gate.
 - Exit 2 means the checker could not establish the result. Resolve the evidence gap before treating the gate as passed or requesting merge permission.
 
+Recommend a merge, ask for merge permission, or report final-handoff readiness only for an engine PR that the current user both opened and is assigned to; the author merges anyone else's PR, and its TC PRs follow it. `pr-final-merge-handoff` enforces this with an `ownership` blocker that no waiver lifts.
+
 Never use aggregate GitHub review or merge status (`reviewDecision`, `mergeStateStatus`, or mergeability) or approving language in a comment as evidence of an individual GitHub approval.
 
 ## Reusable helpers

@@ -18,6 +18,10 @@ On vimkim's host, the standalone `cubrid-ci-watch` package (`~/gh/cubrid-ci-watc
 
 On 2026-11-25, `vimkim` granted standing review-approval authorization for `cubrid-code-review`: a requested and published PR review whose result is clean submits a formal GitHub `APPROVE` under the conditions in [Approve a clean review](../../cubrid-code-review/references/pr-publication.md#approve-a-clean-review), whatever the author's `/run all` or other CI result. Explicit user approval remains required for any other formal review, including `CHANGES_REQUESTED`, and for merges, CI triggers, and TC PR actions.
 
+## Merge handoff scope
+
+On 2026-11-25, `vimkim` limited `/cubrid-pr-merge` to engine PRs that vimkim both opened and is assigned to. A PR that vimkim only reviews or approves is merged by its author. `pr-final-merge-handoff` enforces this with an `ownership` blocker that no waiver lifts.
+
 ## Interpret team-leader assignment
 
 `hornetmj` is vimkim's development team 2 leader. When a CUBRID issue is assigned to `hornetmj`, the team leader has not yet decided who will implement it.

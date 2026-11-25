@@ -1,6 +1,6 @@
 ---
 name: cubrid-pr-merge
-description: "Show the squash commit messages for a CUBRID engine PR and its tc/pr-N testcase PRs, then on confirmation merge the changed TC PRs, close the unchanged ones, refresh the TC gate, and merge the engine PR."
+description: "Show the squash commit messages for a CUBRID engine PR that the user opened and is assigned to, and its tc/pr-N testcase PRs, then on confirmation merge the changed TC PRs, close the unchanged ones, refresh the TC gate, and merge the engine PR."
 argument-hint: "<engine PR number>"
 disable-model-invocation: true
 ---
@@ -10,6 +10,8 @@ disable-model-invocation: true
 Run the final merge handoff of one `CUBRID/cubrid` PR with squash commit messages that the user reads and confirms first. `pr-final-merge-handoff` performs every GitHub change; this skill writes the messages, shows the whole plan, and runs `execute` only after the user's confirmation in this session.
 
 Take the engine PR number from `$ARGUMENTS`. If it is missing, ask for it.
+
+The handoff covers only an engine PR that the current user (the `gh api user` login) both opened and is assigned to; the author merges anyone else's PR. `pr-final-merge-handoff` enforces this with an `ownership` blocker.
 
 ## 1. Load the policy
 
@@ -39,6 +41,8 @@ Read `data.steps`, `data.testcases`, `data.approvals`, `data.ci_evidence`, `data
   A thread without an answer goes back to the user; the skill ends until it is addressed.
 
 Every other blocker stops the skill: report it with the approval checker output and end. A reviewer waiver (`--waive-reviewer LOGIN`) is used only when the user names that reviewer in this session.
+
+An `ownership` blocker is final. It names the author, the assignees and the login; report it and end the skill. A merge go-ahead from the user or a `--waive-reviewer` leaves it in place, and the tool checks it again before every GitHub change.
 
 ## 3. Write the messages
 

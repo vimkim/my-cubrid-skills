@@ -56,8 +56,7 @@ just preset release_gcc
 Replace `release_gcc` with the requested preset. Then finish the initial configuration and build:
 
 ```bash
-direnv exec . just configure
-direnv exec . just build
+direnv exec . just configure-build
 ```
 
 Inspect `just --list` and `just --show <recipe>` after preparation. The worktree's live just interface is authoritative; do not copy recipe implementations into this skill.
@@ -71,7 +70,9 @@ sed -n 's/^[[:space:]]*PRESET_MODE[[:space:]]*=[[:space:]]*//p' .env
 direnv exec . sh -c 'printf "PRESET_MODE=%s\nCUBRID_BUILD_DIR=%s\nCUBRID=%s\n" "$PRESET_MODE" "$CUBRID_BUILD_DIR" "$CUBRID"'
 ```
 
-If the preset is missing, invalid, or differs from the required mode, select the required preset with `just preset <mode>`, then run `direnv exec . just configure` and `direnv exec . just build`. Use `direnv exec .` when the current non-interactive shell has not reloaded `.env`.
+These two reads are the preset check. `just preset <mode>` writes `.env`, so run it only to change the preset. It exits 75 while a build or runtime lock of this worktree is held; wait for that command to finish, then retry.
+
+If the preset is missing, invalid, or differs from the required mode, select the required preset with `just preset <mode>`, then run `direnv exec . just configure-build`. Use `direnv exec .` when the current non-interactive shell has not reloaded `.env`.
 
 ## 5. Build after every code change
 
@@ -83,11 +84,10 @@ direnv exec . just build-and-install
 
 This is the required verification step even for a small edit. The build is normally fast because the preset uses ccache. Do not invoke `cmake --build` directly.
 
-If CMake files changed or a selected preset has not yet been configured:
+If CMake files changed or a selected preset has not yet been configured, run one command, not `configure && build-and-install`. One run reads the preset once and keeps it to the end:
 
 ```bash
-direnv exec . just configure
-direnv exec . just build-and-install
+direnv exec . just configure-build-and-install
 ```
 
 ## 6. Run tests appropriate to the change
@@ -122,3 +122,5 @@ Shared worktree preparation initializes CCI and does not replace JDBC initializa
 ## 7. Handle failures
 
 Read the first relevant configure, compiler, linker, or test error before changing code. Do not hide errors, bypass the justfile, or switch away from the requested preset merely to obtain a passing build.
+
+Keep the full output of every command that changes state (`just preset`, configure, build, install) visible, also for background runs: never redirect it to `/dev/null` or filter it with `grep`, `tail`, or `head`.

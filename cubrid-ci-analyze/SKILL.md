@@ -17,7 +17,7 @@ Read [Workflow policy](../cubrid-common/SKILL.md#workflow-policy) before interpr
 - Read testcase source at the recorded Git revision from the local testcase repositories. Preserve source and testcase worktrees and indexes unchanged.
 - Separate observations, inferences, and unknowns. Every causal claim needs a PR relation, confidence, falsifier, and concrete next action.
 - Write a full head analysis only when `report_mode.py` permits `full` for the verified head evidence (section 2). Missing baseline evidence limits comparison without downgrading a validated head inventory. For any incomplete, interrupted, or unvalidated collection, write a bounded warning report and make no regression or root-cause conclusion.
-- Locate the report repository at `/home/vimkim/gh/my-cubrid-docs`. Before writing, follow [Document Git workflow](../cubrid-common/references/document-git-workflow.md) to select its task checkout, commit the reviewed report locally, and handle approved integration and publication.
+- Locate the report repository at `/home/vimkim/gh/my-cubrid-docs`. Before writing, follow [Document Git workflow](../cubrid-common/references/document-git-workflow.md) to select its task checkout, commit the reviewed report locally, and integrate it as that workflow authorizes.
 - This workflow writes collector-owned evidence and Git cache data, Chronicle-owned history evidence and index data, plus documents in the report repository. Keep provider acquisition in the respective CLI; trigger, cancellation, comments, testcase/source edits, reproduction, repairs, and source/testcase merges require their own authorized workflow. For unsupported evidence sources, follow the separately labeled fallback boundary in [CI evidence](../cubrid-common/references/ci-evidence.md); integrity failures never authorize bypass.
 
 ## 1. Snapshot and collect once
@@ -205,7 +205,7 @@ Never include credentials, headers, signed URLs, or environment values.
 
 Re-read the saved report against the selected manifest and evidence. Require every requested suite to appear exactly once, every validated failure/error to appear exactly once, all totals to reconcile, every comparison to reconcile against the independently validated baseline and input scope, every attribution to cite concrete evidence, and every inference to have a falsifier. Check historical claims against retained occurrences, symptom evidence, and identity/coverage limitations. Correct discrepancies before sharing.
 
-Complete the Document Git workflow's local review and task commit, including any required report index. Return the report path, exact analyzed commit, suite states and counts, incomplete-evidence warnings, task checkout/branch and report commit, checks, and the highest-priority next action. Present any required integration approval with this committed result; continue approved integration and publication under the same workflow.
+Complete the Document Git workflow's local review and task commit, including any required report index. Return the report path, exact analyzed commit, suite states and counts, incomplete-evidence warnings, task checkout/branch and report commit, checks, and the highest-priority next action. Integrate the report into `main` under the same workflow before the handoff, without asking, when the user's Git workflow pre-authorizes it (Tier 1). Ask only when it does not.
 
 ### Machine-readable summary (`analysis-summary.json`)
 

@@ -11,6 +11,7 @@
 Each top-level directory with a `SKILL.md` is a skill:
 
 - `cubrid-jira/` — CUBRID JIRA issue lookup
+- `cubrid-xref/` — bidirectional CUBRID PR ↔ JIRA issue lookup and caching
 - `cubrid-worktree/` — ticket-first CUBRID worktree and Herdr Space/Tab setup
 - `cubrid-build/` — prepare, build, and test local CUBRID worktrees
 - `cubrid-performance/` — diagnose and optimize performance with optional baseline comparisons

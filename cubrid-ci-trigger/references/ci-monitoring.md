@@ -31,9 +31,11 @@ If `cubrid-ci-watch poll` exits `2` with `another poller owns the state director
 
 By default, `poll` uses per-PR 1/2/4/8/16-minute exponential backoff with a 10-second wakeup loop (pass `--interval SECONDS` for a fixed interval override). Use `cubrid-ci-watch status` (or `ls`) for the concise active-request human summary and poller state, `cubrid-ci-watch show "$REQUEST_ID"` for one request's detailed contexts and events, and `cubrid-ci-watch status --json` for the registry's stored observations. Use `cubrid-ci status "$PR_NUMBER" --json --history 0` when the user requests a fresh standalone snapshot. A successful query means collection succeeded, not that CI passed.
 
-## Wait inside the current session
+## Wait inside the current session (short runs only)
 
-When staying in the current session until CI produces a failure or finishes, block on `cubrid-ci-watch wait` instead of `schedule` timers or repeated `gh run view` / `gh pr checks` loops:
+For typical 1–24h CI runs, prefer registering and returning/closing the session rather than keeping a session open; out-of-session notifications and `work-tracker` notes are handled by an external event consumer when running (e.g., `cubrid-pr-flow.service`), and any new session can inspect `cubrid-ci-watch status` or `cubrid-ci-watch show "$REQUEST_ID"`.
+
+Only when staying in the current session for a short run until CI produces a failure or finishes, block on `cubrid-ci-watch wait` instead of `schedule` timers or repeated `gh run view` / `gh pr checks` loops:
 
 ```bash
 cubrid-ci-watch wait "$REQUEST_ID" --after "$LAST_EVENT_ID"
@@ -47,7 +49,7 @@ Launch `cubrid-ci-watch wait` as one background shell task and end the turn so t
 
 ## Consume events
 
-Read events with `cubrid-ci-watch events --after "$LAST_EVENT_ID"`. Save the cursor only after handling the events. Replayed events retain their identifiers, so consumers can deduplicate them. `cubrid-ci-watch` records local state and JSONL events only and sends no notifications on its own; verify any external delivery sink separately before claiming out-of-session notifications are enabled. A local event stream alone does not establish that an agent or user received it.
+Read events with `cubrid-ci-watch events --after "$LAST_EVENT_ID"`. Save the cursor only after handling the events. Replayed events retain their identifiers, so consumers can deduplicate them. `cubrid-ci-watch` itself records local state and JSONL events only and sends no notifications on its own; verify separately that an external consumer/delivery sink (such as `cubrid-pr-flow.service` for both orchestrated PR runs and standalone `cubrid-ci-watch` registrations, delivering Discord first-failure + terminal notifications with Actions run URLs and terminal `work-tracker` notes) is active before claiming out-of-session notifications are enabled. A local event stream alone does not establish that an agent or user received it.
 
 Invoke AI for a pickup candidate, a new failure or `no_verdict` event, a combined terminal result, a changed head or superseding execution, the 24-hour delay, or the monitoring deadline. Waiting states and unchanged results stay in the CLI. Keep long-running CI work waiting in `work-tracker`, with its CLI request identifier, receipt, head SHA, and last processed event identifier.
 

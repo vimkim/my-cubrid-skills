@@ -52,21 +52,25 @@ proposal, obtain confirmation of the revised proposal before remote writes.
 
 ## Execute Only the Confirmed Operations
 
-Keep the PR body file available through the GitHub write and verification. Do not
-remove its task worktree during docs integration.
+Keep the PR body file available through the GitHub write and verification: in its
+task worktree, or at the same repo-relative path in the destination checkout once
+integrated.
 
-### Documentation, when listed
+### Documentation
+
+Docs integration already authorized by the user's Git workflow runs without being
+listed, under the same checks below.
 
 Commit only intended files, preserving unrelated changes and staged entries.
-Re-run the material checker before committing PR material. If publishing docs is
-listed, inspect the outgoing commits and ensure they contain only the approved
-scope. Validate the docs remote's push URL again.
+Re-run the material checker before committing PR material. Before pushing docs,
+inspect the outgoing commits and ensure they contain only the approved scope.
+Validate the docs remote's push URL again.
 
 Follow the local integration workflow: confirm the destination worktree is clean
 and on the recorded integration branch, rebase the docs task branch onto it, inspect
 and validate the result, and fast-forward merge from the destination worktree.
-The publication confirmation covers these steps when they were listed. If resolving
-a conflict changes reviewed body or explanation text, return that text to review.
+The docs authorization covers these steps. If resolving a conflict changes
+reviewed body or explanation text, return that text to review.
 Push the actual destination branch from the destination worktree; do not blindly
 push `main` from a task worktree. Never force-push to resolve divergence.
 
@@ -74,7 +78,8 @@ For a linked explanation, verify its reviewed contents are accessible at the exa
 public URL before writing the PR. Keep that URL unchanged in the approved body.
 After integration, resolve the same saved relative paths in the destination
 checkout and verify their reviewed contents before upload and final handoff.
-Body-only drafts can remain locally committed when docs publication was not listed.
+Body-only drafts remain locally committed only when docs integration is neither
+authorized by the user's Git workflow nor listed.
 
 ### Source push, when listed
 
@@ -140,10 +145,10 @@ uncertain provenance or a differing result requires reconciliation before mutati
 Do not create another PR, repeat successful writes, regenerate the body, or ask for
 approval again solely because an unchanged authorized operation needs a retry.
 
-Commit meaningful context updates locally. If docs integration was listed, include
-these final execution-record commits in the approved local rebase/fast-forward
-workflow; push them only if that push was also listed. Then follow the worktree
-cleanup policy: verify the task tip is merged, preserve valuable files, and remove
-only the merged task worktree and branch without force. If local integration was
+Commit meaningful context updates locally. Integrate and push these final
+execution-record commits under the same docs authorization as the draft: the
+user's Git workflow, or the confirmed list when that workflow requires one. Then
+follow the worktree cleanup policy: verify the task tip is merged, preserve
+valuable files, and remove only the merged task worktree and branch without force. If local integration was
 not authorized, retain the worktree for review. Report any blocked cleanup and the
 surviving body/context paths so reviewed material remains discoverable.

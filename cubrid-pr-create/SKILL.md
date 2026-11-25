@@ -13,11 +13,18 @@ an actual pull request on GitHub.
 
 - A request to create or update a PR starts preparation. Save the proposed body in
   `my-cubrid-docs` and present its location and intended publication operations.
-  Preparation ends with the files ready for human review, without remote writes.
+  Preparation ends with the files ready for human review, without `CUBRID` remote
+  writes.
 - Publication requires the user's explicit confirmation after the draft is
-  available. One confirmation covers the exact listed operations, including any
-  necessary docs integration/push and source push. Skill invocation, saved context,
-  or an approval flag in a file does not establish permission.
+  available. One confirmation covers the exact listed `CUBRID` operations: source
+  push and GitHub PR writes. Skill invocation, saved context, or an approval flag in
+  a file does not establish permission.
+- Docs commits follow [Document Git workflow](../cubrid-common/references/document-git-workflow.md),
+  not this confirmation. Where the user's Git workflow already authorizes the docs
+  repository (vimkim's Tier 1 covers `my-cubrid-docs`), integrate and push every
+  docs commit, drafts and execution records alike, as soon as its checks pass.
+  List docs integration among the confirmed operations only when no such
+  authorization exists.
 - A **standing instruction** replaces per-draft review when the user says they are
   going to sleep or tells you to keep going. It confirms the PR operations it names
   or the task in progress already includes, within the limits it states, such as
@@ -154,10 +161,10 @@ Keep resume metadata in `context_file`, separate from the uploaded body:
   resuming. Resolve the recorded paths directly, including for older drafts; never
   infer companion paths from SHA/agent suffixes. Keep machine-local paths out of
   tracked context.
-- Exact proposed operations and destinations: docs commits to integrate/push (and
-  files included), source push if needed, new draft PR creation or existing body
-  update, and title change only when proposed. Include docs rebase/fast-forward
-  merge, including final execution-record commits, if required by the local workflow.
+- Exact proposed operations and destinations: source push if needed, new draft PR
+  creation or existing body update, and title change only when proposed. Add docs
+  integration (files included, rebase/fast-forward merge, push) only when the
+  contract above leaves it unauthorized; otherwise record its completed result.
   For creation, include the default `vimkim` assignment in the proposal.
 
 The context is a proposal, not a durable approval token. When confirmed publication
@@ -182,14 +189,16 @@ outside this skill. Record the summary table and your dispositions in
 
 Run the material checker below and correct preparation defects. If a correction
 changes text after the user has reviewed it, return that revision for review.
-Commit only the intended files locally when required by the worktree workflow.
+Commit only the intended files, then integrate them per the contract above: an
+authorized docs repository reaches its integration branch and remote before the
+handoff, and the body stays at the same repo-relative path for review.
 
 Show clickable local links to the body, context, and any explanation; identify the
 source commit, target PR or branches, proposed title, and the exact publication
 operations. Explain that the user can edit the body file directly. Ask for review
 and explicit publication confirmation, then **end preparation here**. Keep the
-docs task worktree available for review. Read the publication reference only when
-continuing after confirmation.
+docs task worktree only while docs integration awaits confirmation. Read the
+publication reference only when continuing after confirmation.
 
 ## Writing Conventions
 

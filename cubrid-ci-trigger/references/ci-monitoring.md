@@ -35,7 +35,9 @@ By default, `poll` uses per-PR 1/2/4/8/16-minute exponential backoff with a 10-s
 
 For typical 1–24h CI runs, prefer registering and returning/closing the session rather than keeping a session open; out-of-session notifications and `work-tracker` notes are handled by an external event consumer when running (e.g., `hermes-notify.service`), and any new session can inspect `cubrid-ci-watch status` or `cubrid-ci-watch show "$REQUEST_ID"`.
 
-Only when staying in the current session for a short run until CI produces a failure or finishes, block on `cubrid-ci-watch wait` instead of `schedule` timers or repeated `gh run view` / `gh pr checks` loops:
+Only when staying in the current session for a short run until CI produces a failure or finishes, block on `cubrid-ci-watch wait` instead of `schedule` timers or repeated `gh run view` / `gh pr checks` / `gh pr view` loops:
+
+Ignore the `gh event listen` hint that `gh pr view` prints. GitHub event subscriptions (preview) are not enabled on this account, so `gh event listen` fails with HTTP 403. Do not retry it. Use `cubrid-ci-watch wait` or `poll` instead.
 
 ```bash
 # Wake on any meaningful event (default):

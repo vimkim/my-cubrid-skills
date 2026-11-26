@@ -28,16 +28,19 @@ def request(number, *, login=None, team=None, removed=False, day=1, kind="User")
     }
 
 
-def review(login, state, day=2):
-    return {
+def review(login, state, day=2, commit_id=None):
+    data = {
         "user": user(login),
         "state": state,
         "submitted_at": f"2026-11-{day:02}T00:00:00Z",
     }
+    if commit_id is not None:
+        data["commit_id"] = commit_id
+    return data
 
 
 class ApprovalCheckTests(unittest.TestCase):
-    def run_checker(self, responses):
+    def run_checker(self, responses, extra_args=()):
         endpoints = {
             PULL: {"user": user("Author")},
             f"{PULL}/reviews": [[]],
@@ -62,7 +65,7 @@ class ApprovalCheckTests(unittest.TestCase):
 
         stdout, stderr = io.StringIO(), io.StringIO()
         with (
-            patch("sys.argv", [str(CHECKER), "--repo", "CUBRID/cubrid", "--pr", "1"]),
+            patch("sys.argv", [str(CHECKER), "--repo", "CUBRID/cubrid", "--pr", "1", *extra_args]),
             patch("subprocess.run", side_effect=gh_api),
             redirect_stdout(stdout),
             redirect_stderr(stderr),
@@ -152,3 +155,93 @@ class ApprovalCheckTests(unittest.TestCase):
         })
         self.assertEqual((status, lines), (2, []))
         self.assertIn("orgs/CUBRID/teams/dev/members: HTTP 404", error)
+
+    def test_head_pin_accepts_current_head_approval_case_insensitively(self):
+        head = "a" * 40
+        status, lines, error = self.run_checker(
+            {
+                PULL: {"user": user("Author"), "head": {"sha": head}},
+                EVENTS: [[request(1, login="Reviewer")]],
+                f"{PULL}/reviews": [[review("Reviewer", "APPROVED", commit_id=head)]],
+            },
+            extra_args=["--head", head.upper()],
+        )
+        self.assertEqual((status, lines, error), (0, ["CUBRID/cubrid#1", "Reviewer APPROVED", "PASS"], ""))
+
+    def test_head_pin_blocks_stale_and_missing_commit_approvals(self):
+        old_head = "1" * 40
+        curr_head = "2" * 40
+        status, lines, error = self.run_checker(
+            {
+                PULL: {"user": user("Author"), "head": {"sha": curr_head}},
+                EVENTS: [[request(1, login="stale"), request(2, login="nocommit")]],
+                f"{PULL}/reviews": [[
+                    review("stale", "APPROVED", commit_id=old_head),
+                    review("nocommit", "APPROVED"),
+                ]],
+            },
+            extra_args=["--head", curr_head],
+        )
+        self.assertEqual((status, error), (1, ""))
+        self.assertEqual(lines, [
+            "CUBRID/cubrid#1",
+            "nocommit APPROVED (not at current head)",
+            "stale APPROVED (not at current head)",
+            "BLOCKED",
+        ])
+
+    def test_without_flags_behavior_stays_unchanged(self):
+        old_head = "1" * 40
+        curr_head = "2" * 40
+        status, lines, error = self.run_checker({
+            PULL: {"user": user("Author"), "head": {"sha": curr_head}},
+            EVENTS: [[request(1, login="Reviewer"), request(2, login="vimkim")]],
+            f"{PULL}/reviews": [[
+                review("Reviewer", "APPROVED", commit_id=old_head),
+                review("vimkim", "APPROVED", commit_id=old_head),
+            ]],
+        })
+        self.assertEqual(
+            (status, lines, error),
+            (0, ["CUBRID/cubrid#1", "Reviewer APPROVED", "vimkim APPROVED", "PASS"], ""),
+        )
+
+    def test_head_moved_and_invalid_head_exit_2(self):
+        live_head = "a" * 40
+        given_head = "b" * 40
+        status, lines, error = self.run_checker(
+            {PULL: {"user": user("Author"), "head": {"sha": live_head}}},
+            extra_args=["--head", given_head],
+        )
+        self.assertEqual((status, lines), (2, []))
+        self.assertIn(f"head moved: {live_head} != {given_head}", error)
+
+        status, lines, error = self.run_checker({}, extra_args=["--head", "not-a-sha"])
+        self.assertEqual((status, lines), (2, []))
+        self.assertIn("--head must be a 40-hex commit SHA", error)
+
+    def test_exclude_drops_only_reviewer_case_insensitively_and_blocks(self):
+        status, lines, error = self.run_checker(
+            {
+                EVENTS: [[request(1, login="VimKim")]],
+                f"{PULL}/reviews": [[review("VimKim", "APPROVED")]],
+            },
+            extra_args=["--exclude", "vimkim"],
+        )
+        self.assertEqual((status, lines, error), (1, ["CUBRID/cubrid#1", "No enlisted reviewers", "BLOCKED"], ""))
+
+    def test_exclude_is_repeatable_across_direct_and_team_reviewers(self):
+        status, lines, error = self.run_checker(
+            {
+                EVENTS: [[request(1, login="VimKim"), request(2, team="dev")]],
+                f"{PULL}/requested_reviewers": {"users": [], "teams": [{"slug": "dev"}]},
+                TEAM_MEMBERS: [[user("peer"), user("kept")]],
+                f"{PULL}/reviews": [[
+                    review("VimKim", "APPROVED"),
+                    review("peer", "CHANGES_REQUESTED"),
+                    review("kept", "APPROVED"),
+                ]],
+            },
+            extra_args=["--exclude", "vimkim", "--exclude", "PEER"],
+        )
+        self.assertEqual((status, lines, error), (0, ["CUBRID/cubrid#1", "kept APPROVED", "PASS"], ""))

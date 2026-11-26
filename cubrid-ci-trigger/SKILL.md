@@ -24,7 +24,7 @@ Treat these gha-ci commit-status contexts as the stable contract:
 | `gha-ci: test_medium` | required | medium suite |
 | `gha-ci: test_sql_by_cci` | optional | SQL cases through CCI on the release build |
 
-Discover the current required CI checks with `gh pr checks "$PR_URL" --required`. A gha-ci context may be absent before the first `/run`, so also compare the observed contexts with the stable four-context required set above. Use the [PR approval gate](../cubrid-common/SKILL.md#pr-approval-gate) for review readiness.
+Discover the current required CI checks with `gh pr checks "$PR_URL" --required`. A gha-ci context may be absent before the first `/run`, so also compare the observed contexts with the stable four-context required set above. Use the [PR approval gate](../cubrid-common/SKILL.md#pr-approval-gate) before reporting review or `/cubrid-pr-merge` readiness.
 
 ## Select one operation
 

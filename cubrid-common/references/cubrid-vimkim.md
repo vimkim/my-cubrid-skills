@@ -20,7 +20,7 @@ On 2026-11-25, `vimkim` granted standing review-approval authorization for `cubr
 
 ## Merge handoff scope
 
-On 2026-11-25, `vimkim` limited final engine PR merges (and their linked `tc/pr-<N>` PRs) to the user-invoked `/cubrid-pr-merge <PR>` skill (`pr-final-merge-handoff`), and only for engine PRs that `vimkim` both opened and is assigned to. A PR that `vimkim` only reviews or approves is merged by its author; `pr-final-merge-handoff` enforces this with an `ownership` blocker that no waiver lifts. Outside `/cubrid-pr-merge`, direct `vimkim` to run `/cubrid-pr-merge <PR>` once reviews and CI are ready rather than proposing manual close/merge steps, requesting ad-hoc merge permission, or running `gh pr merge` directly on an engine PR.
+On 2026-11-25, `vimkim` limited final engine PR merges (and their linked `tc/pr-<N>` PRs) to the user-invoked `/cubrid-pr-merge <PR>` skill (`pr-final-merge-handoff`), and only for engine PRs that `vimkim` both opened and is assigned to. A PR that `vimkim` only reviews or approves is merged by its author; `pr-final-merge-handoff` enforces this with an `ownership` blocker that no waiver lifts. Outside `/cubrid-pr-merge`, direct `vimkim` to run `/cubrid-pr-merge <PR>` only once the [PR approval gate](../SKILL.md#pr-approval-gate) readiness check passes rather than proposing manual close/merge steps, requesting ad-hoc merge permission, or running `gh pr merge` directly on an engine PR.
 
 ## Interpret team-leader assignment
 

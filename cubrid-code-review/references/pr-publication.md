@@ -86,7 +86,7 @@ gh pr review <N> --repo <owner/repo> --approve --body-file <saved-approval-file>
 
 Read back the review with `gh api repos/<owner>/<repo>/pulls/<N>/reviews --paginate`. Verify that the authenticated account's latest review has state `APPROVED`, `commit_id` equal to the reviewed head, and the snapshot marker. Record its `html_url` as the approval URL in the run directory's publication progress, the final summary, and `verdict.json`.
 
-Then run the [PR approval checker](../../cubrid-common/SKILL.md#pr-approval-gate) for this PR and show its full output. The approval and the checker result authorize no merge, CI trigger, or TC PR action; those gates apply unchanged.
+Then run the [PR approval checker](../../cubrid-common/SKILL.md#pr-approval-gate) for this PR and show its full output. The approval and this single-PR output neither establish `/cubrid-pr-merge` readiness nor authorize a merge, CI trigger, or TC PR action; follow the [PR approval gate](../../cubrid-common/SKILL.md#pr-approval-gate).
 
 ## Clean up
 

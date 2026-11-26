@@ -15,7 +15,7 @@ On entering this workflow policy, establish the current user's identity once per
 
 When the user is `vimkim`, read [vimkim's CUBRID context](references/cubrid-vimkim.md). For another or unknown user, continue with shared policy and that user's instructions without loading this profile.
 
-Before recommending or performing PR, CI, TC-only PR, or testcase integration actions, read [Testcase lifecycle](references/testcase-lifecycle.md). Before recommending, requesting permission for, or performing a GitHub PR merge, apply the [PR approval gate](#pr-approval-gate). Write every squash commit message by the [Squash commit message convention](references/squash-message.md). Final engine PR merges (and their linked `tc/pr-<N>` PRs) run only through the user-invoked `/cubrid-pr-merge <PR>` skill (`pr-final-merge-handoff`): outside `/cubrid-pr-merge`, direct the user to run `/cubrid-pr-merge <PR>` once reviews and CI are ready rather than proposing manual close/merge steps or running `gh pr merge` directly.
+Before recommending or performing PR, CI, TC-only PR, or testcase integration actions, read [Testcase lifecycle](references/testcase-lifecycle.md). Before reporting merge readiness, requesting merge permission, or merging a GitHub PR, apply the [PR approval gate](#pr-approval-gate). Write every squash commit message by the [Squash commit message convention](references/squash-message.md). Final engine PR merges (and their linked `tc/pr-<N>` PRs) run only through the user-invoked `/cubrid-pr-merge <PR>` skill (`pr-final-merge-handoff`): outside `/cubrid-pr-merge`, direct the user to run `/cubrid-pr-merge <PR>` once `pr-final-merge-handoff plan --pr <PR> --json` reports `data.review_ready: true` (no blockers other than squash messages, covering engine and changed TC PR reviews) rather than proposing manual close/merge steps or running `gh pr merge` directly.
 
 ### Dev2 team membership
 
@@ -23,17 +23,19 @@ Use `cubrid-dev2-members` to identify members of the [GitHub CUBRID/dev2 team](h
 
 ### PR approval gate
 
-Apply this gate to each PR in `CUBRID/cubrid`, `CUBRID/cubrid-testcases`, and `CUBRID/cubrid-testcases-private-ex`. Run the checker immediately before asking for merge permission and again immediately before each merge, including an already-authorized merge. Show its full output to the user at both points. Set `CUBRID_COMMON_DIR` to the directory containing this skill file.
+Apply this gate to each PR in `CUBRID/cubrid`, `CUBRID/cubrid-testcases`, and `CUBRID/cubrid-testcases-private-ex`. Run the checker immediately before reporting merge readiness, before asking for merge permission, and again immediately before each merge, including an already-authorized merge. Show its full output to the user at both points. Set `CUBRID_COMMON_DIR` to the directory containing this skill file.
 
 ```bash
 "$CUBRID_COMMON_DIR/scripts/cubrid-pr-approval-check" --repo "$REPO" --pr "$PR_NUMBER"
 ```
 
-The checker includes each user with a review request that has not since been explicitly removed, plus members of currently requested teams. It excludes the PR author and bots. A PR with no enlisted reviewer is blocked. Each enlisted reviewer's latest non-`COMMENTED` GitHub review must be `APPROVED` and follow the latest active request. A direct request still pending blocks that reviewer.
+The checker includes each user with a review request that has not since been explicitly removed, plus members of currently requested teams. It excludes the PR author, any repeatable `--exclude <LOGIN>` (case-insensitive), and bots. A PR with no enlisted reviewer is blocked. Each enlisted reviewer's latest non-`COMMENTED` GitHub review must be `APPROVED` and follow the latest active request. A direct request still pending blocks that reviewer. When `--head <SHA>` (40 hex) is passed, `APPROVED` also requires `commit_id == <SHA>`; stale approvals report `APPROVED (not at current head)` and block, and a moved live head exits `2`.
 
 - Exit 0 satisfies the reviewer gate. Verify the other merge requirements and obtain any required merge permission.
 - Exit 1 blocks the merge. Show each reviewer and their state. Proceed only if the user explicitly names every blocked reviewer and authorizes merging anyway. A general merge go-ahead does not waive the gate.
 - Exit 2 means the checker could not establish the result. Resolve the evidence gap before treating the gate as passed or requesting merge permission.
+
+Readiness reports count as merge decisions. Before calling an engine PR ready or suggesting `/cubrid-pr-merge <PR>`, run `pr-final-merge-handoff plan --pr <PR> --json` and require `data.review_ready` (`true`). Report every blocker other than the squash-message blockers (`data.message_blockers`). Every changed `tc/pr-<N>` PR (`changed_files > 0`) must be ready for review (not draft) and pass this gate with at least one `APPROVED` review at its current head from someone other than the engine PR author (`--head <TC_HEAD> --exclude <ENGINE_AUTHOR>`); waivers cannot replace that approval. Never call an engine PR ready from the engine PR's checker output alone.
 
 Report final-handoff readiness or suggest `/cubrid-pr-merge <PR>` only for an engine PR that the current user both opened and is assigned to; the author merges anyone else's PR, and its TC PRs follow it. Outside `/cubrid-pr-merge`, do not request ad-hoc merge permission or run `gh pr merge` directly on a `CUBRID/cubrid` engine PR (TC-only CI-carrier PRs follow [testcase-lifecycle.md](references/testcase-lifecycle.md#tc-only-changes-ci-carrier-draft-engine-pr)). `pr-final-merge-handoff` enforces ownership with an `ownership` blocker that no waiver lifts.
 

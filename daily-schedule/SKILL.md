@@ -30,7 +30,7 @@ verbatim plan, requested language, dates, priorities, and uncertainty.
 2. Read the newest `weekly/week-*.md` whose date is ≤ today, and today's `daily/today-YYYY-MM-DD.md` if it exists.
 3. Read scheduled commitments with `work-tracker todo today --json` (or `todo --days 3` / `todo --days 5` for a requested horizon), and use `work-tracker today --json` to detect ongoing/recently finished work (fall back to `work-tracker list --json` for the open backlog). If the installed CLI lacks `todo`, report the missing capability and use the sheets; do not claim structured dates were stored. If `work-tracker` is missing, say so and continue from the sheets alone. Follow the `track-work` skill from `vimkim/my-skills` for all ledger mutations. If it is unavailable, install that collection before mutating the ledger; schedule-sheet reads remain available.
 4. Detect work already done today by other sessions: `git -C /home/vimkim/gh/my-cubrid-docs log --oneline --since=midnight` — agents commit evidence reports there.
-5. For every candidate next action that references a PR or CI, recheck live state with `gh pr view <n> --repo CUBRID/cubrid --json state,isDraft` and `gh pr checks <n> --repo CUBRID/cubrid` for engine PRs. Use the [PR approval gate](../cubrid-common/SKILL.md#pr-approval-gate) to verify reviewer completion.
+5. For every candidate next action that references a PR or CI, recheck live state with `gh pr view <n> --repo CUBRID/cubrid --json state,isDraft` and `gh pr checks <n> --repo CUBRID/cubrid` for engine PRs. Before reporting review completion or `/cubrid-pr-merge` readiness, follow the [PR approval gate](../cubrid-common/SKILL.md#pr-approval-gate).
 6. When a plan needs the Dev2 roster, follow [Dev2 team membership](../cubrid-common/SKILL.md#dev2-team-membership).
 
 ## Structured scheduling
@@ -66,7 +66,7 @@ When the user reports an item done, blocked, or deferred: update the today sheet
 1. Save the plan verbatim as `YYYY-MM-DD-raw-prompt*.md`.
 2. Build `weekly/week-YYYY-MM-DD.md`: calendar notes (holidays shrink the real working days — say so), one section per item with JIRA/PR links, a date-stamped live-state snapshot, concrete next actions, and related work-tracker item IDs.
 3. Register a work-tracker umbrella item whose description points at the week sheet; register new items for objectives not yet tracked; add cross-reference notes to existing related items instead of creating duplicates. Apply the accepted structured dates and priorities under Structured scheduling.
-4. Verify the plan's premises against live state before accepting them. For a "get review" item, use the approval checker to verify whether every enlisted reviewer approved. Report any corrections.
+4. Verify the plan's premises against live state before accepting them. For a "get review" or merge-readiness item, follow the [PR approval gate](../cubrid-common/SKILL.md#pr-approval-gate). Report any corrections.
 5. Close with sequencing advice: name the long-pole item to start first and any people-dependent request to send before the next holiday or weekend.
 
 ## Edge cases

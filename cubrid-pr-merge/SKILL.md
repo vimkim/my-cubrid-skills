@@ -23,9 +23,9 @@ Read [Workflow policy](../cubrid-common/SKILL.md#workflow-policy), [Testcase lif
 pr-final-merge-handoff plan --pr "$PR" --json
 ```
 
-Read `data.steps`, `data.testcases`, `data.approvals`, `data.ci_evidence`, `data.review_threads`, and `data.blockers`. Two blocker kinds are handled here:
+Read `data.steps`, `data.testcases`, `data.approvals`, `data.ci_evidence`, `data.review_threads`, `data.review_ready`, `data.message_blockers`, and `data.blockers`. When `data.review_ready` is `true`, only `data.message_blockers` remain and Step 3 can proceed directly; otherwise handle `data.message_blockers` and `unresolved review thread(s)`:
 
-- `squash message required (--message KEY=FILE)` names one pull that the handoff merges and the `KEY` for its message. Step 3 writes it.
+- `squash message required (--message KEY=FILE)` (`data.message_blockers`) names one pull that the handoff merges and the `KEY` for its message. Step 3 writes it.
 - `unresolved review thread(s)` means GitHub will refuse that merge (`All comments must be resolved`). Resolve this before any testcase PR changes, because the handoff merges the TC PRs first. For each entry in `data.review_threads`, show the user its PR, path, first author, URL, and whether the latest reply addresses it:
 
   ```bash
@@ -40,7 +40,7 @@ Read `data.steps`, `data.testcases`, `data.approvals`, `data.ci_evidence`, `data
 
   A thread without an answer goes back to the user; the skill ends until it is addressed.
 
-Every other blocker stops the skill: report it with the approval checker output and end. A reviewer waiver (`--waive-reviewer LOGIN`) is used only when the user names that reviewer in this session.
+Every other blocker stops the skill: report it with the approval checker output and end. `--waive-reviewer LOGIN` waives `LOGIN` on the engine PR only; `--waive-reviewer OWNER/REPO#N:LOGIN` waives `LOGIN` on that PR only (used only when the user names the reviewer, and the PR for a TC PR, in this session). A TC PR blocker `no approval at the current head (waivers cannot replace it)` cannot be waived.
 
 An `ownership` blocker is final. It names the author, the assignees and the login; report it and end the skill. A merge go-ahead from the user or a `--waive-reviewer` leaves it in place, and the tool checks it again before every GitHub change.
 

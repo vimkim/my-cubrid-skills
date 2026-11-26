@@ -41,7 +41,7 @@ an actual pull request on GitHub.
 - A source revision change or an edit to the existing GitHub description requires
   reconciliation and another review. A changed destination or expanded operation
   list also returns to review. Unchanged retries retain the existing authorization.
-- For any later merge request, follow the [PR approval gate](../cubrid-common/SKILL.md#pr-approval-gate) and obtain merge authorization.
+- For any later readiness report or merge request, follow the [PR approval gate](../cubrid-common/SKILL.md#pr-approval-gate) and obtain merge authorization.
 
 ## Route the Request
 

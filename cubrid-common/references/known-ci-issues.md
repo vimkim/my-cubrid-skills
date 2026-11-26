@@ -11,7 +11,9 @@
 cubrid-tcr --json check --ci-attempt "$SUITE_DIR" --record
 ```
 
-It reads each failure's testcase path, shard, tested Engine SHA from the shard build provenance, and `message.txt`, which holds any CTP `CORE ANALYZER` stacks. It applies the testcase's rules and the rules of the shard's job, so a `test_sql_by_cci` failure needs no second call. `failures[]` has one entry per failure with `identity`, `verdict`, `hits`, `reason`, `stack_found`, and `history` counts. `--record` tags the occurrence when exactly one signature matches its stack; `record.result` says what happened. If the output has `rerun.mode` `carried_forward`, the attempt ran no cases; check the source attempt named in `rerun` instead.
+It reads each failure's testcase path, shard, tested Engine SHA from the shard build provenance, and `message.txt`, which holds any CTP `CORE ANALYZER` stacks. It applies the testcase's rules and the rules of the shard's job. For a `test_sql_by_cci` failure, it applies the matching `sql` testcase signature rules and the job rules, so the failure needs no second call. For such a failure, it skips Chronicle history (`history.available` is false) and `--record` writes nothing. `failures[]` has one entry per failure with `identity`, `verdict`, `hits`, `reason`, `stack_found`, and `history` counts. `--record` tags the occurrence when exactly one signature matches its stack; `record.result` says what happened. If the output has `rerun.mode` `carried_forward`, the attempt ran no cases; check the source attempt named in `rerun` instead.
+
+If an entry's `history.status` is `NOT_INDEXED`, Chronicle has not indexed that testcase run, and the text output says `NOT_INDEXED` with its freshness. If `history.freshness` is `STALE` or `UNKNOWN`, the text output appends it to the counts. In both cases, report the history as incomplete. Do not read the counts as "no earlier failures".
 
 3. For a job-level failure without testcase records, check the job name with the shard's tested Engine SHA. A workflow `head_sha` is not enough.
 
@@ -19,7 +21,7 @@ It reads each failure's testcase path, shard, tested Engine SHA from the shard b
 cubrid-tcr --json check --job "$JOB_NAME" --engine "$ENGINE_SHA"
 ```
 
-`check` reads fix commits from `origin/develop` of `$TCR_ENGINE_REPO`. If it exits 2 and names that variable, pass `--engine-repo` with a local `CUBRID/cubrid` checkout.
+When a rule's issue is resolved `Fixed` or `Done` in Jira, `check` tests whether the fix commit is in the tested Engine SHA and answers `fix_missing` or `fix_present`. It reads fix commits from `origin/develop` of `$TCR_ENGINE_REPO`. If it exits 2 and names that variable, pass `--engine-repo` with a local `CUBRID/cubrid` checkout.
 
 4. Apply the label for the `verdict` from the table below. Cite the rule id, the issue, and the `reason`.
 5. Keep every failure in the failure inventory, whatever its verdict. Still analyze every other failure in the same job.
@@ -34,19 +36,21 @@ cubrid-tcr --json check --job "$JOB_NAME" --engine "$ENGINE_SHA"
 | `expired` | Do not apply the rule. Tell the user to retire or extend it. |
 | `unknown` | Known issue, with the `reason` that the state is unknown. If the reason is a missing stack or failure text, get it and check again. |
 
-Each entry's `history` counts earlier failures by branch and signature. Report it as history context. History context does not prove a root cause or PR causality. `cubrid-tcr show "$TC_PATH" --suite "$SUITE"` prints the full testcase view with related issues and notes. If that view's `sync_hint` names a date window, record the gap in one line instead of running it. Window syncs outlast the agent's command time limit.
+Each entry's `history` counts earlier failures by branch and signature. Report it as history context. History context does not prove a root cause or PR causality. `cubrid-tcr show "$TC_PATH" --suite "$SUITE"` prints the full testcase view with related issues and notes. If that view's `sync_hint` names a date window, record the gap in one line instead of running it. Window syncs outlast the agent's command time limit. Every `--suite` option accepts the canonical names (`sql`, `medium`, `shell`) and the CI aliases (`test_sql`, `test_medium`, `test_shell`). `check` and `show` also accept `sql_by_cci` and `test_sql_by_cci`.
 
 If `cubrid-tcr` is not installed or exits with code 2, record the limitation and analyze the failure as usual.
 
 ## Record what the analysis learned
 
-Run these commands after the analysis. Each command is idempotent.
+Run these commands after the analysis and before the report handoff. `cubrid-ci-analyze` requires this step. Each command is idempotent.
 
 - If a failure matched no signature (`record.result` is `no_single_match` with no candidates) and its shape will recur, add one with `signature add`, then rerun the batch check with `--record`.
   - For a core, pass `--frames` and any `--text`. To see the parsed frames, run `cubrid-tcr signature attach "$TC_PATH" --suite "$SUITE" --run "$RUN_ID" --shard "$SHARD" --stack-file "$SUITE_DIR/failures/<id>/message.txt"`.
   - For a NOK line without a core, pass only `--text` with the stable part of the line from `message.txt`, such as `--text 'NOK stat.log is empty'`. Leave out run-specific numbers and paths.
 - If an issue looks related but nobody has confirmed it, run `cubrid-tcr link "$TC_PATH" --suite "$SUITE" --issue CBRD-n --relation suspected`.
 - If a later reader needs a fact, run `cubrid-tcr note "$TC_PATH" --suite "$SUITE" --body "..." --ref ...`.
+- `check` does not record `test_sql_by_cci` failures. To give such a failure a signature, use `--suite sql`, because `check` applies `sql` signature rules to it.
+- If a failure that this PR did not cause recurs across PRs or on `develop`, and no rule covers it, propose a rule to the user as [Add a known-issue rule](#add-a-known-issue-rule) describes.
 
 You can write links, signatures, and notes without asking, because they never change a verdict.
 
@@ -62,4 +66,4 @@ A rule hides a failure from analysis, so only the user approves one.
 
 A rule for a recurring job-level failure without an issue uses `--job-contains TEXT` and needs `--expires YYYY-MM-DD`. It answers `known_job`, never `known`. Retire a rule with `cubrid-tcr rule retire ID --reason "..."`.
 
-`cubrid-tcr rules --audit` lists the active rules with their Jira state and days until expiry, and flags rules whose issue is resolved Fixed or whose expiry is near. Run it when a verdict looks stale, and report its flags to the user, who decides whether to retire or extend a rule.
+`cubrid-tcr rules --audit` lists the active rules with their Jira state and days until expiry, and flags rules whose issue is resolved `Fixed` or `Done` or whose expiry is near. Run it when a verdict looks stale, and report its flags to the user, who decides whether to retire or extend a rule.

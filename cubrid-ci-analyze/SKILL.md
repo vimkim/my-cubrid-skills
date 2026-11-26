@@ -205,6 +205,15 @@ Never include credentials, headers, signed URLs, or environment values.
 
 Re-read the saved report against the selected manifest and evidence. Require every requested suite to appear exactly once, every validated failure/error to appear exactly once, all totals to reconcile, every comparison to reconcile against the independently validated baseline and input scope, every attribution to cite concrete evidence, and every inference to have a falsifier. Check historical claims against retained occurrences, symptom evidence, and identity/coverage limitations. Correct discrepancies before sharing.
 
+Before the handoff, do the [Record what the analysis learned](../cubrid-common/references/known-ci-issues.md#record-what-the-analysis-learned) procedure for every analyzed testcase failure. Skip it only when `cubrid-tcr` is not installed or exits with code 2; record that limitation in the report.
+
+- Add a signature with `cubrid-tcr signature add` for a recurring failure shape that matched no signature. Then rerun the batch check with `--record`.
+- Add a `cubrid-tcr link --relation suspected` for an unconfirmed related issue.
+- Add a `cubrid-tcr note` for a fact that a later reader needs.
+- If a failure that this PR did not cause recurs across PRs or on `develop`, and no rule covers it, propose a `cubrid-tcr rule add` to the user. Do not approve the rule yourself.
+
+List each `cubrid-tcr` write and each proposed rule in the report and in the handoff.
+
 Complete the Document Git workflow's local review and task commit, including any required report index. Return the report path, exact analyzed commit, suite states and counts, incomplete-evidence warnings, task checkout/branch and report commit, checks, and the highest-priority next action. Integrate the report into `main` under the same workflow before the handoff, without asking, when the user's Git workflow pre-authorizes it (Tier 1). Ask only when it does not.
 
 ### Machine-readable summary (`analysis-summary.json`)

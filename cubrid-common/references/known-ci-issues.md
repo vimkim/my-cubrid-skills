@@ -67,3 +67,20 @@ A rule hides a failure from analysis, so only the user approves one.
 A rule for a recurring job-level failure without an issue uses `--job-contains TEXT` and needs `--expires YYYY-MM-DD`. It answers `known_job`, never `known`. Retire a rule with `cubrid-tcr rule retire ID --reason "..."`.
 
 `cubrid-tcr rules --audit` lists the active rules with their Jira state and days until expiry, and flags rules whose issue is resolved `Fixed` or `Done` or whose expiry is near. Run it when a verdict looks stale, and report its flags to the user, who decides whether to retire or extend a rule.
+
+## Track blockers, culprits, and unblock readiness
+
+When a failure's root cause and fix target are identified, record them as a first-class blocker in `cubrid-tcr` so PR unblock checks stay fast and reliable:
+
+- Register or update a blocker (auto-hydrates culprit PR/commit metadata unless `--offline`):
+  ```bash
+  cubrid-tcr blocker add CBRD-28395 --culprit engine#8537 --fix-issue CBRD-28395 --signature <SIG>
+  cubrid-tcr blocker add tc-4474 --culprit engine#7990 --pr tc#4474 --signature <SIG> --rule <RULE>
+  cubrid-tcr blocker pr add CBRD-28395 engine#8810
+  ```
+- Inspect blocker merge readiness and affected open PRs (`cubrid-tcr` owns fix-PR merge state and exposes `wait_keys` in `--json`):
+  ```bash
+  cubrid-tcr blockers --affected-days 7
+  cubrid-tcr unblock --pr <PR_NUMBER>
+  ```
+- Loose coupling with `work-tracker`: when a work item waits on a CI blocker, record `wait-for:<KEY>` (matching a `wait_keys` value such as `CBRD-28395` or `tc-4474`) in its `work-tracker` note rather than mirroring PR/JIRA state into `work-tracker`.

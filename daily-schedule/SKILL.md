@@ -1,6 +1,6 @@
 ---
 name: daily-schedule
-description: Maintain and answer the user's daily and weekly work plan from the my-cubrid-schedule control sheets, the work-tracker ledger, and live GitHub/CI state. Use when the user asks what to do today or next, hands over a daily or weekly plan to track, reports progress on planned items, or wants an end-of-day or end-of-week wrap-up. Triggers on phrases like 'what should I do today', '오늘 뭐 하지', '다음은?', 'what did I plan last week', '지난주에 뭐 하기로 했지', '차주 계획', 'track my schedule', 'wrap up today'.
+description: Maintain and answer the user's daily and weekly work plan from the my-cubrid-schedule control sheets, the work-tracker ledger, and live GitHub/CI state. Use when the user asks what to do today (or next today), hands over a daily or weekly plan to track, reports progress on planned items, or wants an end-of-day or end-of-week wrap-up. Triggers on phrases like 'what should I do today', 'what to do next today', '오늘 뭐 하지', '오늘 다음은?', 'what did I plan last week', '지난주에 뭐 하기로 했지', '차주 계획', 'track my schedule', 'wrap up today'. Not for ordinary in-session next-step questions within a single task.
 ---
 
 # Daily Schedule
@@ -44,7 +44,7 @@ Use `work-tracker` as the authority for `planned_date`, `due_date`, and `priorit
 - The view selects unfinished items by either date through its end, includes carryover and overdue work, sorts by Priority then deadline, and separates blocked/waiting items. Rescheduling a Planned Date does not erase an overdue Due Date. The CLI does not refresh GitHub; its last-update time is ledger activity, not external verification.
 - On plan intake, write the accepted dates/priorities through the CLI immediately and verify with `show ID --json` or the requested Todo View. Leave the older undated backlog untouched. Suggestions stay in the sheet's progress log until accepted.
 
-## 2. Answer "what should I do today / what's next"
+## 2. Answer "what should I do today / what's next today"
 
 1. On the first ask of a day, create `daily/today-YYYY-MM-DD.md` from the governing week sheet, the ledger, and live state: working window, per-item status and next action, a 운영 규칙 header (like `weekly/week-2026-09-21.md`), and a 진행 로그 section. Carry unfinished items forward from the previous today-sheet.
 2. Recommend one most important next action with a timebox. Offer one fallback only if the primary is blocked. Do not enumerate the whole backlog unless asked.

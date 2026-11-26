@@ -179,6 +179,16 @@ verification outcomes must match evidence; include limits and follow-up when
 relevant. Resolve unknown intended behavior before proposing unsupported claims.
 Use an independent reviewer only when the user requests one.
 
+Separate observed codebase and official CI/QA facts from consequences seen only in
+personal tooling (`cubrid-ci`, `cubrid-tcc`, `cubrid-tcr`, `cubrid-ci-watch`,
+`cubrid-pr-flow`, `cubrid-static-check`, `work-tracker`, `failure-tracker`, and
+personal analysis notes) before writing shared PR text. State the defect and
+impact in terms of official product, test-framework, or company CI behavior (for
+example, report a CTP summary count mismatch itself as a result-integrity defect
+rather than reporting `cubrid-ci collect` failing with `collection_failed` as
+official CI impact); cite a personal tool only if explicitly framed as a
+non-official example verifier.
+
 Optional static evidence: when `cubrid-static-check` is on `PATH`, run
 `cubrid-static-check <base> "$SOURCE_COMMIT"` from the source worktree. It reports
 only what the change adds: cppcheck and clang-tidy findings, new clones, and
@@ -246,17 +256,24 @@ https://jira.cubrid.org/browse/CBRD-XXXXX
 - When an explanation is included, link its public URL once, normally as the final
   Remarks bullet. Otherwise omit the link. The body must stand alone either way.
 - Put deep technical detail in the optional explanation. Express verification
-  with public project scripts, CMake/ctest, or outcomes, not personal `just` recipes.
+  with public project scripts, CMake/ctest, or outcomes, not personal `just` recipes,
+  and report official codebase/CI facts and impact rather than personal-tool errors
+  or workflows.
 - PR bodies and explanations contain repo-relative paths or public URLs, never
   local absolute paths, `file://` URLs, or machine-specific workspace paths.
 
 ## Material Checker
 
 Resolve `checker` to this skill's `scripts/check-pr-material.sh`. It checks the
-new body's three-section contract and all files for known local-path/task-runner
-patterns. It does not establish factual accuracy, review approval, or source/PR freshness. It also
-runs the shared Python link checker on every supplied file; passing the known-host
-check does not establish access to other URLs.
+new body's three-section contract and all files for known local-path, `just`,
+and personal-only tool (`cubrid-ci`, `cubrid-ci-watch`, `cubrid-tcc`, `cubrid-tcr`,
+`cubrid-pr-flow`, `cubrid-static-check`, `work-tracker`, `failure-tracker`)
+patterns. It does not establish factual accuracy, review approval, or source/PR
+freshness. It also runs the shared Python link checker on every supplied file;
+passing the known-host check does not establish access to other URLs. If a
+personal tool name is intentionally cited strictly as a clearly labeled
+non-official example verifier (approved or verified as non-official impact),
+re-run with `--allow-personal-tool-mention` after confirming every match.
 
 Run it before the review handoff, before committing body/explanation changes, and
 immediately before creating or updating a PR. Set `operation` from the recorded

@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat >&2 <<'EOF'
-Usage: check-pr-material.sh [--existing-body] --body PR_BODY.md [FILE...]
+Usage: check-pr-material.sh [--existing-body] [--allow-personal-tool-mention] --body PR_BODY.md [FILE...]
 
 Checks generated CUBRID PR material before publishing.
 
@@ -14,11 +14,15 @@ Rules:
       ## Remarks
   - Generated material must not contain local absolute paths or file:// URLs.
   - Generated material must not contain task-runner shortcut commands beginning with "just".
+  - Generated material must not mention personal-only CLI tools (use
+    --allow-personal-tool-mention only after confirming every hit is framed
+    strictly as a non-official example, never as official CUBRID/CI impact).
   - Shared links must pass the common Python personal-host check.
 EOF
 }
 
 existing_body=0
+allow_personal_tool_mention=0
 body_file=""
 files=()
 
@@ -26,6 +30,9 @@ while (($#)); do
   case "$1" in
     --existing-body)
       existing_body=1
+      ;;
+    --allow-personal-tool-mention)
+      allow_personal_tool_mention=1
       ;;
     --body)
       shift
@@ -102,10 +109,14 @@ check_pattern() {
 
 local_path_re='(/home/[[:alnum:]_.-]+/|/Users/[[:alnum:]_.-]+/|file://|[[:alpha:]]:\\(Users|home)\\|[[:alpha:]]:\\)'
 just_command_re='(^|[[:space:]`$>])just[[:space:]]+[[:alnum:]_.:/-]+'
+personal_tool_re='(^|[^[:alnum:]_-])(cubrid-ci-watch|cubrid-ci|cubrid-tcc|cubrid-tcr|cubrid-pr-flow|cubrid-static-check|work-tracker|failure-tracker)([^[:alnum:]_-]|$)'
 
 for file in "${files[@]}"; do
   check_pattern "local path or file URL" "$local_path_re" "$file"
   check_pattern "just task-runner command" "$just_command_re" "$file"
+  if ((!allow_personal_tool_mention)); then
+    check_pattern "personal tool reference (reframe as official CUBRID/CI impact, or pass --allow-personal-tool-mention only for a clearly labeled non-official example)" "$personal_tool_re" "$file"
+  fi
 done
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"

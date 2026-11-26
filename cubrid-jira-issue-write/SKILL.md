@@ -39,7 +39,7 @@ When invoked in draft-only automation mode (such as by `cubrid-pr-flow`'s `draft
 Use these questions to review the draft, not as required headings. Below the opening fields, add the minimum shared explanation that lets a colleague understand the problem and assess the evidence. One connected paragraph can be enough for a small issue.
 
 - **Problem:** Identify the task, relevant conditions, current behavior or unmet need, and expected outcome. Ground the gap in an observation, requirement, or attributed user report. A proved root cause is not required.
-- **Impact:** Connect the problem to the affected user's work and concrete cost or risk. Internal users include developers, QA engineers, and operators. Distinguish measured or observed impact from plausible risk, and leave unknown frequency or magnitude unasserted.
+- **Impact:** Connect the problem to the affected user's work and concrete cost or risk. Internal users include developers, QA engineers, and operators. Distinguish measured or observed impact from plausible risk, and leave unknown frequency or magnitude unasserted. Separate observed codebase and official company CI/QA facts from consequences seen only in personal tooling (`cubrid-ci`, `cubrid-tcc`, `cubrid-tcr`, `work-tracker`, personal analysis notes): report the underlying product or official CI/QA defect (for example, state a CTP summary count gap as a result-integrity error rather than presenting `cubrid-ci collect` returning `collection_failed` as official CI impact; mention a personal tool only if explicitly framed as a non-official example verifier).
 - **Needed outcome:** Explain what resolving the issue enables. Discuss workarounds, urgency, deferral cost, or scope objections only when available evidence makes them useful to the decision. A preference for cleaner code alone does not establish impact.
 
 State the decision needed from triage when it is useful. Propose an analysis owner only when the user requests it or the context supports that proposal, and identify whose proposal it is. Assignment, priority, and confirmation remain triage decisions; proposed ownership is not an existing commitment.
@@ -112,9 +112,15 @@ the report and any shared supporting documents. Resolve `link_checker` to
 any shared supporting files as additional arguments. Correct preparation failures;
 personal viewing links belong only in the chat handoff.
 
-Use project-provided commands, CMake, ctest, or the relevant suite's actual runner. Translate personal `just` recipes, aliases, and local-only helpers into their underlying commands. Supply required configuration, assets, and paths so another engineer can reproduce the reported result. Match the runner to the evidence; do not replace a native testkit run with a CTP command. Mark missing prerequisites explicitly.
+Use project-provided commands, CMake, ctest, or the relevant suite's actual runner. Translate personal `just` recipes, aliases, and local-only helpers into their underlying commands. When distilling personal analysis notes, separate observed codebase/CI facts from personal-tool consequences and reframe impact as official product, test-framework, or company CI/QA behavior. Supply required configuration, assets, and paths so another engineer can reproduce the reported result. Match the runner to the evidence; do not replace a native testkit run with a CTP command. Mark missing prerequisites explicitly.
 
-The issue body must have zero matches for `rg -nP '\bjust\s+\w'`. This scan is a guard against one common local dependency; also review the commands and referenced assets for portability.
+The issue body must have zero matches for `rg -nP '\bjust\s+\w'`. Also scan for personal-only tool mentions before review:
+
+```bash
+rg -nP '(?<![\w-])(cubrid-ci(?:-watch)?|cubrid-tcc|cubrid-tcr|cubrid-pr-flow|cubrid-static-check|work-tracker|failure-tracker)(?![\w-])' "$issue_file"
+```
+
+Every match must be removed and reframed as official codebase/CI impact, or explicitly verified as a clearly labeled non-official example verifier. Also review the commands and referenced assets for portability.
 
 ## Review criteria
 
@@ -122,7 +128,7 @@ Review the saved file against the conversation, ticket, and evidence. The report
 
 - **One-line summary:** A team lead can explain what the issue addresses and, when known, why it was raised from this sentence alone. A PR follow-up names the PR and the specific review concern, with a comment link when available. Internal context is explained rather than assumed.
 - **Problem:** The current condition, needed behavior, and gap are explicit. Observations, user reports, inferred explanations, and unknowns are distinguishable. The report does not require a proved root cause before triage.
-- **Impact:** A reader unfamiliar with the implementation can follow the affected user's task and expected result through the current difficulty to concrete costs or risks; repeating the technical symptom alone does not pass. Scope, frequency, magnitude, and uncertainty match the evidence, with unsupported impact left as a specific ANALYSIS question.
+- **Impact:** A reader unfamiliar with the implementation can follow the affected user's task and expected result through the current difficulty to concrete costs or risks; repeating the technical symptom alone does not pass. Scope, frequency, magnitude, and uncertainty match the evidence, with unsupported impact left as a specific ANALYSIS question. Personal-tool behavior or errors are never presented as official CUBRID or company CI impact.
 - **Need:** The report explains why the outcome matters and any relevant workaround limitations, without inventing urgency or impact. Any ownership proposal is supported and attributed.
 - **Stage:** The opening method field uses the default text unless an existing decision is cited. Acceptance describes outcomes. Any optional candidates receive criticism, pros and cons, and a direct comparison; none silently becomes the selected design.
 - **Consistency:** The title, one-line summary, four-field summary, detailed argument, expected result, and acceptance criteria describe the same problem and scope. Conflicting evidence is resolved or visibly open. Classification suggestions are distinguishable from live JIRA field values.

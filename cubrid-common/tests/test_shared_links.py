@@ -109,9 +109,22 @@ class SharedLinksTests(unittest.TestCase):
 
 
 class PrMaterialIntegrationTests(unittest.TestCase):
-    def run_checker(self, root: Path, body: Path, *files: Path, existing=False):
+    def run_checker(
+        self,
+        root: Path,
+        body: Path,
+        *files: Path,
+        existing=False,
+        allow_personal_tool_mention=False,
+    ):
+        args = ["bash", str(PR_CHECKER)]
+        if existing:
+            args.append("--existing-body")
+        if allow_personal_tool_mention:
+            args.append("--allow-personal-tool-mention")
+        args.extend(["--body", str(body), *map(str, files)])
         return subprocess.run(
-            ["bash", str(PR_CHECKER), *(["--existing-body"] if existing else []), "--body", str(body), *map(str, files)],
+            args,
             cwd=root,
             text=True,
             capture_output=True,
@@ -205,6 +218,61 @@ class PrMaterialIntegrationTests(unittest.TestCase):
                     result = self.run_checker(root, body)
                     self.assertEqual(result.returncode, 1, result)
                     self.assertIn(expected, result.stderr)
+
+    def test_rejects_personal_tool_mentions_by_default_across_files_and_modes(self):
+        tools = (
+            "cubrid-ci",
+            "cubrid-ci-watch",
+            "cubrid-tcc",
+            "cubrid-tcr",
+            "cubrid-pr-flow",
+            "cubrid-static-check",
+            "work-tracker",
+            "failure-tracker",
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            body, detail = root / "body.md", root / "detail.md"
+            for existing in (False, True):
+                for tool in tools:
+                    for target in (body, detail):
+                        with self.subTest(existing=existing, tool=tool, target=target):
+                            mention = f"Verified with `{tool}` collect."
+                            body.write_text(self.body(mention if target == body else "safe"))
+                            detail.write_text(mention if target == detail else "safe")
+                            before = {p: p.read_bytes() for p in (body, detail)}
+                            result = self.run_checker(root, body, detail, existing=existing)
+                            self.assertEqual(result.returncode, 1, result)
+                            self.assertIn("personal tool reference", result.stderr)
+                            self.assertNotIn("PR material check passed", result.stdout)
+                            self.assertEqual({p: p.read_bytes() for p in before}, before)
+
+    def test_allows_verified_example_flag_and_safe_cubrid_terms(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            body, detail = root / "body.md", root / "detail.md"
+            body.write_text(
+                self.body(
+                    "Verified on gha-ci with cubrid-testtools; see "
+                    "https://github.com/vimkim/my-cubrid-docs/blob/main/cbrd-12345/design.md"
+                )
+            )
+            detail.write_text("# Explanation\nNo personal tool names.\n")
+            safe_result = self.run_checker(root, body, detail)
+            self.assertEqual(safe_result.returncode, 0, safe_result.stderr)
+            self.assertIn("PR material check passed", safe_result.stdout)
+
+            body.write_text(self.body("For example, a local verifier such as `cubrid-ci` rejects mismatched counts."))
+            allowed_result = self.run_checker(root, body, detail, allow_personal_tool_mention=True)
+            self.assertEqual(allowed_result.returncode, 0, allowed_result.stderr)
+            self.assertIn("PR material check passed", allowed_result.stdout)
+
+            for unsafe in ("/home/author/report.md", "`just build`", PRIVATE_URL):
+                with self.subTest(unsafe=unsafe):
+                    body.write_text(self.body(f"Example `cubrid-ci` and {unsafe}"))
+                    blocked = self.run_checker(root, body, detail, allow_personal_tool_mention=True)
+                    self.assertEqual(blocked.returncode, 1, blocked)
+                    self.assertNotIn("PR material check passed", blocked.stdout)
 
 
 if __name__ == "__main__":

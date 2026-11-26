@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Sequence
 from dataclasses import dataclass
 import hashlib
 import os
@@ -77,8 +78,332 @@ KEPT_CUBRID_ENV = {"CUBRID_DATABASES", "CUBRID_TMP", "CUBRID_JAVA_HOME"}
 # CUBRID exits when $CUBRID_TMP is longer: socket paths go there (environment_variable.c: 108-byte sun_path minus 12).
 CUBRID_TMP_MAX_LENGTH = 108 - 12
 
+# Helpers defined in CTP/shell/init_path/init.sh (excluding bare `init`, which is ambiguous with OS init).
+KNOWN_SHELL_INIT_HELPERS: frozenset[str] = frozenset(
+    {
+        "wait_until",
+        "diff_ignore_lineno",
+        "write_ok",
+        "write_nok",
+        "finish",
+        "xkill",
+        "xkill_pid",
+        "xkill_java_windows",
+        "change_parameter",
+        "change_db_parameter",
+        "change_db_section_parameter",
+        "change_config_section_parameter",
+        "change_broker_parameter",
+        "change_ha_parameter",
+        "change_broker_section_parameter",
+        "change_gateway_section_parameter",
+        "change_ha_section_parameter",
+        "restore_broker_conf",
+        "restore_gateway_conf",
+        "restore_ha_conf",
+        "restore_db_conf",
+        "restore_all_conf",
+        "delete_ini",
+        "exec_sql",
+        "test_exec_sql",
+        "test_exec_command",
+        "db_status",
+        "compare_result_between_files",
+        "make_answer_or_compare_result",
+        "get_broker_port_from_shell_config",
+        "get_cubrid_port_id",
+        "generate_port",
+        "get_curr_second",
+        "get_curr_seconds",
+        "get_curr_min",
+        "get_curr_hour",
+        "release_broker_sharedmemory",
+        "count_time",
+        "get_codeset",
+        "get_language",
+        "get_comment",
+        "is32bit",
+        "format_csql_output",
+        "format_query_plan",
+        "format_path_output",
+        "remove_space_character",
+        "format_number_output",
+        "format_instance_oid_output",
+        "format_tran_index_lockdb_output",
+        "set_CUBRID_CHARSET",
+        "setENVParam",
+        "recoverENVParam",
+        "unsetENVParam",
+        "do_make_locale",
+        "delete_make_locale",
+        "backup_tz",
+        "do_make_tz",
+        "revert_tz",
+        "get_bit_ver",
+        "xgcc",
+        "cas_info_replace",
+        "get_csql_execution_time",
+        "parse_build_version",
+        "format_cubrid_version",
+        "cubrid_createdb",
+        "search_in_upper_path",
+        "create_ccidb",
+        "WINDOWS_NOT_SUPPORTED",
+        "LINUX_NOT_SUPPORTED",
+        "AIX_NOT_SUPPORTED",
+        "get_os",
+        "pick_test_compat_version",
+        "version_convert_to_number",
+        "get_best_compat_file",
+        "get_win_service_pid",
+    }
+)
 
-def preflight(suite: str, allow_commit_mismatch: bool) -> None:
+HEREDOC_START_RE = re.compile(
+    r"<<(-?)\s*(?:'([^']+)'|\"([^\"]+)\"|\\?([A-Za-z_][A-Za-z0-9_]*))"
+)
+SHELL_FUNC_RE = re.compile(
+    r"^\s*(?:function\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*\(\s*\))?"
+    r"|([A-Za-z_][A-Za-z0-9_]*)\s*\(\s*\))(?:\s*\{|\s*$)",
+    re.MULTILINE,
+)
+SHELL_CMD_CALL_RE = re.compile(
+    r"(?:^|[;&|({`)])"
+    r"(?:\s*(?:!|if|elif|then|else|do|while|until|time)\b|\s*[A-Za-z_][A-Za-z0-9_]*=\S*)*"
+    r"\s*([A-Za-z_][A-Za-z0-9_]*)(?=$|[\s;&|)`}])",
+    re.MULTILINE,
+)
+
+
+def strip_shell_heredocs_and_comments(text: str) -> str:
+    """Drop heredoc bodies, comments, and string interiors while preserving command structure."""
+    logical_lines: list[str] = []
+    current_parts: list[str] = []
+    heredocs: list[tuple[str, bool]] = []
+    in_single = False
+    in_double = False
+
+    for raw_line in text.splitlines():
+        if heredocs:
+            delim, strip_tabs = heredocs[0]
+            candidate = raw_line.lstrip("\t") if strip_tabs else raw_line
+            if candidate == delim:
+                heredocs.pop(0)
+            continue
+
+        out: list[str] = []
+        line_continued = False
+        i = 0
+        n = len(raw_line)
+        while i < n:
+            ch = raw_line[i]
+            if in_single:
+                if ch == "'":
+                    in_single = False
+                    out.append("'")
+                i += 1
+                continue
+            if in_double:
+                if ch == "\\":
+                    i += 2
+                    continue
+                if ch == '"':
+                    in_double = False
+                    out.append('"')
+                i += 1
+                continue
+            if ch == "\\":
+                if i + 1 == n:
+                    line_continued = True
+                    break
+                out.append(ch)
+                out.append(raw_line[i + 1])
+                i += 2
+                continue
+            if ch == "'":
+                in_single = True
+                out.append("'")
+                i += 1
+                continue
+            if ch == '"':
+                in_double = True
+                out.append('"')
+                i += 1
+                continue
+            if ch == "#" and (i == 0 or raw_line[i - 1] in " \t;&|({`"):
+                break
+            if ch == "<" and i + 1 < n and raw_line[i + 1] == "<":
+                if i + 2 < n and raw_line[i + 2] == "<":
+                    out.append("<<<")
+                    i += 3
+                    continue
+                match = HEREDOC_START_RE.match(raw_line, i)
+                if match:
+                    strip_tabs = bool(match.group(1))
+                    delim = match.group(2) or match.group(3) or match.group(4) or ""
+                    heredocs.append((delim, strip_tabs))
+                    out.append(" ")
+                    i = match.end()
+                    continue
+            out.append(ch)
+            i += 1
+
+        current_parts.append("".join(out))
+        if line_continued:
+            current_parts.append(" ")
+        else:
+            logical_lines.append("".join(current_parts))
+            current_parts.clear()
+
+    if current_parts:
+        logical_lines.append("".join(current_parts))
+    return "\n".join(logical_lines)
+
+
+def parse_shell_functions(text: str) -> set[str]:
+    """Return function names declared in a shell script outside comments and heredocs."""
+    stripped = strip_shell_heredocs_and_comments(text)
+    names: set[str] = set()
+    for match in SHELL_FUNC_RE.finditer(stripped):
+        name = match.group(1) or match.group(2)
+        if name:
+            names.add(name)
+    return names
+
+
+def find_command_calls(stripped_text: str) -> set[str]:
+    """Return command-position identifiers from already-stripped shell code."""
+    return {match.group(1) for match in SHELL_CMD_CALL_RE.finditer(stripped_text)}
+
+
+def inspect_ctp_git(ctp_home: Path, *, exclude_root: Path | None = None) -> dict[str, object]:
+    """Inspect a git-backed CTP_HOME offline without triggering network fetches."""
+    probe = subprocess.run(
+        ["git", "-C", str(ctp_home), "rev-parse", "--show-toplevel"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if probe.returncode != 0:
+        return {}
+    git_root = Path(probe.stdout.strip()).resolve()
+    if exclude_root is not None and git_root == exclude_root.resolve():
+        return {}
+
+    head = command_output(["git", "-C", str(git_root), "rev-parse", "HEAD"])
+    status_output = command_output(["git", "-C", str(git_root), "status", "--porcelain"])
+    dirty_lines = [line for line in status_output.splitlines() if line.strip()]
+    info: dict[str, object] = {
+        "git_root": git_root,
+        "head": head,
+        "dirty": bool(dirty_lines),
+        "dirty_count": len(dirty_lines),
+    }
+
+    origin_probe = subprocess.run(
+        ["git", "-C", str(git_root), "rev-parse", "--verify", "--quiet", "refs/remotes/origin/develop"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if origin_probe.returncode == 0:
+        origin_develop = origin_probe.stdout.strip()
+        behind_count = int(
+            command_output(
+                ["git", "-C", str(git_root), "rev-list", "--count", "HEAD..refs/remotes/origin/develop"]
+            )
+        )
+        info["origin_develop"] = origin_develop
+        info["behind_origin_develop"] = behind_count
+        init_show = subprocess.run(
+            ["git", "-C", str(git_root), "show", "refs/remotes/origin/develop:CTP/shell/init_path/init.sh"],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if init_show.returncode == 0:
+            info["origin_init_helpers"] = parse_shell_functions(init_show.stdout)
+    return info
+
+
+def discover_shell_cases(selection: Path) -> tuple[Path, ...]:
+    """Resolve a shell case file or directory subtree to concrete <name>/cases/<name>.sh files."""
+    if not selection.exists():
+        fail(f"shell selection does not exist: {selection}")
+    resolved = selection.resolve()
+    if resolved.is_file():
+        if resolved.suffix != ".sh":
+            fail(f"shell selection must be a .sh case or directory: {selection}")
+        return (resolved,)
+    if not resolved.is_dir():
+        fail(f"shell selection must be a .sh case or directory: {selection}")
+
+    cases: list[Path] = []
+    for candidate in resolved.rglob("*.sh"):
+        if (
+            candidate.is_file()
+            and candidate.parent.name == "cases"
+            and candidate.name == candidate.parent.parent.name + ".sh"
+        ):
+            cases.append(candidate.resolve())
+    cases.sort(key=str)
+    if not cases:
+        fail(f"shell selection contains no cases: {selection}")
+    return tuple(cases)
+
+
+def verify_shell_init_helpers(
+    ctp_home: Path,
+    cases: Sequence[Path],
+    *,
+    extra_known: set[str] | None = None,
+) -> None:
+    """Fail if selected shell cases invoke CTP init.sh helpers missing from this CTP_HOME."""
+    init_sh = ctp_home / "shell" / "init_path" / "init.sh"
+    defined = (
+        parse_shell_functions(init_sh.read_text(encoding="utf-8", errors="replace"))
+        if init_sh.is_file()
+        else set()
+    )
+    catalog = KNOWN_SHELL_INIT_HELPERS | (extra_known or set())
+    missing_by_helper: dict[str, list[Path]] = {}
+
+    for case in cases:
+        case_text = case.read_text(encoding="utf-8", errors="replace")
+        local_funcs = parse_shell_functions(case_text)
+        if case.parent.is_dir():
+            for sibling in case.parent.iterdir():
+                if sibling != case and sibling.is_file() and sibling.suffix == ".sh":
+                    local_funcs |= parse_shell_functions(
+                        sibling.read_text(encoding="utf-8", errors="replace")
+                    )
+        called = find_command_calls(strip_shell_heredocs_and_comments(case_text))
+        needed = (called & catalog) - local_funcs
+        for helper in sorted(needed):
+            if helper not in defined:
+                missing_by_helper.setdefault(helper, []).append(case)
+
+    if not missing_by_helper:
+        return
+
+    details = "; ".join(
+        f"{helper} (called by {', '.join(str(p) for p in paths)})"
+        for helper, paths in sorted(missing_by_helper.items())
+    )
+    if not init_sh.is_file():
+        fail(
+            f"CTP_HOME lacks shell/init_path/init.sh needed by selected shell case(s): {details}. "
+            f"Point CTP_HOME to a current clean cubrid-testtools/CTP checkout and rerun."
+        )
+    fail(
+        f"CTP init.sh ({init_sh}) lacks shell helper(s) called by selected case(s): {details}. "
+        f"Update or repoint CTP_HOME to a current clean cubrid-testtools/CTP checkout and rerun."
+    )
+
+
+def preflight(suite: str, allow_commit_mismatch: bool, selection: Path | None = None) -> None:
+    if selection is not None and suite != "shell":
+        fail("--selection applies only to shell preflight")
     testkit = resolve_testkit()
     version = command_output([str(testkit), "--version"])
 
@@ -181,6 +506,47 @@ def preflight(suite: str, allow_commit_mismatch: bool) -> None:
             file=sys.stderr,
         )
 
+    ctp_git = inspect_ctp_git(ctp_home, exclude_root=source_root)
+    if ctp_git.get("dirty"):
+        print(
+            f"WARNING: CTP_HOME checkout is dirty ({ctp_git['dirty_count']} path(s)): {ctp_git['git_root']}",
+            file=sys.stderr,
+        )
+    behind_origin = ctp_git.get("behind_origin_develop")
+    if isinstance(behind_origin, int) and behind_origin > 0:
+        head_short = str(ctp_git["head"])[:7]
+        origin_short = str(ctp_git["origin_develop"])[:7]
+        print(
+            f"WARNING: CTP_HOME is {behind_origin} commit(s) behind origin/develop "
+            f"({head_short} vs {origin_short}): {ctp_git['git_root']}",
+            file=sys.stderr,
+        )
+
+    origin_init_helpers: set[str] = set()
+    raw_origin_helpers = ctp_git.get("origin_init_helpers")
+    if isinstance(raw_origin_helpers, set):
+        origin_init_helpers = raw_origin_helpers
+
+    ctp_init_has_wait_until: str | None = None
+    ctp_init_missing_helpers: list[str] = []
+    ctp_shell_helpers_checked = False
+    if suite == "shell":
+        init_sh = ctp_home / "shell" / "init_path" / "init.sh"
+        if init_sh.is_file():
+            defined_helpers = parse_shell_functions(init_sh.read_text(encoding="utf-8", errors="replace"))
+            ctp_init_has_wait_until = "yes" if "wait_until" in defined_helpers else "no"
+            ctp_init_missing_helpers = sorted(({"wait_until"} | origin_init_helpers) - defined_helpers)
+            if ctp_init_missing_helpers:
+                print(
+                    "WARNING: CTP_HOME init.sh lacks helper(s) present in newer CTP "
+                    f"({', '.join(ctp_init_missing_helpers)}): {init_sh}",
+                    file=sys.stderr,
+                )
+        if selection is not None:
+            cases = discover_shell_cases(selection)
+            verify_shell_init_helpers(ctp_home, cases, extra_known=origin_init_helpers)
+            ctp_shell_helpers_checked = True
+
     facts = {
         "suite": suite,
         "source_root": str(source_root),
@@ -200,6 +566,18 @@ def preflight(suite: str, allow_commit_mismatch: bool) -> None:
         # CUBRID_CONF_FILE, CUBRID_BROKER_CONF_FILE and CUBRID_<PARAM> point the binaries away from the attempt's conf.
         "env_unset": " ".join(sorted(name for name in os.environ if name.startswith("CUBRID_") and name not in KEPT_CUBRID_ENV)),
     }
+    if ctp_git:
+        facts["ctp_git_root"] = str(ctp_git["git_root"])
+        facts["ctp_head"] = str(ctp_git["head"])
+        facts["ctp_dirty"] = "yes" if ctp_git["dirty"] else "no"
+        if isinstance(behind_origin, int):
+            facts["ctp_behind_origin_develop"] = str(behind_origin)
+    if ctp_init_has_wait_until is not None:
+        facts["ctp_init_has_wait_until"] = ctp_init_has_wait_until
+    if ctp_init_missing_helpers:
+        facts["ctp_init_missing_helpers"] = " ".join(ctp_init_missing_helpers)
+    if ctp_shell_helpers_checked:
+        facts["ctp_shell_helpers_checked"] = "yes"
     if java_home is not None:
         facts["java_home"] = str(java_home)
         facts["java_version"] = java_version
@@ -462,6 +840,14 @@ def prepare_config(
                 f"attempt CTP result tree is not empty: {ctp_results}. "
                 "Earlier runs there would mix into this attempt's shell logs; remove it from the attempt first."
             )
+        extra_known: set[str] = set()
+        env_ctp = os.environ.get("CTP_HOME", "")
+        if env_ctp and Path(env_ctp).is_dir():
+            ctp_git = inspect_ctp_git(Path(env_ctp).resolve())
+            raw_origin_helpers = ctp_git.get("origin_init_helpers")
+            if isinstance(raw_origin_helpers, set):
+                extra_known = raw_origin_helpers
+        verify_shell_init_helpers(attempt_ctp, selected.cases, extra_known=extra_known)
     for output in outputs:
         if output.resolve().is_relative_to(scenario.resolve()):
             fail(f"output is inside scenario: {output}")
@@ -812,6 +1198,7 @@ def parse_arguments() -> argparse.Namespace:
     preflight_parser = subparsers.add_parser("preflight")
     preflight_parser.add_argument("--suite", required=True, choices=("sql", "medium", "shell"))
     preflight_parser.add_argument("--allow-commit-mismatch", action="store_true")
+    preflight_parser.add_argument("--selection", type=Path)
     verify_parser = subparsers.add_parser("verify")
     verify_parser.add_argument("--suite", required=True, choices=("sql", "medium", "shell"))
     verify_parser.add_argument("--result-dir", required=True, type=Path)
@@ -833,7 +1220,7 @@ def main() -> int:
     arguments = parse_arguments()
     try:
         if arguments.command == "preflight":
-            preflight(arguments.suite, arguments.allow_commit_mismatch)
+            preflight(arguments.suite, arguments.allow_commit_mismatch, arguments.selection)
         elif arguments.command == "verify":
             verify(
                 arguments.suite,

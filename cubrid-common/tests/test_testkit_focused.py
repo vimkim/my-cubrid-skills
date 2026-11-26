@@ -1139,6 +1139,237 @@ class TestkitFocusedTests(unittest.TestCase):
             self.assertNotEqual(self.prepare(root, "sql", group, case).returncode, 0)
             self.assertFalse((root / "out.conf").exists())
 
+    def git_ctp_fixture(
+        self,
+        root: Path,
+        *,
+        with_wait_until: bool = True,
+        behind_origin_helpers: tuple[str, ...] = (),
+        dirty: bool = False,
+    ) -> Path:
+        ctp_repo = root / "ctp_repo"
+        ctp_home = ctp_repo / "CTP"
+        self.write(ctp_home / "conf" / "shell_ci.conf", "scenario=/old\n")
+        base_init = "#!/bin/bash\nfunction write_ok\n{\n  echo OK\n}\n"
+        if with_wait_until:
+            base_init += "function wait_until\n{\n  return 0\n}\n"
+        self.write(ctp_home / "shell" / "init_path" / "init.sh", base_init)
+        git_env = {
+            **os.environ,
+            "GIT_AUTHOR_NAME": "Test",
+            "GIT_AUTHOR_EMAIL": "test@example.com",
+            "GIT_COMMITTER_NAME": "Test",
+            "GIT_COMMITTER_EMAIL": "test@example.com",
+        }
+        subprocess.run(["git", "init", "-q"], cwd=ctp_repo, env=git_env, check=True)
+        subprocess.run(["git", "add", "."], cwd=ctp_repo, env=git_env, check=True)
+        subprocess.run(["git", "commit", "-qm", "base"], cwd=ctp_repo, env=git_env, check=True)
+        base_head = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=ctp_repo,
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout.strip()
+
+        if behind_origin_helpers:
+            extra_init = base_init + "".join(
+                f"function {name}\n{{\n  return 0\n}}\n" for name in behind_origin_helpers
+            )
+            self.write(ctp_home / "shell" / "init_path" / "init.sh", extra_init)
+            subprocess.run(["git", "add", "."], cwd=ctp_repo, env=git_env, check=True)
+            subprocess.run(["git", "commit", "-qm", "upstream"], cwd=ctp_repo, env=git_env, check=True)
+            upstream_head = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=ctp_repo,
+                text=True,
+                capture_output=True,
+                check=True,
+            ).stdout.strip()
+            subprocess.run(
+                ["git", "update-ref", "refs/remotes/origin/develop", upstream_head],
+                cwd=ctp_repo,
+                env=git_env,
+                check=True,
+            )
+            subprocess.run(["git", "reset", "--hard", "-q", base_head], cwd=ctp_repo, env=git_env, check=True)
+        else:
+            subprocess.run(
+                ["git", "update-ref", "refs/remotes/origin/develop", base_head],
+                cwd=ctp_repo,
+                env=git_env,
+                check=True,
+            )
+
+        if dirty:
+            self.write(ctp_home / "conf" / "shell_ci.conf", "scenario=/modified\n")
+        return ctp_home
+
+    def test_preflight_clean_ctp_git_reports_fresh_and_has_wait_until(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            source.mkdir()
+            env, head = self.preflight_fixture(source, installed_commit="placeholder")
+            self.matching_install(env, head)
+            env["CTP_HOME"] = str(self.git_ctp_fixture(root, with_wait_until=True))
+
+            result = self.run_cli(source, "preflight", "--suite", "shell", env=env)
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("ctp_dirty=no\n", result.stdout)
+            self.assertIn("ctp_behind_origin_develop=0\n", result.stdout)
+            self.assertIn("ctp_init_has_wait_until=yes\n", result.stdout)
+            self.assertNotIn("WARNING: CTP_HOME", result.stderr)
+
+    def test_preflight_warns_when_ctp_git_is_dirty(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            source.mkdir()
+            env, head = self.preflight_fixture(source, installed_commit="placeholder")
+            self.matching_install(env, head)
+            env["CTP_HOME"] = str(self.git_ctp_fixture(root, with_wait_until=True, dirty=True))
+
+            result = self.run_cli(source, "preflight", "--suite", "shell", env=env)
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("ctp_dirty=yes\n", result.stdout)
+            self.assertIn("WARNING: CTP_HOME checkout is dirty", result.stderr)
+
+    def test_preflight_warns_when_ctp_git_is_behind_origin_develop(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            source.mkdir()
+            env, head = self.preflight_fixture(source, installed_commit="placeholder")
+            self.matching_install(env, head)
+            env["CTP_HOME"] = str(
+                self.git_ctp_fixture(
+                    root,
+                    with_wait_until=False,
+                    behind_origin_helpers=("wait_until", "future_ctp_helper"),
+                )
+            )
+
+            result = self.run_cli(source, "preflight", "--suite", "shell", env=env)
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("ctp_behind_origin_develop=1\n", result.stdout)
+            self.assertIn("ctp_init_has_wait_until=no\n", result.stdout)
+            self.assertIn("WARNING: CTP_HOME is 1 commit(s) behind origin/develop", result.stderr)
+            self.assertIn("WARNING: CTP_HOME init.sh lacks helper(s)", result.stderr)
+            self.assertIn("future_ctp_helper", result.stderr)
+
+    def test_preflight_shell_selection_rejects_missing_init_helpers(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            source.mkdir()
+            env, head = self.preflight_fixture(source, installed_commit="placeholder")
+            self.matching_install(env, head)
+            env["CTP_HOME"] = str(
+                self.git_ctp_fixture(
+                    root,
+                    with_wait_until=False,
+                    behind_origin_helpers=("wait_until", "future_ctp_helper"),
+                )
+            )
+            case = self.write(
+                root / "corpus" / "shell" / "cbrd_27780" / "cases" / "cbrd_27780.sh",
+                "#!/bin/bash\n. $init_path/init.sh\nif wait_until 60 check_ready; then\n  future_ctp_helper\nfi\n",
+            )
+
+            file_result = self.run_cli(
+                source, "preflight", "--suite", "shell", "--selection", str(case), env=env
+            )
+            dir_result = self.run_cli(
+                source, "preflight", "--suite", "shell", "--selection", str(root / "corpus"), env=env
+            )
+
+            for result in (file_result, dir_result):
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("wait_until", result.stderr)
+                self.assertIn("future_ctp_helper", result.stderr)
+                self.assertIn(str(case), result.stderr)
+
+    def test_preflight_shell_selection_ignores_comments_heredocs_quotes_and_local_defs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source"
+            source.mkdir()
+            env, head = self.preflight_fixture(source, installed_commit="placeholder")
+            self.matching_install(env, head)
+            env["CTP_HOME"] = str(self.git_ctp_fixture(root, with_wait_until=False))
+            case = self.write(
+                root / "corpus" / "shell" / "clean_case" / "cases" / "clean_case.sh",
+                "#!/bin/bash\n"
+                ". $init_path/init.sh\n"
+                "# wait_until 10 false\n"
+                "echo \"wait_until failed\" 'wait_until'\n"
+                "cat <<'EOF'\n"
+                "wait_until 10 inside_heredoc\n"
+                "EOF\n"
+                "local_helper() {\n"
+                "  write_ok\n"
+                "}\n"
+                "wait_until() {\n"
+                "  return 0\n"
+                "}\n"
+                "wait_until 5 true\n",
+            )
+
+            result = self.run_cli(
+                source, "preflight", "--suite", "shell", "--selection", str(case), env=env
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("ctp_shell_helpers_checked=yes\n", result.stdout)
+
+    def test_preflight_rejects_selection_for_non_shell_suite(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            env, head = self.preflight_fixture(root, installed_commit="placeholder")
+            self.matching_install(env, head)
+            case = self.write(root / "case.sh", "#!/bin/sh\n")
+
+            result = self.run_cli(
+                root, "preflight", "--suite", "sql", "--selection", str(case), env=env
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("--selection applies only to shell preflight", result.stderr)
+
+    def test_prepare_shell_rejects_missing_init_helper_before_writing_outputs(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            corpus = root / "shell"
+            case = self.write(
+                corpus / "cbrd_27780" / "cases" / "cbrd_27780.sh",
+                "#!/bin/bash\n. $init_path/init.sh\nif wait_until 120 s1_vacuumed; then\n  write_ok\nfi\n",
+            )
+            init_sh = self.write(
+                root / "CTP" / "shell" / "init_path" / "init.sh",
+                "#!/bin/bash\nfunction write_ok\n{\n  echo OK\n}\n",
+            )
+
+            failed = self.prepare(root, "shell", corpus, case)
+
+            self.assertNotEqual(failed.returncode, 0)
+            self.assertIn("wait_until", failed.stderr)
+            self.assertFalse((root / "conf" / "out.conf").exists())
+            self.assertFalse((root / "expected.txt").exists())
+
+            self.write(
+                init_sh,
+                "#!/bin/bash\nfunction write_ok\n{\n  echo OK\n}\nfunction wait_until\n{\n  return 0\n}\n",
+            )
+            passed = self.prepare(root, "shell", corpus, case)
+
+            self.assertEqual(passed.returncode, 0, passed.stderr)
+            self.assertTrue((root / "conf" / "out.conf").exists())
+            self.assertTrue((root / "expected.txt").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -7,6 +7,19 @@ description: Find and assess duplicate or related CBRD JIRA issues with the cubr
 
 Use `cubrid-jira-dup candidate-find` to rank candidates, then compare issue text to judge them. This workflow only reads JIRA.
 
+## Scope
+
+The CLI indexes only the public CBRD project. Anonymous reads cannot see other projects such as CUBRIDQA, and a key from another project exits `2` with a fallback message. For a draft or issue in another project:
+
+- Run `candidate-find` on the draft file, or with `--title` and the body on stdin, to find related CBRD issues. A CBRD match is related or a cross-project duplicate, never proof of a duplicate inside the other project.
+- Search the target project with a JIRA client that can read it. Use two or three distinctive terms from the title, identifiers, or error codes per query, and run more than one query.
+
+  ```text
+  project = CUBRIDQA AND text ~ "summary regression" ORDER BY created DESC
+  ```
+
+- Compare the results under [Compare evidence](#compare-evidence). Report the project search as a manual keyword search without ranking or completeness fields, and list the queries that were run.
+
 ## Prepare
 
 Run `command -v cubrid-jira-dup`. If it is missing, report the missing command and this installation command for uv with Python 3.12 or later. Resume after the CLI is available.

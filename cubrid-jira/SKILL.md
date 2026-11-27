@@ -52,6 +52,14 @@ After `/cubrid-pr-merge`, `pr-final-merge-handoff cleanup --pr PR --jira-resolve
 
 Every transition is a live JIRA write. Show the dry-run and send it (`--yes` or `--apply`) only when the user asks for it or approves it in this session.
 
+## Affects Version/s rule (`Correct Error` in `CBRD`, `APIS`, `TOOLS`)
+
+`CBRD`, `APIS`, and `TOOLS` require `Affects Version/s` (`versions`) when creating a `Correct Error` issue or triaging it (`Open` -> `Confirmed`). Other issue types (`Improve Function/Performance`, `Refactoring`, `Task`, `Sub-task`, etc.) do not require it.
+
+- For defects found on the `11.5` development branch (`develop`), pass `--affects-version guava` (`cubrid-jira` also normalizes `11.5` to `guava` on `create`, `update`, and `transition`).
+- `cubrid-jira create` enforces this in dry-run mode for `CBRD`, `APIS`, and `TOOLS` when `--type "Correct Error"`.
+- During triage transitions whose screen exposes `versions`, pass `--affects-version VERSION` to `cubrid-jira transition` (or update it with `cubrid-jira update KEY --affects-version VERSION`).
+
 ## Check for duplicates before a write
 
 Before you create an issue or publish a description, run the [`cubrid-jira-dup`](../cubrid-jira-dup/SKILL.md) skill on the Markdown file. Skip it when the calling skill already ran it on the same file content. Report the result with the dry-run output. The check does not block the write and does not replace the user's authorization.

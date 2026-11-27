@@ -9,7 +9,7 @@ Read this reference when classifying an issue or suggesting broader categories o
 - **Problem category:** A concern such as reliability, compatibility, or test coverage. An issue may have more than one. These are writing and routing suggestions; use an existing label only when appropriate.
 - **Component:** The affected module or subsystem. Select modules supported by evidence; add others as analysis discovers them. A concern such as reliability is not automatically a module name.
 
-Suggest the type, relevant categories, and known components in the drafting handoff. Keep them out of live field mutations unless that action is authorized. Verify current project metadata before any authorized field change. Writing or publishing a description does not authorize creating types, labels, or components, changing priority, assigning owners, or transitioning status.
+Suggest the type, relevant categories, and known components in the drafting handoff. For `Correct Error` issues in `CBRD`, `APIS`, or `TOOLS`, also specify `Affects Version/s` (mandatory at creation and `Open -> Confirmed` triage; use `guava` for `11.5` development defects, and do not guess untested release versions). Keep them out of live field mutations unless that action is authorized. Verify current project metadata before any authorized field change. Writing or publishing a description does not authorize creating types, labels, or components, changing priority, assigning owners, or transitioning status.
 
 ## Baseline JIRA types
 

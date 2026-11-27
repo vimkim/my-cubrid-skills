@@ -20,7 +20,7 @@ Keep publication inside these boundaries:
 - Use the `cubrid-jira` skill's publish-description workflow, including its dry-run, live update with `--yes`, and live read-back verification.
 - If the live update fails after the push, keep the pushed commit, report the exact JIRA error and the partial-completion state, and do not claim success.
 
-A ticket-free draft has no upload target. Prepare its local task commit and follow the same approval rules for integration and push, then report that no JIRA upload target exists. Creating a new JIRA issue is a separate workflow requiring the project, issue type, summary, and other required fields.
+A ticket-free draft has no upload target. Prepare its local task commit and follow the same approval rules for integration and push, then report that no JIRA upload target exists. Creating a new JIRA issue is a separate workflow requiring the project, issue type, summary, and other required fields. For `Correct Error` issues in `CBRD`, `APIS`, or `TOOLS`, `Affects Version/s` is required at issue creation and `Open -> Confirmed` triage (`guava` for `11.5` development defects; `11.5` auto-converts to `guava`); include the recommended `Affects Version/s` in the drafting handoff without guessing untested release versions.
 
 ## Artifact identity
 

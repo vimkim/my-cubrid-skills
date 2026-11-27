@@ -10,9 +10,9 @@ On vimkim's host, the standalone `cubrid-ci-watch` package (`~/gh/cubrid-ci-watc
 
 ## Standing CI rerun authorization
 
-`vimkim` grants standing authorization for **at most one automatic `/run rerun <run-id>` per `(PR, head_sha)`** when every guardrail in `cubrid-ci-trigger` holds: zero prior reruns on that head, all failures are `cubrid-tcr` `known` / verified flaky / `found=no` dead shard with no PR defect or unexplained new failure, no `/run rerun` disqualifier, no active run, and any `cubrid-pr-tc-base-check` `stale` exit is solely due to later `develop` commits that keep both PRs `MERGEABLE` without modifying the failing testcases.
+`vimkim` grants standing authorization for **up to 3 automatic `/run rerun <run-id>` triggers per `(PR, head_sha)`** (per-head cap `N = 3`), each chained onto the latest eligible failed run on that head, when every guardrail in `cubrid-ci-trigger` holds: fewer than 3 prior `/run rerun` triggers on that head, all failures are `cubrid-tcr` `known` / verified flaky / `found=no` dead shard with no PR defect or unexplained new failure, no `/run rerun` disqualifier, no active run, and any `cubrid-pr-tc-base-check` `stale` exit is solely due to later `develop` commits that keep both PRs `MERGEABLE` without modifying the failing testcases.
 
-`cubrid-pr-flow.service` applies the same 1-per-head cap in the background (`auto_rerun_max_per_head = 1`) and falls back to an `ACT-<N>` confirmation prompt on a second failure or any guardrail miss. Explicit user approval remains required for a 2nd rerun on the same head, any `/run all` or `/run <suite>` retrigger, testcase PR closure or merge, and engine PR merges (engine PR handoffs go through `/cubrid-pr-merge <PR>`).
+`cubrid-pr-flow.service` applies the same 3-per-head cap in the background (`auto_rerun_max_per_head = 3`) and falls back to an `ACT-<N>` confirmation prompt once the budget is exhausted (the 4th failure on the same head) or on any guardrail miss. After 3 reruns on the same head still fail, or on any guardrail miss, stop and wait for explicit user approval. Explicit user approval remains required for a 4th or later rerun on the same head, any `/run all` or `/run <suite>` retrigger, testcase PR closure or merge, and engine PR merges (engine PR handoffs go through `/cubrid-pr-merge <PR>`).
 
 ## Standing review-approval authorization
 

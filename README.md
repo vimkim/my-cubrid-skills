@@ -14,7 +14,7 @@
 
 <p align="center">
   <a href="#why-this-exists--end-to-end-workflow">Workflow</a> ·
-  <a href="#skills-by-workflow-stage">Skills (23)</a> ·
+  <a href="#skills-by-workflow-stage">Skills (24)</a> ·
   <a href="#ci-and-test-skill-layout">CI &amp; Test Layout</a> ·
   <a href="#installation--sync">Installation &amp; Sync</a> ·
   <a href="#usage">Usage</a> ·
@@ -52,6 +52,7 @@ Engine work on CUBRID spans JIRA triage, multi-submodule worktrees, preset CMake
 | Skill | Purpose |
 |-------|---------|
 | [`cubrid-jira`](cubrid-jira/SKILL.md) | Look up CUBRID JIRA issue context (`CBRD-XXXXX`), choose transitions, and publish reviewed Markdown descriptions |
+| [`cubrid-jira-kanban-sync`](cubrid-jira-kanban-sync/SKILL.md) | Sync active CUBRID JIRA kanban ticket statuses with live GitHub PR, review, CI, and sub-task state |
 | [`cubrid-jira-dup`](cubrid-jira-dup/SKILL.md) | Find and assess duplicate or related `CBRD` issues before creating or writing to JIRA |
 | [`cubrid-jira-issue-write`](cubrid-jira-issue-write/SKILL.md) | Write or revise structured Korean JIRA issue reports for triage |
 | [`cubrid-xref`](cubrid-xref/SKILL.md) | Bidirectional lookup between CUBRID GitHub PRs and `CBRD` JIRA issues (engine, `tc-private`, `tc-public`, follow-up PRs) with 24h local SQLite caching |
@@ -207,7 +208,7 @@ Some skills require external CLI tools or runtimes:
 | Tool | Required by | Install |
 |------|------------|---------|
 | `cubrid-worktree` | `cubrid-worktree` | `uv tool install git+https://github.com/vimkim/cubrid-worktree` (or `just install` in `~/gh/cubrid-worktree`) |
-| `cubrid-jira` | `cubrid-jira` | `uv tool install git+https://github.com/vimkim/cubrid-jira` |
+| `cubrid-jira` (`cubrid-jira-kanban`) | `cubrid-jira`, `cubrid-jira-kanban-sync` | `uv tool install git+https://github.com/vimkim/cubrid-jira` |
 | `cubrid-jira-dup` | `cubrid-jira-dup` | `uv tool install git+https://github.com/vimkim/cubrid-jira-duplicate-poc` |
 | `gh` | `cubrid-ci-trigger`, `cubrid-ci-analyze`, `cubrid-pr-create` | [cli.github.com](https://cli.github.com/) |
 | `cubrid-ci` | `cubrid-ci-analyze` | `cargo install --path ~/gh/cubrid-ci --locked` |

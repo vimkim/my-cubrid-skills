@@ -22,6 +22,7 @@ Each top-level directory with a `SKILL.md` is a skill:
 - `cubrid-pr-create/` — GitHub PR creation with CBRD title format
 - `cubrid-pr-merge/` — user-invoked final merge handoff with confirmed squash commit messages
 - `cubrid-jira-issue-write/` — JIRA issue report writer
+- `cubrid-jira-kanban-sync/` — sync personal JIRA kanban issue statuses with GitHub PR, review, and CI state
 - `cubrid-jira-dup/` — duplicate-candidate check before a JIRA write
 - `cubrid-manual-search/` — evidence-backed English/Korean CUBRID manual search
 - `cubrid-oos-context/` — OOS project context loader

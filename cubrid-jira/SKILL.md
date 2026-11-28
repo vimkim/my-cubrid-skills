@@ -38,7 +38,7 @@ When a PR that fixes the issue merged normally, the issue's target is status `Re
 |---|---|---|
 | `Confirmed` or `Analysis` | `Start Develop` | `Develop` |
 | `Develop` | `Accept the fix` | `Handover` |
-| `Handover` | `Check in fix` with `--resolution Fixed` | `Resolved` |
+| `Handover` | `Check in fix` with `--resolution Fixed` and `Fix Version/s` | `Resolved` |
 
 Transition names depend on the current status, and JIRA lists ` Check in fix` with a leading space (`--to` matches names case-insensitively without the surrounding spaces). Before each step, list the live transitions and their target statuses, and take the one this table names:
 
@@ -46,9 +46,17 @@ Transition names depend on the current status, and JIRA lists ` Check in fix` wi
 cubrid-jira transition TICKET_ID --output json
 ```
 
+`Check in fix` also needs `Fix Version/s` (`fixVersions`). A workflow validator enforces it, so JIRA marks the screen field optional and returns HTTP 400 only on the live send. `cubrid-jira` reads the issue during the dry run and exits 1 with `requires Fix Version/s` when the issue has none. Pass the version the fix landed in, which is `guava` for `11.5`/`develop` work:
+
+```bash
+cubrid-jira transition TICKET_ID --to "Check in fix" --resolution Fixed --fix-version guava
+```
+
+To set it on its own, run `cubrid-jira update TICKET_ID --fix-version guava`. That replaces the whole list. `--field fixVersions=guava` and `--field "Fix Version/s=guava"` do the same.
+
 `Resolve without fix` and `Ask Reconfirmation` record the issue as unfixed or send it back to the reporter, so they fit only an issue whose fix did not land. An issue already `Resolved` or `Closed` needs no transition. For any other status, such as `Open`, report the status and the listed transitions to the user.
 
-After `/cubrid-pr-merge`, `pr-final-merge-handoff cleanup --pr PR --jira-resolve-fixed` previews this whole walk for the PR's tickets; `--apply` runs it. Elsewhere, such as a TC-only change whose carrier engine PR closed unmerged, run each step with `cubrid-jira transition TICKET_ID --to NAME`.
+After `/cubrid-pr-merge`, `pr-final-merge-handoff cleanup --pr PR --jira-resolve-fixed` previews this whole walk for the PR's tickets; `--apply` runs it. It does not pass `--fix-version`, so when its preview reports `requires Fix Version/s` at `Check in fix`, run `cubrid-jira update TICKET_ID --fix-version VERSION` first (a live write that needs the same approval), then preview again. Elsewhere, such as a TC-only change whose carrier engine PR closed unmerged, run each step with `cubrid-jira transition TICKET_ID --to NAME`.
 
 Every transition is a live JIRA write. Show the dry-run and send it (`--yes` or `--apply`) only when the user asks for it or approves it in this session.
 

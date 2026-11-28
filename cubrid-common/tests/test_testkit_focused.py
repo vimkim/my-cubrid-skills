@@ -371,6 +371,118 @@ class TestkitFocusedTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("native shell requires JDK 8", result.stderr)
 
+    def test_preflight_warns_about_crash_artifacts_in_the_source_install(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            env, head = self.preflight_fixture(root, installed_commit="placeholder")
+            self.matching_install(env, head)
+            cubrid = Path(env["CUBRID"])
+            self.write(cubrid / "log" / "coredump" / "csql_20261126.coredump", "stack\n")
+            self.write(cubrid / "core.1234", "core\n")
+            self.write(cubrid / "log" / "core.log", "engine log\n")
+
+            result = self.run_cli(root, "preflight", "--suite", "sql", env=env)
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("source_crash_artifacts=2", result.stdout)
+            self.assertIn("WARNING: source CUBRID install holds 2 crash artifact(s)", result.stderr)
+            self.assertIn("core.1234", result.stderr)
+            self.assertIn("log/coredump/csql_20261126.coredump", result.stderr)
+            self.assertNotIn("core.log", result.stderr)
+            self.assertTrue((cubrid / "core.1234").is_file(), "preflight must not touch the source install")
+
+    def test_preflight_reports_no_crash_artifacts_in_a_clean_install(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            env, head = self.preflight_fixture(root, installed_commit="placeholder")
+            self.matching_install(env, head)
+
+            result = self.run_cli(root, "preflight", "--suite", "sql", env=env)
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("source_crash_artifacts=0", result.stdout)
+            self.assertNotIn("crash artifact", result.stderr)
+
+    def test_quarantine_moves_crash_artifacts_out_of_the_attempt_copy(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            attempt = root / "attempt"
+            cubrid = attempt / "cubrid"
+            coredump = self.write(cubrid / "log" / "coredump" / "csql_20261126.coredump", "stack\n")
+            core = self.write(cubrid / "bin" / "core", "core\n")
+            numbered = self.write(cubrid / "databases.copied" / "CORE.99", "core\n")
+            engine_log = self.write(cubrid / "log" / "core.log", "engine log\n")
+            binary = self.write(cubrid / "bin" / "cubrid", "bin\n")
+            env = os.environ.copy()
+            env["CUBRID"] = str(root / "source-install")
+
+            result = self.run_cli(
+                root, "quarantine-crash-artifacts", "--attempt-dir", str(attempt), env=env
+            )
+
+            self.assertEqual(result.returncode, 0, result.stderr)
+            quarantine = attempt / "crash-quarantine"
+            self.assertIn("crash_artifacts_quarantined=3", result.stdout)
+            self.assertIn(f"crash_quarantine_dir={quarantine}", result.stdout)
+            self.assertIn(
+                "crash_artifacts=bin/core databases.copied/CORE.99 log/coredump/csql_20261126.coredump",
+                result.stdout,
+            )
+            for moved in (coredump, core, numbered):
+                self.assertFalse(moved.exists(), moved)
+            self.assertEqual(
+                (quarantine / "log" / "coredump" / "csql_20261126.coredump").read_text(), "stack\n"
+            )
+            self.assertTrue((quarantine / "bin" / "core").is_file())
+            self.assertTrue((quarantine / "databases.copied" / "CORE.99").is_file())
+            self.assertTrue(engine_log.is_file())
+            self.assertTrue(binary.is_file())
+
+            again = self.run_cli(
+                root, "quarantine-crash-artifacts", "--attempt-dir", str(attempt), env=env
+            )
+            self.assertEqual(again.returncode, 0, again.stderr)
+            self.assertIn("crash_artifacts_quarantined=0", again.stdout)
+
+    def test_quarantine_refuses_the_source_install_and_a_missing_copy(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            attempt = root / "attempt"
+            env = os.environ.copy()
+            env["CUBRID"] = str(attempt / "cubrid")
+
+            missing = self.run_cli(
+                root, "quarantine-crash-artifacts", "--attempt-dir", str(attempt), env=env
+            )
+            self.assertNotEqual(missing.returncode, 0)
+            self.assertIn("attempt has no copied CUBRID install", missing.stderr)
+
+            core = self.write(attempt / "cubrid" / "core.7", "core\n")
+            source = self.run_cli(
+                root, "quarantine-crash-artifacts", "--attempt-dir", str(attempt), env=env
+            )
+            self.assertNotEqual(source.returncode, 0)
+            self.assertIn("refusing to quarantine inside $CUBRID itself", source.stderr)
+            self.assertTrue(core.is_file())
+
+    def test_quarantine_never_overwrites_an_earlier_quarantined_artifact(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            attempt = root / "attempt"
+            core = self.write(attempt / "cubrid" / "core.7", "new\n")
+            earlier = self.write(attempt / "crash-quarantine" / "core.7", "old\n")
+            env = os.environ.copy()
+            env.pop("CUBRID", None)
+
+            result = self.run_cli(
+                root, "quarantine-crash-artifacts", "--attempt-dir", str(attempt), env=env
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("refusing to overwrite quarantined crash artifact", result.stderr)
+            self.assertEqual(core.read_text(), "new\n")
+            self.assertEqual(earlier.read_text(), "old\n")
+
     def test_shell_preflight_rejects_cubrid_java_home_newer_than_8(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -887,6 +999,18 @@ class TestkitFocusedTests(unittest.TestCase):
         case = self.write(group / "cases" / name, "select 1;\n")
         self.write(group / "answers" / (Path(name).name.split(".")[0] + ".answer"), "1\n")
         return case
+
+    def test_prepare_rejects_an_attempt_copy_with_crash_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            group = root / "group"
+            self.sql_case(group, "a.sql")
+            self.write(root / "cubrid" / "log" / "coredump" / "csql_1.coredump", "stack\n")
+            result = self.prepare(root, "sql", group, group / "cases", output=root / "conf" / "sql.conf")
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("crash artifact(s) from earlier runs", result.stderr)
+            self.assertIn("quarantine-crash-artifacts", result.stderr)
+            self.assertFalse((root / "conf" / "sql.conf").exists())
 
     def test_prepare_sql_discovers_depth_first_and_native_answers(self) -> None:
         with tempfile.TemporaryDirectory() as d:

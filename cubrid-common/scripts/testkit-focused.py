@@ -401,6 +401,56 @@ def verify_shell_init_helpers(
     )
 
 
+CRASH_QUARANTINE_DIR = "crash-quarantine"
+
+
+def find_crash_artifacts(cubrid: Path) -> list[Path]:
+    """Return install-relative crash artifacts that testkit would report as the case's crash.
+
+    testkit reads every file in $CUBRID/log/coredump as a server crash report and every
+    core / core.* file under $CUBRID (except the engine's core.log) as a core dump.
+    """
+    found: list[Path] = []
+    for directory, subdirectories, files in os.walk(cubrid):
+        subdirectories.sort()
+        relative_directory = Path(directory).relative_to(cubrid)
+        in_coredump = relative_directory.parts[:2] == ("log", "coredump")
+        for name in sorted(files):
+            path = Path(directory) / name
+            if path.is_symlink() or not path.is_file():
+                continue
+            lowered = name.lower()
+            is_core = lowered == "core" or (lowered.startswith("core.") and lowered != "core.log")
+            if in_coredump or is_core:
+                found.append(relative_directory / name)
+    return found
+
+
+def quarantine_crash_artifacts(attempt_dir: Path) -> None:
+    """Move crash artifacts out of the attempt's disposable install copy; never delete them."""
+    attempt_dir = artifact_path(attempt_dir)
+    attempt_cubrid = attempt_dir / "cubrid"
+    if not attempt_cubrid.is_dir() or attempt_cubrid.is_symlink():
+        fail(f"attempt has no copied CUBRID install at {attempt_cubrid}; copy $CUBRID there first")
+    source_cubrid = os.environ.get("CUBRID", "")
+    if source_cubrid and Path(source_cubrid).resolve() == attempt_cubrid.resolve():
+        fail(f"refusing to quarantine inside $CUBRID itself ({attempt_cubrid}); pass the attempt copy")
+    quarantine = attempt_dir / CRASH_QUARANTINE_DIR
+    artifacts = find_crash_artifacts(attempt_cubrid)
+    for relative in artifacts:
+        if os.path.lexists(quarantine / relative):
+            fail(f"refusing to overwrite quarantined crash artifact: {quarantine / relative}")
+    for relative in artifacts:
+        target = quarantine / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        os.rename(attempt_cubrid / relative, target)
+    print(f"attempt_cubrid={attempt_cubrid}")
+    print(f"crash_artifacts_quarantined={len(artifacts)}")
+    if artifacts:
+        print(f"crash_quarantine_dir={quarantine}")
+        print(f"crash_artifacts={' '.join(str(path) for path in artifacts)}")
+
+
 def preflight(suite: str, allow_commit_mismatch: bool, selection: Path | None = None) -> None:
     if selection is not None and suite != "shell":
         fail("--selection applies only to shell preflight")
@@ -505,6 +555,15 @@ def preflight(suite: str, allow_commit_mismatch: bool, selection: Path | None = 
             file=sys.stderr,
         )
 
+    source_crash_artifacts = find_crash_artifacts(cubrid)
+    if source_crash_artifacts:
+        print(
+            f"WARNING: source CUBRID install holds {len(source_crash_artifacts)} crash artifact(s) "
+            "that a copied install would attribute to the testcase; run quarantine-crash-artifacts "
+            f"on the attempt copy ({', '.join(str(path) for path in source_crash_artifacts)}): {cubrid}",
+            file=sys.stderr,
+        )
+
     ctp_git = inspect_ctp_git(ctp_home, exclude_root=source_root)
     if ctp_git.get("dirty"):
         print(
@@ -562,6 +621,7 @@ def preflight(suite: str, allow_commit_mismatch: bool, selection: Path | None = 
         "testkit_version": version,
         "testkit_sha256": sha256(testkit),
         "containment": "available",
+        "source_crash_artifacts": str(len(source_crash_artifacts)),
         # CUBRID_CONF_FILE, CUBRID_BROKER_CONF_FILE and CUBRID_<PARAM> point the binaries away from the attempt's conf.
         "env_unset": " ".join(sorted(name for name in os.environ if name.startswith("CUBRID_") and name not in KEPT_CUBRID_ENV)),
     }
@@ -826,6 +886,15 @@ def prepare_config(
             f"attempt CUBRID_TMP would be {len(str(attempt_tmp))} characters ({attempt_tmp}); "
             f"CUBRID accepts at most {CUBRID_TMP_MAX_LENGTH}. Use a shorter attempt root."
         )
+    attempt_cubrid = attempt_root / "cubrid"
+    if attempt_cubrid.is_dir():
+        leftover = find_crash_artifacts(attempt_cubrid)
+        if leftover:
+            fail(
+                f"attempt CUBRID copy holds crash artifact(s) from earlier runs "
+                f"({', '.join(str(path) for path in leftover)}): {attempt_cubrid}. "
+                "testkit would attribute them to this testcase; run quarantine-crash-artifacts first."
+            )
     if suite == "shell":
         # Shell testkit appends to fixed files in <CTP_HOME>/result/shell/current_runtime_logs,
         # so old runs carried by a copied CTP tree would mix into this attempt's logs.
@@ -1203,6 +1272,8 @@ def parse_arguments() -> argparse.Namespace:
     verify_parser.add_argument("--expected-list", required=True, type=Path)
     verify_parser.add_argument("--run-log", required=True, type=Path)
     verify_parser.add_argument("--runner-exit", required=True, type=int)
+    quarantine_parser = subparsers.add_parser("quarantine-crash-artifacts")
+    quarantine_parser.add_argument("--attempt-dir", required=True, type=Path)
     config_parser = subparsers.add_parser("prepare-config")
     config_parser.add_argument("--suite", required=True, choices=("sql", "medium", "shell"))
     config_parser.add_argument("--base-conf", required=True, type=Path)
@@ -1227,6 +1298,8 @@ def main() -> int:
                 arguments.run_log,
                 arguments.runner_exit,
             )
+        elif arguments.command == "quarantine-crash-artifacts":
+            quarantine_crash_artifacts(arguments.attempt_dir)
         elif arguments.command == "prepare-config":
             prepare_config(
                 arguments.suite,

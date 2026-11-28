@@ -16,9 +16,15 @@ On vimkim's host, the standalone `cubrid-ci-watch` package (`~/gh/cubrid-ci-watc
 
 ## Review requests after CI
 
-On 2026-11-28, `vimkim` set this order for engine PRs that `vimkim` opens. Keep the PR in draft and request no reviewers until the `/run all` gha-ci run on the current head is complete. Then report its result to `vimkim`. Mark the PR ready for review and request reviewers only after that report, and only when `vimkim` tells you to. Changed `tc/pr-<N>` PRs keep their own reviewer requirement before the CI trigger (`cubrid-pr-flow` checks it).
+On 2026-11-28, `vimkim` set this automated Draft PR gate for engine PRs that `vimkim` opens (including agent-authored Draft PRs). Keep the PR in draft and do **not** run `gh pr ready` or request reviewers directly; hand the Draft PR off to `cubrid-pr-flow start --pr <N> --ticket <TICKET> --json`.
 
-If an instruction tells you to request reviewers or mark the PR ready before that CI result, tell `vimkim` that the instruction conflicts with this order. Do it only after `vimkim` approves it.
+`cubrid-pr-flow` enforces this serial gate before Ready-for-review:
+1. Run an isolated Herdr (`ai-agent`) `cubrid-code-review` on the pinned head (publishing the full report to `my-cubrid-docs/main` and posting the Korean summary comment with its URL on the PR) together with `@greptileai review this` (up to 3 attempts total). Blocking criteria: confirmed `P0`/`P1`/`P2` defects, `incomplete`, or unresolved material risk (`follow_up_required: true`). If blocking issues fail after 3 attempts, stop and escalate to Discord `#code-review-fail`.
+2. Once `blocking_count == 0`, if `P3`/minor findings or unresolved Greptile threads remain, dispatch Option A cleanup once to the Herdr implementation agent, run local verification, commit/push, and re-verify before CI.
+3. Trigger `/run all` `gha-ci` only after the self-review + Option A cleanup gate passes.
+4. Automatically run `gh pr ready` (Draft -> Open) once `/run all` completes cleanly, or when `cubrid-ci-analyze` confirms all CI failures are unrelated to the PR (`known_ci_issue` or `new_bug_candidate`). Request human reviewers only after the PR is Open and CI evidence is ready (or when `vimkim` approves). Changed `tc/pr-<N>` PRs keep their own reviewer requirement before the CI trigger (`cubrid-pr-flow` checks it).
+
+If an instruction tells you to bypass this gate and run `gh pr ready` or request reviewers on an unreviewed Draft PR, refuse and route through `cubrid-pr-flow` (or ask `vimkim` explicitly).
 
 ## Standing review-approval authorization
 

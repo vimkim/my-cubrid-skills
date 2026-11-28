@@ -39,7 +39,7 @@ an actual pull request on GitHub.
   change the title only if that change was presented and approved. Preserve their
   draft/ready status. A description-only update does not authorize a source push.
 - Do not request reviewers or mark a new PR ready for review during publication.
-  Follow the loaded user context for when to do these steps. For `vimkim`, see
+  Keep the PR in Draft and hand it off to `cubrid-pr-flow` so the automated self-review + Greptile + CI gate completes first. For `vimkim`, see
   [Review requests after CI](../cubrid-common/references/cubrid-vimkim.md#review-requests-after-ci).
 - A source revision change or an edit to the existing GitHub description requires
   reconciliation and another review. A changed destination or expanded operation

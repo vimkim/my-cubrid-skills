@@ -47,7 +47,7 @@ Use this format, replacing all placeholders and omitting inapplicable finding ro
 
 List at most three confirmed findings in impact order. Count all confirmed findings by severity and point to the report for the remainder. Each finding states a concrete trigger, consequence, and needed action. Keep unverified concerns in the separate risk line. Coverage gaps and required follow-up remain visible even when the verdict is `changes-required`.
 
-When there are zero confirmed findings, omit the severity breakdown and replace the findings block with: `검토한 범위에서 확인된 결함은 없습니다. 이 결과가 PR의 병합 안전성을 보장하지는 않습니다.` Keep the actual verdict, limitations, and follow-up; zero findings can still mean `검토 미완료` or `예산 설정 필요`.
+When there are zero confirmed findings, omit the severity breakdown and replace the findings block with: `검토한 범위에서 확인된 결함은 없습니다. 이 결과가 PR의 병합 안전성을 보장하지는 않습니다.` Keep the actual verdict, limitations, and follow-up; zero findings can still mean `검토 미완료` or `예산 설정 필요`. When `blocking_count == 0` (`P0`/`P1`/`P2` 없음)이지만 `P3` 등 사소한 개선점이 있으면, `주요 발견` 아래에 짧은 `사소한 개선점 (비차단)` 목록으로 분리해 적습니다.
 
 Recheck the PR's base and head before posting. If it moved, preserve the reviewed snapshot, record the required delta review in the report and handoff, and publish those updates before the comment. State prominently in the summary: `검토 이후 PR이 변경되어 현재 커밋에 대한 추가 검토가 필요합니다.` Do not restart the review automatically.
 

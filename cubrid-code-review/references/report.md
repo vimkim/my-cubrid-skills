@@ -89,6 +89,8 @@ When `verdict.json` is requested (for example by `cubrid-pr-flow`), write one JS
   "verdict": "no-confirmed-findings | changes-required | incomplete",
   "follow_up_required": false,
   "findings_count": {"P0": 0, "P1": 0, "P2": 0, "P3": 0},
+  "blocking_count": 0,
+  "minor_findings": ["optional concise P3 or non-blocking item"],
   "findings_summary": "한두 문장 요약",
   "report_url": "https://github.com/vimkim/my-cubrid-docs/blob/main/...",
   "comment_url": "https://github.com/CUBRID/cubrid/pull/8504#issuecomment-...",
@@ -96,4 +98,4 @@ When `verdict.json` is requested (for example by `cubrid-pr-flow`), write one JS
 }
 ```
 
-Record `report_url` and `comment_url` from the verified publication step (empty string only when local-only or publication failed). Record `approval_url` from the verified [approval](pr-publication.md#approve-a-clean-review), or an empty string when no approval was submitted. `approval_url` is optional for readers, so `schema_version` stays 1.
+Record `report_url` and `comment_url` from the verified publication step (empty string only when local-only or publication failed). Record `approval_url` from the verified [approval](pr-publication.md#approve-a-clean-review), or an empty string when no approval was submitted. `blocking_count` counts confirmed `P0`/`P1`/`P2` defects (and `>= 1` when `follow_up_required` is `true` for a material unresolved risk), while `minor_findings` lists concise `P3` or non-blocking improvements. `approval_url`, `blocking_count`, and `minor_findings` are optional for backward compatibility, so `schema_version` stays 1.

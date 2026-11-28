@@ -41,12 +41,12 @@ Completion requires an immutable patch identity and an inventory of every change
 
 Read [the budget policy](references/budget.md) before any agent launch. It defines the default bounded mode and how to honor an explicit absolute budget from the user. The budget never delays launching the planned reviewers.
 
-Create a run directory outside the submitted source tree. Use separate paths for each reviewer. Save a manifest with these fields:
+Create a run directory outside the submitted source tree. Give each reviewer its own report path, `reviewer-<role>/report.md`, and its own evidence directory. Save a manifest with these fields:
 
 - Repository, request, comparison mode, full revision SHAs or patch hash, and snapshot time.
 - Applicable policy and specification paths. Record missing specifications without blocking code-correctness review.
 - Budget mode, per-reviewer scope and targets, any explicit user limits, available telemetry, enforcement mechanism or `none`, and the total review envelope with its coordinator reservation.
-- Planned agents, model and reasoning settings, assignments, output paths, and verification resource ownership.
+- Planned agents, model and reasoning settings, assignments, report paths with their report writers (reviewer or coordinator), and verification resource ownership.
 
 Use the user's configured models when available. Otherwise use available models suited to the assigned work. Avoid a fixed vendor or model dependency. Record actual choices. Preserve enough reasoning capacity for concurrency and recovery analysis by narrowing scope first.
 
@@ -80,7 +80,7 @@ The coordinator covers documented standards and specification conformance across
 
 Optional static evidence: when `cubrid-static-check` is on `PATH` and a CUBRID worktree holds the pinned commits, run `cubrid-static-check <base-sha> <head-sha>` from it and save the Markdown in the run directory. It reports only what the change adds: cppcheck and clang-tidy findings, new clones, and functions whose complexity grew. It compares the merge base of the two SHAs, so record the base it printed when that differs from the pinned comparison. Put each reported item in the brief of the reviewer who owns its path, as a lead to verify. Section 5 governs it like any other candidate. Record files listed as not fully analyzed (exit 3) as coverage limits.
 
-Each brief contains the user's goal, pinned identity, role, assigned paths, invariants, relevant context pointers, budget, output path, and completion conditions. Include any shared challenge question and the safety fact to test. Point to this skill and the reviewer contract. Do not copy the entire conversation into every brief.
+Each brief contains the user's goal, pinned identity, role, assigned paths, invariants, relevant context pointers, budget, report path, report delivery mode, and completion conditions. Include any shared challenge question and the safety fact to test. Point to this skill and the reviewer contract. Do not copy the entire conversation into every brief.
 
 Completion requires an owner for every changed path and every identified cross-domain risk, or an explicit coverage gap.
 
@@ -88,7 +88,7 @@ Completion requires an owner for every changed path and every identified cross-d
 
 Launch the planned agents with fresh, bounded context. In Codex, use `spawn_agent` with `fork_turns="none"` when available. In Claude Code, use the available general-purpose subagent tool. Pass supported budget controls only. Reviewers must not spawn other agents.
 
-Keep submitted source read-only. Each reviewer writes only its own report and isolated evidence. The coordinator schedules builds and runtime checks. Concurrent source readers may share a pinned checkout. Tests that alter databases, services, install prefixes, or resource pressure run in separate environments or serially.
+Keep submitted source read-only. Each report path has one writer, as [report delivery](references/reviewers.md#deliver-the-report) defines. A Codex, fork, or Herdr-worker reviewer writes its own report and evidence. A Claude Code in-process subagent cannot write report files. It returns its full report as its final text, and the coordinator saves that text verbatim to the reviewer's report path. The coordinator schedules builds and runtime checks. Concurrent source readers may share a pinned checkout. Tests that alter databases, services, install prefixes, or resource pressure run in separate environments or serially.
 
 Reviewers read their assigned code before reading other reviewers' conclusions. They trace success, failure, cleanup, and relevant concurrent or crash paths. Require evidence for every claimed violated invariant.
 

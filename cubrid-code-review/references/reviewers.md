@@ -46,6 +46,13 @@ Each reviewer returns the pinned identity, assigned and inspected paths, checked
 
 Stop when assigned invariants have sufficient evidence or when the budget requires termination. Report all supported findings. Do not spend the remaining allowance on unrelated cleanup.
 
+### Deliver the report
+
+Each report path has one writer. The delivery mode depends on the harness:
+
+- A reviewer that runs as a Codex agent, fork, or Herdr worker writes its report to its assigned `reviewer-<role>/report.md` path. It keeps evidence in its own evidence directory.
+- A Claude Code in-process subagent does not write report files. Claude Code refuses those writes. The reviewer returns its full report as its final text. The coordinator saves that text verbatim to the reviewer's report path and writes no other path for that reviewer.
+
 ## Systems reviewer
 
 Check the C/C++ execution and ownership rules that the changed code actually uses:

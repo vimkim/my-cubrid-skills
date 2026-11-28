@@ -14,7 +14,7 @@
 
 <p align="center">
   <a href="#why-this-exists--end-to-end-workflow">Workflow</a> ·
-  <a href="#skills-by-workflow-stage">Skills (24)</a> ·
+  <a href="#skills-by-workflow-stage">Skills (17)</a> ·
   <a href="#ci-and-test-skill-layout">CI &amp; Test Layout</a> ·
   <a href="#installation--sync">Installation &amp; Sync</a> ·
   <a href="#usage">Usage</a> ·
@@ -36,8 +36,8 @@ Engine work on CUBRID spans JIRA triage, multi-submodule worktrees, preset CMake
 
 ### End-to-end stage flow
 
-1. **JIRA & Triage**: Inspect tickets ([`cubrid-jira`](cubrid-jira/SKILL.md)), cross-reference linked PRs ([`cubrid-xref`](cubrid-xref/SKILL.md)), screen duplicates ([`cubrid-jira-dup`](cubrid-jira-dup/SKILL.md)), and author Korean triage reports ([`cubrid-jira-issue-write`](cubrid-jira-issue-write/SKILL.md)).
-2. **Worktree & Herdr Space**: Spin up or clean up ticket-first worktrees with `cubrid-cci`/`cubrid-jdbc` submodules and Herdr Spaces/Tabs ([`cubrid-worktree`](cubrid-worktree/SKILL.md)).
+1. **JIRA & Triage**: Inspect tickets (`cubrid-jira` in `vimkim/cubrid-jira`), cross-reference linked PRs (`cubrid-xref` in `vimkim/cubrid-xref`), screen duplicates (`cubrid-jira-dup` in `vimkim/cubrid-jira-duplicate`), and author Korean triage reports ([`cubrid-jira-issue-write`](cubrid-jira-issue-write/SKILL.md)).
+2. **Worktree & Herdr Space**: Spin up or clean up ticket-first worktrees with `cubrid-cci`/`cubrid-jdbc` submodules and Herdr Spaces/Tabs (`cubrid-worktree` in `vimkim/cubrid-worktree`).
 3. **Build & Focused Testkit**: Configure preset builds and run `ctest` ([`cubrid-build`](cubrid-build/SKILL.md)), then verify focused SQL, medium, or shell cases ([`cubrid-test-sql-run`](cubrid-test-sql-run/SKILL.md), [`cubrid-test-medium-run`](cubrid-test-medium-run/SKILL.md), [`cubrid-test-shell-run`](cubrid-test-shell-run/SKILL.md)).
 4. **2-Step Draft PR**: Persist the Korean PR body and resume metadata in `my-cubrid-docs`, review or edit, and publish only after confirmation ([`cubrid-pr-create`](cubrid-pr-create/SKILL.md)).
 5. **Review & CI Analyze**: Run budgeted specialist code reviews ([`cubrid-code-review`](cubrid-code-review/SKILL.md)), trigger or rerun `gha-ci` safely ([`cubrid-ci-trigger`](cubrid-ci-trigger/SKILL.md)), and attribute exact-commit failures ([`cubrid-ci-analyze`](cubrid-ci-analyze/SKILL.md)).
@@ -47,21 +47,16 @@ Engine work on CUBRID spans JIRA triage, multi-submodule worktrees, preset CMake
 
 ## Skills by workflow stage
 
-### 1. JIRA & Cross-Reference
+### 1. JIRA & Issue Authoring
 
 | Skill | Purpose |
 |-------|---------|
-| [`cubrid-jira`](cubrid-jira/SKILL.md) | Look up CUBRID JIRA issue context (`CBRD-XXXXX`), choose transitions, and publish reviewed Markdown descriptions |
-| [`cubrid-jira-kanban-sync`](cubrid-jira-kanban-sync/SKILL.md) | Sync active CUBRID JIRA kanban ticket statuses with live GitHub PR, review, CI, and sub-task state |
-| [`cubrid-jira-dup`](cubrid-jira-dup/SKILL.md) | Find and assess duplicate or related `CBRD` issues before creating or writing to JIRA |
 | [`cubrid-jira-issue-write`](cubrid-jira-issue-write/SKILL.md) | Write or revise structured Korean JIRA issue reports for triage |
-| [`cubrid-xref`](cubrid-xref/SKILL.md) | Bidirectional lookup between CUBRID GitHub PRs and `CBRD` JIRA issues (engine, `tc-private`, `tc-public`, follow-up PRs) with 24h local SQLite caching |
 
-### 2. Workspace, Build & Local Verification
+### 2. Build, Test & Optimization
 
 | Skill | Purpose |
 |-------|---------|
-| [`cubrid-worktree`](cubrid-worktree/SKILL.md) | Create, prepare, list, open, and safely delete (with submodules) ticket-first CUBRID worktrees and Herdr Spaces/Tabs |
 | [`cubrid-build`](cubrid-build/SKILL.md) | Prepare, configure, build, install, and run configured `ctest` suites via preset-aware `just` targets |
 | [`cubrid-test-sql-run`](cubrid-test-sql-run/SKILL.md) | Run focused SQL cases or narrow SQL subtrees with native `cubrid-testkit` and prove artifact verdicts |
 | [`cubrid-test-medium-run`](cubrid-test-medium-run/SKILL.md) | Run complete medium testcase directories serially with native `cubrid-testkit` and verify ordered artifact verdicts |
@@ -79,13 +74,11 @@ Engine work on CUBRID spans JIRA triage, multi-submodule worktrees, preset CMake
 | [`cubrid-ci-analyze`](cubrid-ci-analyze/SKILL.md) | Collect exact-commit GitHub Actions evidence with `cubrid-ci`, add testcase-history context, and write failure-analysis reports |
 | [`cubrid-pr-merge`](cubrid-pr-merge/SKILL.md) | User-invoked: preview squash commit messages, then merge changed TC PRs, close unchanged ones, refresh the TC gate, and merge the engine PR after confirmation |
 
-### 4. Reference, QA & Operations
+### 4. Reference & Operations
 
 | Skill | Purpose |
 |-------|---------|
 | [`cubrid-manual-search`](cubrid-manual-search/SKILL.md) | Answer CUBRID questions from the local English/Korean RST manual with file-and-line citations |
-| [`cubrid-oos-context`](cubrid-oos-context/SKILL.md) | Load authoritative OOS (Out-of-row Overflow Storage) project specification context when conformance or design behavior matters |
-| [`cubrid-qa-fetch`](cubrid-qa-fetch/SKILL.md) | Fetch and analyze authenticated pages, NOK lists, and core stacks from CUBRID's internal QA portal |
 | [`cubrid-disk-cleanup`](cubrid-disk-cleanup/SKILL.md) | Audit Linux CUBRID home disk usage, enforce live-process/worktree safety checks, and clean approved artifacts by tier |
 | [`daily-schedule`](daily-schedule/SKILL.md) | Maintain daily and weekly work plans using `my-cubrid-schedule`, the external `track-work` ledger, and live GitHub/CI state |
 | [`my-cubrid-skills-create`](my-cubrid-skills-create/SKILL.md) | Scaffold and register new skills in the `my-cubrid-skills` collection |
@@ -95,6 +88,22 @@ Engine work on CUBRID spans JIRA triage, multi-submodule worktrees, preset CMake
 | Skill | Purpose |
 |-------|---------|
 | [`cubrid-common`](cubrid-common/SKILL.md) | Shared workflow policy, user context, native testkit preflight/configuration/verdict logic, CI evidence identity, and helper scripts used internally by other CUBRID skills |
+
+### CLI-bundled skills (migrated)
+
+Standalone CLI and specification skills now live in and install alongside their owning repositories (`just install` / `just sync`):
+
+| Skill | Owning repository | Local checkout / Install |
+|---|---|---|
+| `cubrid-jira`, `cubrid-jira-kanban-sync` | [`vimkim/cubrid-jira`](https://github.com/vimkim/cubrid-jira) | `~/gh/cubrid-jira` (`just install`) |
+| `cubrid-jira-dup` | [`vimkim/cubrid-jira-duplicate`](https://github.com/vimkim/cubrid-jira-duplicate) | `~/gh/cubrid-jira-duplicate` (`just install`) |
+| `cubrid-xref` | [`vimkim/cubrid-xref`](https://github.com/vimkim/cubrid-xref) | `~/gh/cubrid-xref` (`just install`) |
+| `cubrid-worktree` | [`vimkim/cubrid-worktree`](https://github.com/vimkim/cubrid-worktree) | `~/gh/cubrid-worktree` (`just install`) |
+| `cubrid-qa-fetch` | [`vimkim/cubrid-qahome-fetcher`](https://github.com/vimkim/cubrid-qahome-fetcher) | `~/gh/cubrid-qahome-fetcher` (`just install`) |
+| `cubrid-oos-context` | [`vimkim/cubrid-oos-context`](https://github.com/vimkim/cubrid-oos-context) | `~/gh/cubrid-oos-context` (`just install`) |
+| `workflow-hygiene`, `cubrid-issue-intake`, `cubrid-review-intake` | [`vimkim/my-cubrid-workflow`](https://github.com/vimkim/my-cubrid-workflow) | `~/gh/my-cubrid-workflow` (`just sync`) |
+
+See also `cubrid-ci` in [`vimkim/cubrid-ci`](https://github.com/vimkim/cubrid-ci) (`just install`).
 
 ### General-purpose skill migration
 
@@ -145,7 +154,7 @@ just sync
 just sync                # Verify current skills, then recoverably prune obsolete owned skills
 just sync-dry-run        # Preview additions, conflicts and removals
 just list                # List installed skills
-just remove cubrid-jira  # Remove a specific skill
+just remove cubrid-build # Remove a specific skill
 ```
 
 ### Sync engine, requirements & ownership
@@ -186,8 +195,6 @@ Run from this checkout; no live synchronization is part of that check.
 Once installed, invoke skills as slash commands in Claude Code:
 
 ```text
-/cubrid-worktree CBRD-28099
-/cubrid-jira CBRD-25123
 /cubrid-pr-create CBRD-26583
 /cubrid-ci-analyze https://github.com/CUBRID/cubrid/pull/6864
 /cubrid-manual-search What is the default value of max_clients?
@@ -207,11 +214,11 @@ Some skills require external CLI tools or runtimes:
 
 | Tool | Required by | Install |
 |------|------------|---------|
-| `cubrid-worktree` | `cubrid-worktree` | `uv tool install git+https://github.com/vimkim/cubrid-worktree` (or `just install` in `~/gh/cubrid-worktree`) |
-| `cubrid-jira` (`cubrid-jira-kanban`) | `cubrid-jira`, `cubrid-jira-kanban-sync` | `uv tool install git+https://github.com/vimkim/cubrid-jira` |
-| `cubrid-jira-dup` | `cubrid-jira-dup` | `uv tool install git+https://github.com/vimkim/cubrid-jira-duplicate-poc` |
+| `cubrid-worktree` | `cubrid-disk-cleanup` | `just install` in `~/gh/cubrid-worktree` (also installs `cubrid-worktree` skill) |
+| `cubrid-jira` | `cubrid-jira-issue-write`, `cubrid-pr-merge` | `just install` in `~/gh/cubrid-jira` (also installs `cubrid-jira` skills) |
+| `cubrid-jira-dup` | `cubrid-jira-issue-write` | `just install` in `~/gh/cubrid-jira-duplicate` (also installs `cubrid-jira-dup` skill) |
 | `gh` | `cubrid-ci-trigger`, `cubrid-ci-analyze`, `cubrid-pr-create` | [cli.github.com](https://cli.github.com/) |
-| `cubrid-ci` | `cubrid-ci-analyze` | `cargo install --path ~/gh/cubrid-ci --locked` |
+| `cubrid-ci` | `cubrid-ci-analyze` | `just install` in `~/gh/cubrid-ci` (also installs `cubrid-ci` skill) |
 | `testkit` | `cubrid-test-sql-run`, `cubrid-test-medium-run`, `cubrid-test-shell-run` | Manually install the intended `cubrid-testkit` revision with `go install` |
 | JDK 8 + CTP assets | `cubrid-test-sql-run`, `cubrid-test-medium-run` | Use the selected worktree environment's configured installations |
 | `work-tracker` | `daily-schedule` (uses external `track-work`) | `just install` in `~/gh/work-tracker` |

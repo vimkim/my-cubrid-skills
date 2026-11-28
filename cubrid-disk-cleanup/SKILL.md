@@ -38,7 +38,7 @@ Apply all safety checks before removing any file or directory:
 3. Check that zero Git-tracked files (`git ls-files`) sit inside any build, cache, or scratch target before removal.
 4. Preserve every path referenced by an active process, every dirty worktree, primary `develop` or `main` checkouts, `~/.cache/ccache`, and personal archives.
 5. Remove directories through Python `shutil.rmtree` with an internal `PermissionError` chmod handler, not unguarded shell `rm -rf` expansions.
-6. Delegate removal of clean linked Git worktrees to [`cubrid-worktree delete`](../cubrid-worktree/SKILL.md). For testcase repositories, pass the repository's control checkout with `--control-dir`.
+6. Delegate removal of clean linked Git worktrees to `cubrid-worktree delete` (via the `cubrid-worktree` skill/CLI). For testcase repositories, pass the repository's control checkout with `--control-dir`.
    - Snapshot `git for-each-ref refs/heads` before removal.
    - Save `git worktree add` restoration commands to `~/temp/vimkim-disk-cleanup/` before deletion.
    - Preview with `cubrid-worktree delete <path> --dry-run --json`. After approval, run `cubrid-worktree delete <path> --json` with the same control checkout. Preserve the branch and omit `--force`.

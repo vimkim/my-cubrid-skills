@@ -8,11 +8,8 @@
 
 ## Directory structure
 
-Each top-level directory with a `SKILL.md` is a skill:
+Each top-level directory with a `SKILL.md` is a skill (17 remaining in this collection):
 
-- `cubrid-jira/` — CUBRID JIRA issue lookup
-- `cubrid-xref/` — bidirectional CUBRID PR ↔ JIRA issue lookup and caching
-- `cubrid-worktree/` — ticket-first CUBRID worktree and Herdr Space/Tab setup
 - `cubrid-build/` — prepare, build, and test local CUBRID worktrees
 - `cubrid-performance/` — diagnose and optimize performance with optional baseline comparisons
 - `cubrid-test-sql-run/` — run focused SQL cases locally
@@ -21,20 +18,25 @@ Each top-level directory with a `SKILL.md` is a skill:
 - `cubrid-ci-trigger/` — trigger CUBRID CI suites on GitHub PRs
 - `cubrid-pr-create/` — GitHub PR creation with CBRD title format
 - `cubrid-pr-merge/` — user-invoked final merge handoff with confirmed squash commit messages
+- `cubrid-code-review/` — budgeted CUBRID PR code review with specialists
 - `cubrid-jira-issue-write/` — JIRA issue report writer
-- `cubrid-jira-kanban-sync/` — sync personal JIRA kanban issue statuses with GitHub PR, review, and CI state
-- `cubrid-jira-dup/` — duplicate-candidate check before a JIRA write
 - `cubrid-manual-search/` — evidence-backed English/Korean CUBRID manual search
-- `cubrid-oos-context/` — OOS project context loader
-- `cubrid-qa-fetch/` — authenticated CUBRID internal QA result retrieval and analysis
 - `cubrid-test-shell-run/` — run and debug focused shell tests locally
 - `create-testcases/` — CUBRID test case generator
 - `cubrid-disk-cleanup/` — `dev2` home disk usage audit, tiered cleanup, and safety guardrails
-- `workflow-hygiene/` — `workflow-watchdog` health check, safe Tier 1 cleanup, ops digest, and timer controls
-- `cubrid-review-intake/` — assigned PR review intake with `cubrid-review-flow`, approval-gated posting, and review worktree cleanup
-- `cubrid-issue-intake/` — two-stage `Confirmed` JIRA issue intake and implementation with `confirmed-issue-flow`
+- `daily-schedule/` — daily/weekly work plan maintenance
 - `my-cubrid-skills-create/` — create new skills in this collection
-- `cubrid-common/` — shared helper scripts used by CUBRID skills; an internal dependency rather than a user-facing workflow
+- `cubrid-common/` — shared helper scripts and policy used by CUBRID skills; an internal dependency rather than a user-facing workflow
+
+CLI-bundled skills migrated to their owning repositories (installed via `just install` / `just sync` in each repo):
+
+- `cubrid-jira`, `cubrid-jira-kanban-sync` -> `vimkim/cubrid-jira`
+- `cubrid-jira-dup` -> `vimkim/cubrid-jira-duplicate`
+- `cubrid-xref` -> `vimkim/cubrid-xref`
+- `cubrid-worktree` -> `vimkim/cubrid-worktree`
+- `cubrid-qa-fetch` -> `vimkim/cubrid-qahome-fetcher`
+- `cubrid-oos-context` -> `vimkim/cubrid-oos-context`
+- `workflow-hygiene`, `cubrid-issue-intake`, `cubrid-review-intake` -> `vimkim/my-cubrid-workflow` (`automations/*`)
 
 For `gh-pr-comments-all`, `resolve-greptile-comments`, `markdown-write`, and `track-work`, edit the `skills/<name>/` source in `vimkim/my-skills`. `question-socratically` also moved there and is now disabled under `disabled-skills/`. `daily-schedule` and `my-cubrid-skills-create` remain here. See `docs/general-skills-migration.md` for the coordinated transfer.
 

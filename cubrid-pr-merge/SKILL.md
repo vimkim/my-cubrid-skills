@@ -96,4 +96,4 @@ Then show the cleanup preview:
 pr-final-merge-handoff cleanup --pr "$PR" --jira-resolve-fixed
 ```
 
-It walks each ticket to `Resolved` (`Fixed`) by [Resolve an issue after its fix merges](../cubrid-jira/SKILL.md#resolve-an-issue-after-its-fix-merges). Apply it (`--apply`, `--jira-comment`) only when the user asks.
+It walks each ticket to `Resolved` (`Fixed`) per the `cubrid-jira` skill's "Resolve an issue after its fix merges" workflow. Apply it (`--apply`, `--jira-comment`) only when the user asks.

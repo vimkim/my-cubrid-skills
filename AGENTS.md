@@ -30,6 +30,9 @@ Each top-level directory with a `SKILL.md` is a skill:
 - `cubrid-test-shell-run/` — run and debug focused shell tests locally
 - `create-testcases/` — CUBRID test case generator
 - `cubrid-disk-cleanup/` — `dev2` home disk usage audit, tiered cleanup, and safety guardrails
+- `workflow-hygiene/` — `workflow-watchdog` health check, safe Tier 1 cleanup, ops digest, and timer controls
+- `cubrid-review-intake/` — assigned PR review intake with `cubrid-review-flow`, approval-gated posting, and review worktree cleanup
+- `cubrid-issue-intake/` — two-stage `Confirmed` JIRA issue intake and implementation with `confirmed-issue-flow`
 - `my-cubrid-skills-create/` — create new skills in this collection
 - `cubrid-common/` — shared helper scripts used by CUBRID skills; an internal dependency rather than a user-facing workflow
 

@@ -40,6 +40,12 @@ Prove that the reviewed change introduces or exposes the failure. Run the same c
 
 If execution is unavailable, retain the hypothesis and source argument as an unverified risk. Specify the missing environment and the cheapest decisive check. Do not fabricate output or classify an unrun check as passed.
 
+### Persist evidence and check provenance
+
+Save each decisive result to a file in your evidence directory: a command with its exit status, a backtrace, or an observed value. For example, run `gdb -batch ... 2>&1 | tee <evidence-dir>/bt.txt`. Cite that file path next to the claim in the report. A result that stays only on a terminal is not evidence. A subagent reviewer that cannot write a file puts the command, exit status, and raw output inline in its final text. The coordinator saves that text with the report.
+
+Before you state that a file predates the task or that another actor made it, check the file. Compare its mtime with the task start and read its content. Cite that check. Failure example: a worker said that untracked `csql.access` and `csql.err` files predated the task. Their mtime and content showed that its own repro made them.
+
 For concurrency, give a feasible actor schedule and identify synchronization at each step. For recovery, give the durable state before and after the crash point. For performance, identify the workload and limiting resource. Do not claim a measured regression from source inspection.
 
 Each reviewer returns the pinned identity, assigned and inspected paths, checked invariants, safety facts, commands, results, candidate findings, unresolved questions, and budget status. Include cleared risks and rejected hypotheses with their evidence. Use `complete`, `partial`, or `blocked` for coverage. Report reproduced candidates separately from source-only risks. The coordinator owns confirmation.

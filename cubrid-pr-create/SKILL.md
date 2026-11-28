@@ -38,6 +38,9 @@ an actual pull request on GitHub.
 - New PRs are created in draft status. Existing PRs receive a body update by default;
   change the title only if that change was presented and approved. Preserve their
   draft/ready status. A description-only update does not authorize a source push.
+- Do not request reviewers or mark a new PR ready for review during publication.
+  Follow the loaded user context for when to do these steps. For `vimkim`, see
+  [Review requests after CI](../cubrid-common/references/cubrid-vimkim.md#review-requests-after-ci).
 - A source revision change or an edit to the existing GitHub description requires
   reconciliation and another review. A changed destination or expanded operation
   list also returns to review. Unchanged retries retain the existing authorization.

@@ -14,6 +14,12 @@ On vimkim's host, the standalone `cubrid-ci-watch` package (`~/gh/cubrid-ci-watc
 
 `cubrid-pr-flow.service` applies the same 3-per-head cap in the background (`auto_rerun_max_per_head = 3`) and falls back to an `ACT-<N>` confirmation prompt once the budget is exhausted (the 4th failure on the same head) or on any guardrail miss. After 3 reruns on the same head still fail, or on any guardrail miss, stop and wait for explicit user approval. Explicit user approval remains required for a 4th or later rerun on the same head, any `/run all` or `/run <suite>` retrigger, testcase PR closure or merge, and engine PR merges (engine PR handoffs go through `/cubrid-pr-merge <PR>`).
 
+## Review requests after CI
+
+On 2026-11-28, `vimkim` set this order for engine PRs that `vimkim` opens. Keep the PR in draft and request no reviewers until the `/run all` gha-ci run on the current head is complete. Then report its result to `vimkim`. Mark the PR ready for review and request reviewers only after that report, and only when `vimkim` tells you to. Changed `tc/pr-<N>` PRs keep their own reviewer requirement before the CI trigger (`cubrid-pr-flow` checks it).
+
+If an instruction tells you to request reviewers or mark the PR ready before that CI result, tell `vimkim` that the instruction conflicts with this order. Do it only after `vimkim` approves it.
+
 ## Standing review-approval authorization
 
 On 2026-11-25, `vimkim` granted standing review-approval authorization for `cubrid-code-review`: a requested and published PR review whose result is clean submits a formal GitHub `APPROVE` under the conditions in [Approve a clean review](../../cubrid-code-review/references/pr-publication.md#approve-a-clean-review), whatever the author's `/run all` or other CI result. Explicit user approval remains required for any other formal review, including `CHANGES_REQUESTED`, and for merges, CI triggers, and TC PR actions.

@@ -330,25 +330,46 @@ class TestkitFocusedTests(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn("containment probe failed", result.stderr)
 
-    def test_shell_preflight_does_not_require_java(self) -> None:
+    def test_shell_preflight_requires_java_home(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             env, head = self.preflight_fixture(root, installed_commit="placeholder")
-            cubrid_rel = Path(env["CUBRID"]) / "bin" / "cubrid_rel"
-            self.write(
-                cubrid_rel,
-                "#!/bin/sh\n"
-                f"echo 'CUBRID 11.5.0 (11.5.0.2602-{head[:7]}) "
-                "(64bit debug build for Linux)'\n",
-                executable=True,
-            )
+            self.matching_install(env, head)
             env.pop("JAVA_HOME")
+
+            result = self.run_cli(root, "preflight", "--suite", "shell", env=env)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("JAVA_HOME is not set", result.stderr)
+
+    def test_shell_preflight_reports_java_home(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            env, head = self.preflight_fixture(root, installed_commit="placeholder")
+            self.matching_install(env, head)
 
             result = self.run_cli(root, "preflight", "--suite", "shell", env=env)
 
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("suite=shell", result.stdout)
-            self.assertNotIn("\njava_home=", result.stdout)
+            self.assertIn(f"\njava_home={Path(env['JAVA_HOME']).resolve()}\n", result.stdout)
+            self.assertIn("\njava_version=javac 1.8.0-test\n", result.stdout)
+
+    def test_shell_preflight_rejects_non_jdk8(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            env, head = self.preflight_fixture(root, installed_commit="placeholder")
+            self.matching_install(env, head)
+            self.write(
+                Path(env["JAVA_HOME"]) / "bin" / "javac",
+                "#!/bin/sh\necho 'javac 17.0.1' >&2\n",
+                executable=True,
+            )
+
+            result = self.run_cli(root, "preflight", "--suite", "shell", env=env)
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("native shell requires JDK 8", result.stderr)
 
     def test_shell_preflight_rejects_cubrid_java_home_newer_than_8(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

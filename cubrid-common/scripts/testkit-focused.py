@@ -425,24 +425,23 @@ def preflight(suite: str, allow_commit_mismatch: bool, selection: Path | None = 
     ctp_home = required_directory("CTP_HOME")
     if not (ctp_home / "conf").is_dir():
         fail(f"CTP_HOME has no conf directory: {ctp_home}")
-    java_home: Path | None = None
-    java_version = ""
-    if suite in {"sql", "medium"}:
-        java_home = required_directory("JAVA_HOME")
-        javac = java_home / "bin" / "javac"
-        if not javac.is_file() or not os.access(javac, os.X_OK):
-            fail(f"JAVA_HOME does not provide executable bin/javac: {java_home}")
-        javac_result = subprocess.run(
-            [str(javac), "-version"],
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        java_version = (javac_result.stdout.strip() or javac_result.stderr.strip()).splitlines()[0]
-        if javac_result.returncode != 0 or not re.search(
-            r"\bjavac\s+(?:1\.8(?:\.|\b)|8(?:\.|\b))", java_version
-        ):
-            fail(f"native {suite} requires JDK 8; selected javac reports {java_version!r}")
+    # Every suite needs JDK 8: shell cases start the PL server too, and the run shell exports
+    # JAVA_HOME from the java_home= line printed here.
+    java_home = required_directory("JAVA_HOME")
+    javac = java_home / "bin" / "javac"
+    if not javac.is_file() or not os.access(javac, os.X_OK):
+        fail(f"JAVA_HOME does not provide executable bin/javac: {java_home}")
+    javac_result = subprocess.run(
+        [str(javac), "-version"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    java_version = ((javac_result.stdout.strip() or javac_result.stderr.strip()).splitlines() or [""])[0]
+    if javac_result.returncode != 0 or not re.search(
+        r"\bjavac\s+(?:1\.8(?:\.|\b)|8(?:\.|\b))", java_version
+    ):
+        fail(f"native {suite} requires JDK 8; selected javac reports {java_version!r}")
 
     # The run keeps CUBRID_JAVA_HOME, and the PL server starts from it. A JDK newer than 8
     # fails at server start ("PL server can not be started"), so stop here instead.
@@ -578,9 +577,8 @@ def preflight(suite: str, allow_commit_mismatch: bool, selection: Path | None = 
         facts["ctp_init_missing_helpers"] = " ".join(ctp_init_missing_helpers)
     if ctp_shell_helpers_checked:
         facts["ctp_shell_helpers_checked"] = "yes"
-    if java_home is not None:
-        facts["java_home"] = str(java_home)
-        facts["java_version"] = java_version
+    facts["java_home"] = str(java_home)
+    facts["java_version"] = java_version
     if cubrid_java_home:
         facts["cubrid_java_home"] = cubrid_java_home
         facts["cubrid_java_version"] = cubrid_java_version

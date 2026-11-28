@@ -18,6 +18,13 @@ Before acting, inspect the selected base's current TC sync, merge-gate, and fina
 
 An isolation-related TC gate failure is not a regression-suite failure. Report both the observed gate result and its deferred action. Do not call the PR fully green or mergeable while this gate remains blocked. A status request, CI trigger, or CI analysis does not authorize TC finalization or an engine merge.
 
+## Push TC branches against pinned CI
+
+`pr-final-merge-handoff` pins CI evidence to the engine head and to both `tc/pr-<N>` heads that a run actually tested. Treat every `tc/pr-<N>` push as a change that needs CI:
+
+- A push to either `tc/pr-<N>` after a run makes that run stale for the final handoff (`run <id> did not test the pinned engine and testcase revisions`). This holds even when the run passed and the pushed content already exists on `develop`. Before the push, name the run that will cover the new TC heads; report a TC push as needing that run.
+- To pick up testcase fixes that landed on `develop`, sync instead of cherry-picking: merge `origin/develop` into both `tc/pr-<N>` branches. When the engine head lags `develop`, also bring the engine branch level with `develop` (a non-force merge unless the user asks for a rebase), then run `/run all`. A merge whose content equals `develop` keeps the TC PR at `changed_files: 0`. A cherry-pick of `develop` commits makes the TC PR carry changes (`changed_files > 0`), so it then needs ready-for-review status and a current-head approval under the approval gate.
+
 ## Complete one final merge handoff
 
 This handoff applies only to an engine PR that the current user both opened and is assigned to ([PR approval gate](../SKILL.md#pr-approval-gate)). For anyone else's PR, report review and CI readiness and leave the merge to its author.
